@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Handled with Care · Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --slate:#1273C4;--slate-light:#3E9EE8;--slate-dark:#0A4A7D;
+  --sage:#3F8C4B;--sage-light:#DCF0DC;
+  --stone:#AE9A81;--stone-light:#EDE4D6;
+  --terracotta:#E8460F;--terracotta-light:#FBD3BF;
+  --crimson:#C1272D;--crimson-light:#FBDCDC;
+  --ivory:#FAF7F2;--charcoal:#212121;--graphite:#57565A;
+  --white:#FFFFFF;
+  --radius:12px;--radius-sm:8px;--radius-lg:20px;
+}
+body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+/* ── PAGE HEADER ── */
+.page-header{text-align:center;padding:2rem 1rem 1.5rem;}
+.page-title{font-family:'Lora',serif;font-size:26px;font-weight:700;color:var(--slate-dark);letter-spacing:-0.5px;-webkit-text-stroke:0.5px var(--slate-dark);}
+.page-title span{font-style:italic;font-weight:700;color:var(--terracotta);-webkit-text-stroke:0.3px var(--terracotta);}
+.page-sub{font-size:13px;color:var(--graphite);margin-top:6px;}
+.screen-nav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:0 1rem 1.5rem;}
+.snav-btn{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--stone);background:var(--white);color:var(--graphite);transition:all 0.2s;}
+.snav-btn.active{background:var(--slate);color:white;border-color:var(--slate);}
+.snav-btn:hover:not(.active){background:var(--stone-light);}
+
+/* ── SCREENS CONTAINER ── */
+.screens-wrap{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;padding:0 1rem 3rem;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── PHONE SHELL ── */
+.phone{width:370px;min-height:780px;background:var(--ivory);border-radius:44px;border:10px solid var(--charcoal);overflow:hidden;position:relative;box-shadow:0 32px 64px rgba(44,44,44,0.22);flex-shrink:0;}
+.notch{width:110px;height:26px;background:var(--charcoal);border-radius:0 0 16px 16px;margin:0 auto;position:relative;z-index:10;}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:5px 22px 0;font-size:11px;font-weight:500;color:var(--charcoal);}
+
+/* ── TOP NAV ── */
+.top-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 8px;background:var(--white);border-bottom:1px solid var(--stone-light);}
+.logo-mark{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:30px;height:30px;background:var(--slate);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:16px;height:16px;fill:white;}
+.logo-text{font-family:'Lora',serif;font-size:14px;font-weight:700;color:var(--slate-dark);-webkit-text-stroke:0.4px var(--slate-dark);}
+.logo-text span{font-style:italic;font-weight:700;color:var(--terracotta);-webkit-text-stroke:0.3px var(--terracotta);}
+.nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--slate);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;cursor:pointer;}
+
+/* ── SCREEN TABS ── */
+.screen-tabs{display:flex;background:var(--white);border-bottom:1px solid var(--stone-light);padding:0 14px;}
+.stab{flex:1;text-align:center;padding:9px 0 7px;font-size:12px;font-weight:500;color:var(--graphite);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.stab.active{color:var(--slate);border-bottom-color:var(--slate);font-weight:700;}
+
+/* ── APP BODY ── */
+.app-body{height:580px;overflow-y:auto;padding:0 0 12px;scrollbar-width:none;}
+.app-body::-webkit-scrollbar{display:none;}
+
+/* ── SECTION LABEL ── */
+.slabel{font-size:10px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.9px;padding:12px 18px 7px;}
+
+/* ── GREETING ── */
+.greeting-bar{padding:14px 18px 10px;background:var(--white);border-bottom:1px solid var(--stone-light);}
+.greeting-time{font-size:10px;font-weight:500;color:var(--graphite);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;}
+.greeting-name{font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--slate-dark);line-height:1.2;-webkit-text-stroke:0.4px var(--slate-dark);}
+.greeting-name em{font-style:italic;font-weight:700;color:var(--terracotta);-webkit-text-stroke:0.3px var(--terracotta);}
+
+/* ── ALERT STRIP ── */
+.alert-strip{margin:12px 14px 0;background:var(--crimson-light);border:1px solid var(--crimson);border-left:4px solid var(--crimson);border-radius:var(--radius-sm);padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;}
+.alert-dot{width:7px;height:7px;border-radius:50%;background:var(--crimson);flex-shrink:0;}
+.alert-text{font-size:12px;font-weight:600;color:var(--crimson);}
+.alert-text span{font-weight:400;color:#8A2E10;}
+
+/* ── PROGRESS ── */
+.progress-wrap{margin:10px 14px 2px;background:var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:7px;}
+.progress-track{height:5px;background:#ddd7ce;border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:var(--terracotta);width:60%;transition:width 0.8s ease;}
+
+/* ── MED CARD ── */
+.med-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
+.med-card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;border-bottom:1px solid var(--stone-light);}
+.med-card-title{font-size:11px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.6px;}
+.med-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;}
+.med-badge.ok{background:var(--sage-light);color:#245A2A;}
+.med-badge.missed{background:var(--crimson-light);color:var(--crimson);}
+.med-row{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid #f0ece6;gap:9px;cursor:pointer;}
+.med-row:last-child{border-bottom:none;}
+.med-row:hover{background:#fafaf7;}
+.med-check{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:600;transition:all 0.2s;}
+.med-check.done{background:var(--sage);color:white;}
+.med-check.missed{background:var(--crimson);color:white;}
+.med-check.pending{background:transparent;border:1.5px solid var(--stone);}
+.med-info{flex:1;}
+.med-name{font-size:13px;font-weight:500;color:var(--charcoal);}
+.med-sub{font-size:11px;color:var(--graphite);}
+.med-right{text-align:right;}
+.med-time{font-size:11px;font-weight:500;color:var(--graphite);}
+.med-logged{font-size:10px;}
+.med-logged.ok{color:var(--sage);}
+.med-logged.missed{color:var(--crimson);}
+
+/* ── TASK CARD ── */
+.task-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
+.task-row{display:flex;align-items:flex-start;padding:10px 12px;border-bottom:1px solid #f0ece6;gap:9px;cursor:pointer;transition:background 0.15s;}
+.task-row:last-child{border-bottom:none;}
+.task-row:hover{background:#fafaf7;}
+.task-row.done .task-name{text-decoration:line-through;color:var(--graphite);}
+.task-check{width:18px;height:18px;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.2s;}
+.task-check.done{background:var(--terracotta);color:white;}
+.task-check.open{border:1.5px solid var(--stone);background:transparent;}
+.task-body{flex:1;}
+.task-name{font-size:13px;color:var(--charcoal);line-height:1.3;}
+.task-meta{display:flex;align-items:center;gap:5px;margin-top:3px;}
+.task-assignee{font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;background:var(--slate);color:white;}
+.task-assignee.b{background:var(--sage);}
+.task-assignee.c{background:var(--stone);color:var(--charcoal);}
+.task-due{font-size:10px;color:var(--graphite);}
+
+/* ── NOTE CARD ── */
+.note-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;}
+.note-header{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.note-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;background:var(--terracotta);flex-shrink:0;}
+.note-who{font-size:12px;font-weight:500;color:var(--charcoal);}
+.note-when{font-size:10px;color:var(--graphite);}
+.note-text{font-size:12px;color:var(--charcoal);line-height:1.5;}
+.note-add{margin:0 14px 14px;display:flex;align-items:center;gap:9px;padding:11px 12px;background:var(--stone-light);border-radius:var(--radius);border:1.5px dashed var(--stone);cursor:pointer;}
+.note-add-text{font-size:12px;color:var(--graphite);}
+
+/* ── WELLNESS JOURNAL ── */
+.journal-link{margin:0 14px 8px;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;font-size:12px;font-weight:600;color:var(--slate);cursor:pointer;}
+.journal-tag{display:inline-block;font-size:9px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--terracotta-light);color:#8A2E10;margin-bottom:7px;}
+.journal-photo{background:var(--ivory);border:1px solid var(--stone-light);border-radius:var(--radius-sm);height:110px;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:0.5;margin-top:8px;}
+.journal-footer{display:flex;align-items:center;gap:16px;margin-top:9px;padding-top:8px;border-top:1px solid #f0ece6;}
+.journal-action{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--graphite);cursor:pointer;font-weight:500;}
+.journal-action.liked{color:var(--terracotta);}
+.journal-fab{position:absolute;right:16px;bottom:78px;width:48px;height:48px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.25);z-index:20;}
+.back-chevron{width:32px;height:32px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--graphite);cursor:pointer;}
+
+/* ── COMPOSE SHEET (shared) ── */
+.compose-textarea{width:100%;min-height:90px;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--charcoal);resize:none;margin-bottom:10px;}
+.compose-textarea:focus{outline:none;border-color:var(--slate);}
+.compose-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.compose-chip{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--stone);color:var(--graphite);cursor:pointer;background:var(--white);}
+.compose-chip.selected{background:var(--terracotta);border-color:var(--terracotta);color:white;}
+.compose-submit{background:var(--slate);color:white;text-align:center;padding:12px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;}
+.compose-submit:hover{background:var(--slate-dark);}
+
+/* ── CAREGIVER CHECK-IN ── */
+.checkin-card{margin:10px 14px 0;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px 14px;}
+.checkin-title{font-family:'Lora',serif;font-size:14px;font-weight:700;color:var(--slate-dark);}
+.checkin-sub{font-size:11px;color:var(--graphite);margin-top:2px;margin-bottom:11px;}
+.checkin-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.checkin-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:var(--radius-sm);border:1.5px solid var(--stone-light);cursor:pointer;transition:all 0.15s;}
+.checkin-opt:hover{background:var(--stone-light);}
+.checkin-opt.selected{border-color:var(--slate);background:var(--sage-light);}
+.checkin-opt-emoji{font-size:19px;}
+.checkin-opt-label{font-size:9px;font-weight:600;color:var(--graphite);text-align:center;line-height:1.2;}
+.checkin-done{text-align:center;font-size:12px;color:var(--sage);font-weight:600;padding:6px 0 2px;}
+.checkin-history{display:flex;gap:5px;margin-top:11px;justify-content:center;}
+.checkin-dot{width:9px;height:9px;border-radius:50%;}
+.checkin-followup{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
+.checkin-followup-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
+.checkin-followup-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.checkin-followup-btn{font-size:11px;font-weight:600;padding:7px 12px;border-radius:20px;border:1.5px solid var(--slate);color:var(--slate);cursor:pointer;background:var(--white);}
+.checkin-followup-btn:hover{background:var(--sage-light);}
+.checkin-followup-status{font-size:11px;color:var(--sage);font-weight:600;margin-top:8px;}
+
+/* ── ONBOARDING ── */
+.ob-dots{display:flex;gap:6px;justify-content:center;padding:14px 0 4px;}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:var(--stone-light);transition:all 0.2s;}
+.ob-dot.active{background:var(--slate);width:18px;border-radius:4px;}
+.ob-body{flex:1;overflow-y:auto;padding:6px 20px 10px;}
+.ob-icon-big{font-size:44px;text-align:center;margin:20px 0 8px;}
+.ob-headline{font-family:'Lora',serif;font-size:21px;font-weight:700;color:var(--slate-dark);text-align:center;line-height:1.3;-webkit-text-stroke:0.4px var(--slate-dark);}
+.ob-sub{font-size:12.5px;color:var(--graphite);text-align:center;line-height:1.6;margin:10px 0 6px;padding:0 6px;}
+.ob-label{font-size:11px;font-weight:700;color:var(--graphite);margin:16px 0 7px;text-transform:uppercase;letter-spacing:0.4px;}
+.ob-input{width:100%;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:11px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--charcoal);margin-bottom:4px;box-sizing:border-box;}
+.ob-input:focus{outline:none;border-color:var(--slate);}
+.ob-chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}
+.ob-chip{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--stone);color:var(--graphite);cursor:pointer;background:var(--white);}
+.ob-chip.selected{background:var(--slate);border-color:var(--slate);color:white;}
+.ob-member-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);margin-bottom:7px;}
+.ob-member-avatar{width:32px;height:32px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+.ob-member-info{flex:1;}
+.ob-member-name{font-size:13px;font-weight:500;color:var(--charcoal);}
+.ob-member-role{font-size:10px;color:var(--graphite);}
+.ob-add-member-form{background:var(--stone-light);border-radius:var(--radius);padding:12px;margin-bottom:10px;}
+.ob-inline-add{display:flex;align-items:center;gap:9px;padding:11px 12px;background:var(--stone-light);border-radius:var(--radius);border:1.5px dashed var(--stone);cursor:pointer;font-size:12px;color:var(--graphite);font-weight:500;}
+.ob-checklist-row{display:flex;align-items:center;gap:11px;padding:12px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;}
+.ob-checklist-circle{width:22px;height:22px;border-radius:50%;border:2px solid var(--stone);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;}
+.ob-checklist-circle.done{background:var(--sage);border-color:var(--sage);}
+.ob-checklist-text{flex:1;font-size:12.5px;color:var(--charcoal);}
+.ob-nav{display:flex;gap:10px;padding:12px 20px 18px;}
+.ob-btn{flex:1;text-align:center;padding:13px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;cursor:pointer;}
+.ob-btn.primary{background:var(--slate);color:white;}
+.ob-btn.primary:hover{background:var(--slate-dark);}
+.ob-btn.ghost{background:var(--white);border:1.5px solid var(--stone);color:var(--graphite);}
+.ob-skip{text-align:center;font-size:11.5px;color:var(--graphite);cursor:pointer;text-decoration:underline;margin-top:6px;}
+
+/* ── COST TRACKER ── */
+.cost-summary-card{margin:12px 14px 0;background:var(--slate-dark);border-radius:var(--radius);padding:16px;color:white;}
+.cost-summary-row{display:flex;justify-content:space-between;align-items:flex-end;}
+.cost-summary-label{font-size:10.5px;opacity:0.75;text-transform:uppercase;letter-spacing:0.4px;}
+.cost-summary-figure{font-family:'Lora',serif;font-size:24px;font-weight:700;margin-top:2px;}
+.cost-summary-divider{width:1px;background:rgba(255,255,255,0.2);margin:0 14px;}
+.cost-person-breakdown{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.18);}
+.cost-person-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;}
+.cost-person-name{width:44px;flex-shrink:0;opacity:0.9;}
+.cost-person-track{flex:1;height:6px;background:rgba(255,255,255,0.18);border-radius:3px;overflow:hidden;}
+.cost-person-fill{height:100%;background:var(--terracotta);border-radius:3px;}
+.cost-person-amt{width:52px;text-align:right;flex-shrink:0;font-weight:600;}
+.scan-btn{margin:14px 14px 0;background:var(--terracotta);color:white;border-radius:var(--radius);padding:16px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:14px;font-weight:700;cursor:pointer;}
+.scan-btn:hover{background:#c93c1c;}
+.manual-link{text-align:center;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;margin:9px 0 4px;text-decoration:underline;}
+.cost-loading{margin:10px 14px 0;background:var(--stone-light);border-radius:var(--radius);padding:16px;text-align:center;font-size:12px;color:var(--graphite);}
+.cost-preview-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;margin:0 auto 8px;display:block;}
+.cost-review-card{margin:10px 14px 0;background:var(--white);border:1.5px solid var(--slate);border-radius:var(--radius);padding:14px;}
+.cost-review-title{font-size:12px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;}
+.cost-demo-flag{font-size:9.5px;color:var(--terracotta);font-weight:600;margin-bottom:8px;}
+.cost-field-label{font-size:10px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.3px;margin:9px 0 4px;}
+.cost-input{width:100%;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:9px 10px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--charcoal);box-sizing:border-box;}
+.cost-input:focus{outline:none;border-color:var(--slate);}
+.cost-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.cost-chip{padding:6px 11px;border-radius:16px;font-size:11px;font-weight:600;border:1.5px solid var(--stone);color:var(--graphite);cursor:pointer;background:var(--white);}
+.cost-chip.selected{background:var(--slate);border-color:var(--slate);color:white;}
+.cost-mileage-row{display:flex;gap:8px;margin-top:4px;}
+.cost-mileage-row .cost-input{flex:1;}
+.cost-save-btn{background:var(--sage);color:white;text-align:center;padding:12px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
+.cost-save-btn:hover{background:#357a3f;}
+.cost-cancel-link{text-align:center;font-size:11px;color:var(--graphite);cursor:pointer;margin-top:8px;text-decoration:underline;}
+.cost-entry-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;}
+.cost-entry-row:last-child{border-bottom:none;}
+.cost-entry-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;color:white;}
+.cost-entry-info{flex:1;}
+.cost-entry-name{font-size:12.5px;font-weight:500;color:var(--charcoal);}
+.cost-entry-meta{font-size:10px;color:var(--graphite);margin-top:1px;}
+.cost-entry-amt{font-size:13px;font-weight:700;color:var(--charcoal);}
+.cost-disclaimer{margin:10px 14px 16px;font-size:10px;color:var(--graphite);line-height:1.5;text-align:center;}
+
+/* ── HUDDLE CARD ── */
+.huddle-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;}
+.huddle-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.huddle-title{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--slate-dark);}
+.huddle-title span{font-style:italic;font-weight:400;color:var(--terracotta);}
+.huddle-count{font-size:10px;color:var(--graphite);background:var(--stone-light);padding:2px 8px;border-radius:20px;}
+.huddle-members{display:flex;gap:8px;flex-wrap:wrap;}
+.member-pill{display:flex;align-items:center;gap:5px;padding:4px 9px 4px 4px;border-radius:20px;border:1px solid var(--stone-light);background:var(--ivory);cursor:pointer;}
+.member-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;}
+.member-name{font-size:11px;font-weight:500;color:var(--charcoal);}
+.member-role{font-size:9px;color:var(--graphite);}
+
+/* ── APPT ── */
+.appt-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
+.appt-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;cursor:pointer;transition:background 0.15s;}
+.appt-row:last-child{border-bottom:none;}
+.appt-row:hover{background:#fafaf7;}
+.appt-date-block{width:40px;text-align:center;flex-shrink:0;}
+.appt-month{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;}
+.appt-day{font-size:20px;font-weight:600;line-height:1;}
+.appt-body{flex:1;}
+.appt-name{font-size:13px;font-weight:500;color:var(--charcoal);margin-bottom:3px;}
+.appt-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.appt-tag{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500;}
+.appt-tag.medical{background:var(--slate);color:white;}
+.appt-tag.personal{background:var(--sage-light);color:#245A2A;}
+.appt-tag.urgent{background:var(--crimson-light);color:var(--crimson);}
+.appt-time{font-size:10px;color:var(--graphite);}
+.appt-driver{font-size:10px;color:var(--graphite);margin-top:2px;}
+
+/* ── VIEW TOGGLE ── */
+.view-toggle{display:flex;margin:10px 14px 0;background:var(--stone-light);border-radius:var(--radius-sm);padding:3px;gap:2px;}
+.vt-btn{flex:1;text-align:center;padding:6px;font-size:11px;font-weight:500;color:var(--graphite);border-radius:5px;cursor:pointer;transition:all 0.2s;}
+.vt-btn.active{background:var(--white);color:var(--slate);}
+
+/* ── POST APPT ── */
+.post-appt{margin:10px 14px 0;background:var(--terracotta-light);border:1px solid var(--terracotta);border-left:4px solid var(--terracotta);border-radius:var(--radius-sm);padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.post-appt-text{font-size:12px;font-weight:500;color:#8A2E10;}
+.post-appt-sub{font-size:10px;color:#A8452B;margin-top:1px;}
+
+/* ── ROSTER ── */
+.emergency-banner{margin:12px 14px 0;background:var(--slate);border-radius:var(--radius);padding:12px 13px;cursor:pointer;}
+.em-label{font-size:9px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;}
+.em-title{font-family:'Lora',serif;font-size:15px;font-weight:600;color:white;}
+.em-sub{font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px;}
+.contact-section{margin:12px 14px 0;}
+.contact-section-label{font-size:9px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;padding-left:2px;}
+.contact-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;margin-bottom:8px;}
+.contact-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;cursor:pointer;transition:background 0.15s;}
+.contact-row:last-child{border-bottom:none;}
+.contact-row:hover{background:#fafaf7;}
+.contact-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;flex-shrink:0;}
+.contact-info{flex:1;}
+.contact-name{font-size:13px;font-weight:500;color:var(--charcoal);}
+.contact-role{font-size:10px;color:var(--graphite);}
+.contact-actions{display:flex;gap:5px;}
+.contact-btn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;}
+.contact-btn.call{background:var(--sage-light);}
+.contact-btn.msg{background:var(--terracotta-light);}
+
+/* ── VAULT / RED FOLDER ── */
+.vault-note{margin:8px 14px 0;font-size:11px;color:var(--graphite);line-height:1.5;}
+.redfolder-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 14px 0;}
+.redfolder-tile{background:var(--crimson-light);border:1px solid var(--crimson);border-radius:var(--radius);padding:12px 10px;cursor:pointer;text-align:center;transition:background 0.15s;}
+.redfolder-tile:hover{background:#f7c9c9;}
+.redfolder-icon{font-size:20px;margin-bottom:4px;}
+.redfolder-label{font-size:11px;font-weight:600;color:#7a1f1f;}
+.redfolder-sub{font-size:9px;color:#9a3a3a;margin-top:2px;}
+.doc-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
+.doc-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;cursor:pointer;transition:background 0.15s;}
+.doc-row:last-child{border-bottom:none;}
+.doc-row:hover{background:#fafaf7;}
+.doc-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;color:white;}
+.doc-info{flex:1;}
+.doc-name{font-size:13px;font-weight:500;color:var(--charcoal);}
+.doc-meta{font-size:10px;color:var(--graphite);margin-top:1px;}
+.doc-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--stone-light);color:var(--graphite);white-space:nowrap;flex-shrink:0;}
+.doc-badge.all{background:var(--sage-light);color:#245A2A;}
+.doc-badge.limited{background:var(--terracotta-light);color:#8A2E10;}
+
+/* ── DOC DETAIL SHEET ── */
+.doc-sheet-overlay{display:none;position:absolute;inset:0;background:rgba(33,33,33,0.45);z-index:60;align-items:flex-end;}
+.doc-sheet{background:var(--white);width:100%;border-radius:20px 20px 0 0;padding:8px 18px 20px;box-shadow:0 -8px 32px rgba(0,0,0,0.2);max-height:82%;overflow-y:auto;}
+.doc-sheet-handle{width:36px;height:4px;background:var(--stone);border-radius:3px;margin:6px auto 14px;}
+.doc-sheet-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:12px;}
+.doc-sheet-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;}
+.doc-sheet-title{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);line-height:1.25;}
+.doc-sheet-meta{font-size:11px;color:var(--graphite);margin-top:2px;}
+.doc-sheet-close{margin-left:auto;width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--graphite);cursor:pointer;flex-shrink:0;}
+.doc-preview-box{background:var(--ivory);border:1.5px dashed var(--stone);border-radius:var(--radius);height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;}
+.doc-preview-icon{font-size:30px;opacity:0.55;}
+.doc-preview-text{font-size:11px;color:var(--graphite);}
+.doc-sheet-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+.doc-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 8px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--stone);background:var(--white);color:var(--charcoal);transition:background 0.15s;}
+.doc-action-btn:hover{background:var(--stone-light);}
+.doc-action-btn.primary{background:var(--slate);border-color:var(--slate);color:white;}
+.doc-action-btn.primary:hover{background:var(--slate-dark);}
+.doc-sheet-status{font-size:11px;font-weight:600;color:var(--sage);text-align:center;min-height:14px;margin-bottom:4px;}
+.doc-sheet-perm{font-size:10.5px;color:var(--graphite);text-align:center;line-height:1.5;padding-top:4px;border-top:1px solid var(--stone-light);}
+
+/* ── ADD BUTTON ── */
+.add-btn{margin:8px 14px 14px;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:var(--stone-light);border-radius:var(--radius);border:1.5px dashed var(--stone);cursor:pointer;font-size:12px;font-weight:500;color:var(--graphite);}
+.add-btn:hover{background:#e4ddd4;}
+
+/* ── MEDS FULL SCREEN ── */
+.summary-row{display:flex;gap:7px;padding:10px 14px 2px;}
+.sum-card{flex:1;background:var(--white);border-radius:var(--radius-sm);border:1px solid var(--stone-light);padding:8px 10px;text-align:center;}
+.sum-num{font-size:20px;font-weight:600;line-height:1;}
+.sum-label{font-size:9px;font-weight:500;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+.time-block{margin:0 14px 2px;}
+.time-header{display:flex;align-items:center;gap:7px;margin-bottom:5px;margin-top:12px;}
+.time-pill{font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.4px;}
+.time-pill.morning{background:var(--terracotta-light);color:#8A2E10;}
+.time-pill.evening{background:var(--slate);color:white;}
+.time-line{flex:1;height:1px;background:var(--stone-light);}
+.refill-alert{margin:10px 14px 6px;background:var(--terracotta-light);border:1px solid var(--terracotta);border-left:4px solid var(--terracotta);border-radius:var(--radius-sm);padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;}
+.refill-text{font-size:12px;font-weight:500;color:#8A2E10;}
+.refill-sub{font-size:10px;color:#A8452B;margin-top:1px;}
+.full-med-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;margin-bottom:6px;}
+.full-med-row{display:flex;align-items:stretch;cursor:pointer;transition:background 0.15s;}
+.full-med-row:hover{background:#fafaf7;}
+.med-stripe{width:3px;flex-shrink:0;}
+.med-stripe.done{background:var(--sage);}
+.med-stripe.missed{background:var(--crimson);}
+.med-stripe.pending{background:var(--stone);}
+.full-med-content{flex:1;padding:10px 10px 10px 9px;display:flex;align-items:center;gap:9px;}
+.full-med-info{flex:1;}
+.full-med-name{font-size:13px;font-weight:500;color:var(--charcoal);}
+.full-med-details{font-size:10px;color:var(--graphite);margin-top:1px;}
+.full-med-right{text-align:right;}
+.full-med-time{font-size:10px;font-weight:500;color:var(--graphite);}
+.full-med-confirmed{font-size:9px;margin-top:2px;}
+.full-med-confirmed.done{color:var(--sage);}
+.full-med-confirmed.missed{color:var(--crimson);}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--stone-light);display:flex;padding:7px 0 14px;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 0;transition:opacity 0.15s;}
+.nav-item:hover{opacity:0.7;}
+.nav-label{font-size:9px;font-weight:500;color:var(--graphite);}
+.nav-item.active .nav-label{color:var(--slate);}
+
+/* ── BETA BANNER ── */
+.beta-banner{background:var(--slate);color:white;text-align:center;padding:10px 16px;font-size:12px;}
+.beta-banner a{color:var(--terracotta-light);text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- BETA BANNER -->
+<div class="beta-banner">
+  🌿 <strong>Handled with Care</strong> · Founder Beta Demo &nbsp;·&nbsp; Built for families caring for aging parents &nbsp;·&nbsp; <a href="mailto:hello@handledwithcare.care">Join the waitlist</a>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-title">Handled <span>with Care</span></div>
+  <div class="page-sub">Tap a screen below to explore the app · Built for Lisa, 52, before the 7:42 train</div>
+</div>
+
+<!-- SCREEN NAV -->
+<div class="screen-nav">
+  <div class="snav-btn active" onclick="showScreen('home')">Today's snapshot</div>
+  <div class="snav-btn" onclick="showScreen('meds')">Medications</div>
+  <div class="snav-btn" onclick="showScreen('appts')">Appointments</div>
+  <div class="snav-btn" onclick="showScreen('roster')">Care team</div>
+  <div class="snav-btn" onclick="showScreen('onboarding')">Onboarding</div>
+  <div class="snav-btn" onclick="showScreen('costs')">Cost tracker</div>
+</div>
+
+<div class="screens-wrap">
+
+<!-- ════════════════════════════
+     SCREEN 1: HOME / TODAY
+════════════════════════════ -->
+<div class="screen active" id="screen-home">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
+      <div class="logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab active">Today</div>
+    <div class="stab" onclick="showScreen('meds')">Meds</div>
+    <div class="stab" onclick="showScreen('appts')">Calendar</div>
+  </div>
+  <div class="app-body">
+    <div class="greeting-bar">
+      <div class="greeting-time">Friday, April 11 · Good morning</div>
+      <div class="greeting-name">Here's <em>Mom's</em> morning snapshot</div>
+    </div>
+    <div class="alert-strip" onclick="this.style.display='none'">
+      <div class="alert-dot"></div>
+      <div class="alert-text">Evening BP med not logged. <span>Tap to follow up with Dave</span></div>
+    </div>
+    <div class="slabel" id="home-progress-label">Today's Huddle · 3 of 5 handled</div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span style="font-weight:500;color:var(--charcoal);font-size:11px">Daily care tasks</span>
+        <span style="color:var(--graphite);font-size:11px" id="home-pct">60%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="home-pbar"></div></div>
+    </div>
+    <div class="checkin-card" id="checkin-card">
+      <div class="checkin-title">How are <em style="font-style:italic;color:var(--terracotta);">you</em> doing this week?</div>
+      <div class="checkin-sub">Just for you. Not shared with the Huddle unless you want it to be.</div>
+      <div id="checkin-body"></div>
+    </div>
+    <div class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:10px 14px 0;" onclick="showScreen('costs')">💰 Track caregiving costs →</div>
+    <div class="slabel">Medications</div>
+    <div class="med-card">
+      <div class="med-card-header">
+        <span class="med-card-title">Today's schedule</span>
+        <span class="med-badge ok">2 of 3 logged</span>
+      </div>
+      <div class="med-row" onclick="cycleHomeMed(this,'done')">
+        <div class="med-check done">✓</div>
+        <div class="med-info"><div class="med-name">Lisinopril 10mg</div><div class="med-sub">Blood pressure · with breakfast</div></div>
+        <div class="med-right"><div class="med-time">8:00 AM</div><div class="med-logged ok">Lisa · 8:14 AM</div></div>
+      </div>
+      <div class="med-row" onclick="cycleHomeMed(this,'done')">
+        <div class="med-check done">✓</div>
+        <div class="med-info"><div class="med-name">Metformin 500mg</div><div class="med-sub">Diabetes · with breakfast</div></div>
+        <div class="med-right"><div class="med-time">8:00 AM</div><div class="med-logged ok">Lisa · 8:14 AM</div></div>
+      </div>
+      <div class="med-row" onclick="cycleHomeMed(this,'missed')">
+        <div class="med-check missed">!</div>
+        <div class="med-info"><div class="med-name">Atorvastatin 20mg</div><div class="med-sub">Cholesterol · evening</div></div>
+        <div class="med-right"><div class="med-time">8:00 PM</div><div class="med-logged missed">Not logged</div></div>
+      </div>
+    </div>
+    <div class="slabel">Tasks</div>
+    <div class="task-card">
+      <div class="task-row done" onclick="toggleHomeTask(this)">
+        <div class="task-check done">✓</div>
+        <div class="task-body"><div class="task-name">Morning medications confirmed</div><div class="task-meta"><span class="task-assignee">Lisa</span><span class="task-due">Done 8:14 AM</span></div></div>
+      </div>
+      <div class="task-row done" onclick="toggleHomeTask(this)">
+        <div class="task-check done">✓</div>
+        <div class="task-body"><div class="task-name">Grocery pickup: Trader Joe's</div><div class="task-meta"><span class="task-assignee b">Dave</span><span class="task-due">Done yesterday</span></div></div>
+      </div>
+      <div class="task-row" onclick="toggleHomeTask(this)">
+        <div class="task-check open"></div>
+        <div class="task-body"><div class="task-name">Drive Mom to cardiology: Tue 2pm</div><div class="task-meta"><span class="task-assignee">Lisa</span><span class="task-due">Apr 15</span></div></div>
+      </div>
+      <div class="task-row" onclick="toggleHomeTask(this)">
+        <div class="task-check open"></div>
+        <div class="task-body"><div class="task-name">Refill Lisinopril: running low</div><div class="task-meta"><span class="task-assignee c">Sarah</span><span class="task-due">By Sunday</span></div></div>
+      </div>
+      <div class="task-row" onclick="toggleHomeTask(this)">
+        <div class="task-check open"></div>
+        <div class="task-body"><div class="task-name">Log evening BP reading</div><div class="task-meta"><span class="task-assignee b">Dave</span><span class="task-due">Tonight</span></div></div>
+      </div>
+    </div>
+    <div class="slabel">The Huddle · Mom's Care Circle</div>
+    <div class="huddle-card">
+      <div class="huddle-header"><div class="huddle-title">Who's <span>in</span></div><div class="huddle-count">4 members</div></div>
+      <div class="huddle-members">
+        <div class="member-pill"><div class="member-avatar" style="background:var(--slate)">L</div><div><div class="member-name">Lisa</div><div class="member-role">Coordinator</div></div></div>
+        <div class="member-pill"><div class="member-avatar" style="background:var(--sage)">D</div><div><div class="member-name">Dave</div><div class="member-role">Sibling</div></div></div>
+        <div class="member-pill"><div class="member-avatar" style="background:var(--terracotta)">S</div><div><div class="member-name">Sarah</div><div class="member-role">Sibling</div></div></div>
+        <div class="member-pill"><div class="member-avatar" style="background:var(--stone);color:var(--charcoal)">M</div><div><div class="member-name">Mary</div><div class="member-role">Home aide</div></div></div>
+      </div>
+    </div>
+    <div class="slabel">Wellness Journal</div>
+    <div id="home-journal-preview"></div>
+    <div class="journal-link" onclick="showScreen('journal')">See full journal →</div>
+    <div class="note-add" onclick="showScreen('journal');setTimeout(()=>openCompose('journal'),50);"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--graphite)">+</div><div class="note-add-text">Add a care note…</div></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label" style="color:var(--slate)">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 2: MEDICATIONS
+════════════════════════════ -->
+<div class="screen" id="screen-meds">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
+      <div class="logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab" onclick="showScreen('home')">Today</div>
+    <div class="stab active">Meds</div>
+    <div class="stab">History</div>
+  </div>
+  <div class="app-body">
+    <div class="summary-row">
+      <div class="sum-card"><div class="sum-num" style="color:var(--sage)">2</div><div class="sum-label">Taken</div></div>
+      <div class="sum-card"><div class="sum-num" style="color:var(--crimson)">1</div><div class="sum-label">Missed</div></div>
+      <div class="sum-card"><div class="sum-num" style="color:var(--graphite)">1</div><div class="sum-label">Pending</div></div>
+      <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">4</div><div class="sum-label">Total</div></div>
+    </div>
+    <div class="refill-alert"><div><div class="refill-text">Lisinopril running low</div><div class="refill-sub">Est. 5 days · Sarah assigned · tap to follow up</div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
+    <div class="time-block">
+      <div class="time-header"><div class="time-pill morning">Morning · 8:00 AM</div><div class="time-line"></div></div>
+      <div class="full-med-card">
+        <div class="full-med-row" onclick="toggleMedDetail('md1')">
+          <div class="med-stripe done"></div>
+          <div class="full-med-content">
+            <div class="med-check done">✓</div>
+            <div class="full-med-info"><div class="full-med-name">Lisinopril 10mg</div><div class="full-med-details">Blood pressure · 1 tablet · with food · avoid grapefruit</div></div>
+            <div class="full-med-right"><div class="full-med-time">8:00 AM</div><div class="full-med-confirmed done">Lisa · 8:14 AM</div></div>
+          </div>
+        </div>
+        <div id="md1" style="display:none;padding:0 12px 12px;border-top:1px solid var(--stone-light);background:var(--ivory);">
+          <div style="height:8px"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;">
+            <div><div style="font-size:9px;font-weight:600;color:var(--graphite);text-transform:uppercase;margin-bottom:2px;">Doctor</div><div style="font-size:11px;color:var(--charcoal)">Dr. Linda Chen</div></div>
+            <div><div style="font-size:9px;font-weight:600;color:var(--graphite);text-transform:uppercase;margin-bottom:2px;">Refill by</div><div style="font-size:11px;color:var(--charcoal)">Apr 16 · CVS</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--charcoal);background:var(--white);border-radius:var(--radius-sm);border:1px solid var(--stone-light);padding:7px 9px;margin-bottom:8px;">⚠ Monitor potassium if taking with Metformin. Dr. Chen aware.</div>
+          <div style="display:flex;gap:5px;">
+            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Drug info</div>
+            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Set refill</div>
+            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;">Edit</div>
+          </div>
+        </div>
+      </div>
+      <div class="full-med-card">
+        <div class="full-med-row">
+          <div class="med-stripe done"></div>
+          <div class="full-med-content">
+            <div class="med-check done">✓</div>
+            <div class="full-med-info"><div class="full-med-name">Metformin 500mg</div><div class="full-med-details">Diabetes · 1 tablet · with breakfast</div></div>
+            <div class="full-med-right"><div class="full-med-time">8:00 AM</div><div class="full-med-confirmed done">Lisa · 8:14 AM</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="time-block">
+      <div class="time-header"><div class="time-pill evening">Evening · 8:00 PM</div><div class="time-line"></div></div>
+      <div class="full-med-card">
+        <div class="full-med-row" onclick="toggleMedDetail('md3')">
+          <div class="med-stripe missed"></div>
+          <div class="full-med-content">
+            <div class="med-check missed">!</div>
+            <div class="full-med-info"><div class="full-med-name">Atorvastatin 20mg</div><div class="full-med-details">Cholesterol · 1 tablet · evening</div></div>
+            <div class="full-med-right"><div class="full-med-time">8:00 PM</div><div class="full-med-confirmed missed">Not logged</div></div>
+          </div>
+        </div>
+        <div id="md3" style="display:none;padding:0 12px 12px;border-top:1px solid var(--stone-light);background:var(--ivory);">
+          <div style="height:8px"></div>
+          <div style="font-size:11px;color:var(--crimson);background:var(--crimson-light);border-radius:var(--radius-sm);border:1px solid var(--crimson);padding:7px 9px;margin-bottom:8px;">Dave was assigned last night. Dose not confirmed. Send a nudge?</div>
+          <div style="display:flex;gap:5px;">
+            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Nudge Dave</div>
+            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="markMedTaken('md3',this)">Mark taken</div>
+          </div>
+        </div>
+      </div>
+      <div class="full-med-card">
+        <div class="full-med-row">
+          <div class="med-stripe pending"></div>
+          <div class="full-med-content">
+            <div class="med-check pending"></div>
+            <div class="full-med-info"><div class="full-med-name">Aspirin 81mg</div><div class="full-med-details">Cardiac protection · with dinner</div></div>
+            <div class="full-med-right"><div class="full-med-time">8:00 PM</div><div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Scheduled</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="add-btn" style="margin-top:10px;">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Add medication
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label" style="color:var(--slate)">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 3: APPOINTMENTS
+════════════════════════════ -->
+<div class="screen" id="screen-appts">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
+      <div class="logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab active">Appointments</div>
+    <div class="stab" onclick="showScreen('meds')">Meds</div>
+    <div class="stab" onclick="showScreen('home')">Today</div>
+  </div>
+  <div class="app-body">
+    <div class="view-toggle">
+      <div class="vt-btn active" id="list-btn" onclick="switchApptView('list')">List view</div>
+      <div class="vt-btn" id="cal-btn" onclick="switchApptView('cal')">Calendar view</div>
+    </div>
+    <div id="cal-panel" style="display:none;margin:10px 14px 0;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--slate-dark);">April 2026</div>
+        <div style="display:flex;gap:6px;"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--graphite);">‹</div><div style="width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--graphite);">›</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:3px;">
+        <div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">S</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">M</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">T</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">W</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">T</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">F</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">S</div>
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    </div>
+    <div class="post-appt" onclick="openPostApptCompose()"><div><div class="post-appt-text">How did PT go Tuesday?</div><div class="post-appt-sub">Add a note from Mom's Apr 8 visit → helps the whole Huddle</div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
+    <div class="slabel" id="appt-list-label">Coming up · next 14 days</div>
+    <div class="appt-card" id="appt-list">
+      <div class="appt-row">
+        <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">APR</div><div class="appt-day" style="color:var(--slate)">15</div></div>
+        <div class="appt-body"><div class="appt-name">Dr. Patel: Cardiology follow-up</div><div class="appt-meta"><span class="appt-tag medical">Medical</span><span class="appt-time">2:00 PM · Scripps Clinic</span></div><div class="appt-driver">🚗 Lisa driving</div></div>
+        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
+      </div>
+      <div class="appt-row">
+        <div class="appt-date-block"><div class="appt-month" style="color:var(--sage)">APR</div><div class="appt-day" style="color:var(--sage)">17</div></div>
+        <div class="appt-body"><div class="appt-name">Physical therapy: knee</div><div class="appt-meta"><span class="appt-tag personal">Therapy</span><span class="appt-time">10:30 AM · Sharp Rehab</span></div><div class="appt-driver">🚗 Dave driving</div></div>
+        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
+      </div>
+      <div class="appt-row">
+        <div class="appt-date-block"><div class="appt-month" style="color:var(--crimson)">APR</div><div class="appt-day" style="color:var(--crimson)">19</div></div>
+        <div class="appt-body"><div class="appt-name">Lab work: fasting bloodwork</div><div class="appt-meta"><span class="appt-tag urgent">Urgent</span><span class="appt-time">7:45 AM · Quest Diagnostics</span></div><div class="appt-driver" style="color:var(--crimson)">⚠ Driver needed, ask Huddle</div></div>
+        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
+      </div>
+      <div class="appt-row">
+        <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">APR</div><div class="appt-day" style="color:var(--slate)">24</div></div>
+        <div class="appt-body"><div class="appt-name">Dr. Chen: Primary care check-in</div><div class="appt-meta"><span class="appt-tag medical">Medical</span><span class="appt-time">11:00 AM · Kaiser Permanente</span></div><div class="appt-driver">🚗 Sarah driving</div></div>
+        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
+      </div>
+    </div>
+    <div class="add-btn">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Add appointment
+    </div>
+  </div>
+  <div class="doc-sheet-overlay" id="compose-overlay-appt" onclick="if(event.target===this)closeCompose('appt')">
+    <div class="doc-sheet">
+      <div class="doc-sheet-handle"></div>
+      <div class="doc-sheet-header">
+        <div class="doc-sheet-icon" style="background:var(--terracotta)">🩺</div>
+        <div style="flex:1;">
+          <div class="doc-sheet-title">How did PT go Tuesday?</div>
+          <div class="doc-sheet-meta">Physical therapy · Apr 8 · Sharp Rehab</div>
+        </div>
+        <div class="doc-sheet-close" onclick="closeCompose('appt')">✕</div>
+      </div>
+      <div class="compose-chips" id="compose-chips-appt">
+        <div class="compose-chip" onclick="toggleChip(this)">All good</div>
+        <div class="compose-chip" onclick="toggleChip(this)">New prescription</div>
+        <div class="compose-chip" onclick="toggleChip(this)">Follow-up needed</div>
+      </div>
+      <textarea class="compose-textarea" id="compose-text-appt" placeholder="What did the therapist say? Any next steps for the Huddle?"></textarea>
+      <div class="compose-submit" onclick="submitNote('appt')">Post to Journal</div>
+      <div class="doc-sheet-status" id="compose-status-appt"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label" style="color:var(--slate)">Calendar</div></div>
+    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 4: CARE TEAM ROSTER
+════════════════════════════ -->
+<div class="screen" id="screen-roster">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
+      <div class="logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab" onclick="showScreen('home')">The Huddle</div>
+    <div class="stab active">Care Team</div>
+    <div class="stab" onclick="showScreen('vault')">Vault</div>
+  </div>
+  <div class="app-body">
+    <div class="emergency-banner">
+      <div class="em-label">Emergency quick access</div>
+      <div class="em-title">Mom's Red Folder</div>
+      <div class="em-sub">Insurance · DNR · Primary doctor · Pharmacy · one tap</div>
+    </div>
+    <div class="contact-section">
+      <div class="contact-section-label">Medical team</div>
+      <div class="contact-card">
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate)">RP</div><div class="contact-info"><div class="contact-name">Dr. Raj Patel</div><div class="contact-role">Cardiologist · Scripps Clinic</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate-light)">LC</div><div class="contact-info"><div class="contact-name">Dr. Linda Chen</div><div class="contact-role">Primary care · Kaiser Permanente</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--sage)">KW</div><div class="contact-info"><div class="contact-name">Kim Watkins, PT</div><div class="contact-role">Physical therapist · Sharp Rehab</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
+      </div>
+    </div>
+    <div class="contact-section">
+      <div class="contact-section-label">Pharmacy & services</div>
+      <div class="contact-card">
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--terracotta)">Rx</div><div class="contact-info"><div class="contact-name">CVS Pharmacy</div><div class="contact-role">Rancho Bernardo · Refill line available</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--stone);color:var(--charcoal)">MA</div><div class="contact-info"><div class="contact-name">Mary Andersen</div><div class="contact-role">Home aide · Mon–Fri 9am–1pm</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
+      </div>
+    </div>
+    <div class="contact-section">
+      <div class="contact-section-label">The Huddle · Family</div>
+      <div class="contact-card">
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate)">L</div><div class="contact-info"><div class="contact-name">Lisa M. &nbsp;<span style="color:var(--terracotta);font-size:10px;font-weight:500">Coordinator</span></div><div class="contact-role">Chicago, IL · Primary caregiver</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--sage)">D</div><div class="contact-info"><div class="contact-name">Dave M.</div><div class="contact-role">San Diego, CA · Local contact</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
+        <div class="contact-row"><div class="contact-avatar" style="background:var(--terracotta)">S</div><div class="contact-info"><div class="contact-name">Sarah M.</div><div class="contact-role">Phoenix, AZ · Backup coordinator</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
+      </div>
+    </div>
+    <div class="add-btn" style="margin:4px 14px 14px;">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Add care team member
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 5: DOCUMENT VAULT
+════════════════════════════ -->
+<div class="screen" id="screen-vault">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
+      <div class="logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab" onclick="showScreen('home')">The Huddle</div>
+    <div class="stab" onclick="showScreen('roster')">Care Team</div>
+    <div class="stab active">Vault</div>
+  </div>
+  <div class="app-body">
+    <div class="emergency-banner">
+      <div class="em-label">Emergency quick access</div>
+      <div class="em-title">Mom's Red Folder</div>
+      <div class="em-sub">The 6 things you'd need at 2am. One tap, no searching</div>
+    </div>
+    <div class="redfolder-grid">
+      <div class="redfolder-tile" onclick="openDoc('insurance')"><div class="redfolder-icon">🪪</div><div class="redfolder-label">Insurance Card</div><div class="redfolder-sub">Front & back</div></div>
+      <div class="redfolder-tile" onclick="openDoc('dnr')"><div class="redfolder-icon">📋</div><div class="redfolder-label">Advance Directive</div><div class="redfolder-sub">DNR on file</div></div>
+      <div class="redfolder-tile" onclick="openDoc('primaryDoctor')"><div class="redfolder-icon">👨‍⚕️</div><div class="redfolder-label">Primary Doctor</div><div class="redfolder-sub">Dr. Linda Chen</div></div>
+      <div class="redfolder-tile" onclick="openDoc('pharmacy')"><div class="redfolder-icon">💊</div><div class="redfolder-label">Pharmacy</div><div class="redfolder-sub">CVS · Rancho Bernardo</div></div>
+      <div class="redfolder-tile" onclick="openDoc('allergies')"><div class="redfolder-icon">⚠️</div><div class="redfolder-label">Allergies & Conditions</div><div class="redfolder-sub">Penicillin · A-fib</div></div>
+      <div class="redfolder-tile" onclick="openDoc('emergencyContact')"><div class="redfolder-icon">📞</div><div class="redfolder-label">Emergency Contact</div><div class="redfolder-sub">Lisa M. · Coordinator</div></div>
+    </div>
+    <div class="vault-note">Tap any tile to open, share, or send to a new doctor's office in one tap. Everyone in the Huddle can view the Red Folder. Even during a crisis when Lisa isn't reachable.</div>
+
+    <div class="slabel">Insurance & benefits</div>
+    <div class="doc-card">
+      <div class="doc-row" onclick="openDoc('medicareCard')">
+        <div class="doc-icon" style="background:var(--slate)">🪪</div>
+        <div class="doc-info"><div class="doc-name">Medicare Part B card</div><div class="doc-meta">Added Mar 2 · PDF</div></div>
+        <div class="doc-badge all">Whole Huddle</div>
+      </div>
+      <div class="doc-row" onclick="openDoc('supplemental')">
+        <div class="doc-icon" style="background:var(--slate-light)">🪪</div>
+        <div class="doc-info"><div class="doc-name">Supplemental plan: Aetna</div><div class="doc-meta">Added Mar 2 · PDF</div></div>
+        <div class="doc-badge all">Whole Huddle</div>
+      </div>
+    </div>
+
+    <div class="slabel">Legal documents</div>
+    <div class="doc-card">
+      <div class="doc-row" onclick="openDoc('dnr')">
+        <div class="doc-icon" style="background:var(--crimson)">📋</div>
+        <div class="doc-info"><div class="doc-name">Advance directive / DNR</div><div class="doc-meta">Added Jan 14 · PDF</div></div>
+        <div class="doc-badge all">Whole Huddle</div>
+      </div>
+      <div class="doc-row" onclick="openDoc('poa')">
+        <div class="doc-icon" style="background:var(--stone);color:var(--charcoal)">⚖️</div>
+        <div class="doc-info"><div class="doc-name">Power of attorney</div><div class="doc-meta">Added Jan 14 · PDF</div></div>
+        <div class="doc-badge limited">Lisa only</div>
+      </div>
+      <div class="doc-row" onclick="openDoc('livingWill')">
+        <div class="doc-icon" style="background:var(--stone);color:var(--charcoal)">📜</div>
+        <div class="doc-info"><div class="doc-name">Living will</div><div class="doc-meta">Added Jan 14 · PDF</div></div>
+        <div class="doc-badge limited">Lisa only</div>
+      </div>
+    </div>
+
+    <div class="slabel">Medical records</div>
+    <div class="doc-card">
+      <div class="doc-row" onclick="openDoc('dischargeSummary')">
+        <div class="doc-icon" style="background:var(--sage)">📄</div>
+        <div class="doc-info"><div class="doc-name">Cardiology discharge summary</div><div class="doc-meta">Added Apr 8 · PDF</div></div>
+        <div class="doc-badge all">Whole Huddle</div>
+      </div>
+      <div class="doc-row" onclick="openDoc('bloodwork')">
+        <div class="doc-icon" style="background:var(--sage)">🧪</div>
+        <div class="doc-info"><div class="doc-name">Bloodwork results: March</div><div class="doc-meta">Added Mar 20 · PDF</div></div>
+        <div class="doc-badge all">Whole Huddle</div>
+      </div>
+      <div class="doc-row" onclick="openDoc('medList')">
+        <div class="doc-icon" style="background:var(--terracotta)">💊</div>
+        <div class="doc-info"><div class="doc-name">Current medication list</div><div class="doc-meta">Updated automatically</div></div>
+        <div class="doc-badge all">Whole Huddle</div>
+      </div>
+    </div>
+
+    <div class="add-btn" style="margin:4px 14px 14px;">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Upload a document
+    </div>
+  </div>
+  <div class="doc-sheet-overlay" id="doc-sheet-overlay" onclick="if(event.target===this)closeDoc()">
+    <div class="doc-sheet">
+      <div class="doc-sheet-handle"></div>
+      <div class="doc-sheet-header">
+        <div class="doc-sheet-icon" id="doc-sheet-icon">📄</div>
+        <div style="flex:1;">
+          <div class="doc-sheet-title" id="doc-sheet-title">Document</div>
+          <div class="doc-sheet-meta" id="doc-sheet-meta">Added · PDF</div>
+        </div>
+        <div class="doc-sheet-close" onclick="closeDoc()">✕</div>
+      </div>
+      <div class="doc-preview-box">
+        <div class="doc-preview-icon" id="doc-sheet-preview-icon">📄</div>
+        <div class="doc-preview-text" id="doc-sheet-preview-text">Preview not available in this demo</div>
+      </div>
+      <div class="doc-sheet-actions">
+        <div class="doc-action-btn primary" onclick="docAction('view')">👁 View full size</div>
+        <div class="doc-action-btn" onclick="docAction('share')">↗ Share with Huddle</div>
+        <div class="doc-action-btn" onclick="docAction('send')">✉ Send to a doctor</div>
+        <div class="doc-action-btn" onclick="docAction('download')">⬇ Download</div>
+      </div>
+      <div class="doc-sheet-status" id="doc-sheet-status"></div>
+      <div class="doc-sheet-perm" id="doc-sheet-perm">Visible to: whole Huddle</div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item active" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 6: WELLNESS JOURNAL
+════════════════════════════ -->
+<div class="screen" id="screen-journal">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="back-chevron" onclick="showScreen('home')">‹</div>
+      <div class="logo-text" style="margin-left:8px;">Wellness <span>Journal</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab active">Mom's Care Circle</div>
+  </div>
+  <div class="app-body" id="journal-feed"></div>
+  <div class="journal-fab" onclick="openCompose('journal')">+</div>
+  <div class="doc-sheet-overlay" id="compose-overlay-journal" onclick="if(event.target===this)closeCompose('journal')">
+    <div class="doc-sheet">
+      <div class="doc-sheet-handle"></div>
+      <div class="doc-sheet-header">
+        <div class="doc-sheet-icon" style="background:var(--slate)">📝</div>
+        <div style="flex:1;">
+          <div class="doc-sheet-title">Add a care note</div>
+          <div class="doc-sheet-meta">Visible to the whole Huddle</div>
+        </div>
+        <div class="doc-sheet-close" onclick="closeCompose('journal')">✕</div>
+      </div>
+      <textarea class="compose-textarea" id="compose-text-journal" placeholder="How's Mom doing today? What should the family know?"></textarea>
+      <div class="compose-submit" onclick="submitNote('journal')">Post to Journal</div>
+      <div class="doc-sheet-status" id="compose-status-journal"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 7: ONBOARDING
+════════════════════════════ -->
+<div class="screen" id="screen-onboarding">
+<div class="phone" style="display:flex;flex-direction:column;">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="ob-dots" id="ob-dots"></div>
+  <div class="ob-body" id="ob-body"></div>
+  <div class="ob-nav" id="ob-nav"></div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 8: COST TRACKER
+════════════════════════════ -->
+<div class="screen" id="screen-costs">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="back-chevron" onclick="showScreen('home')">‹</div>
+      <div class="logo-text" style="margin-left:8px;">Cost <span>Tracker</span></div>
+    </div>
+    <div class="nav-avatar">L</div>
+  </div>
+  <div class="app-body" id="cost-body"></div>
+  <input type="file" accept="image/*" capture="environment" id="cost-photo-input" style="display:none" onchange="handleReceiptPhoto(event)">
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+  </div>
+</div>
+</div>
+
+</div><!-- end screens-wrap -->
+
+<script>
+const VAULT_DOCS={
+  insurance:{icon:'🪪',color:'var(--slate)',title:"Insurance Card: Medicare + Aetna Supplemental",meta:'Added Mar 2 · PDF, 2 pages',preview:'🪪',previewText:'Front & back of both cards',perm:'Visible to: whole Huddle'},
+  dnr:{icon:'📋',color:'var(--crimson)',title:'Advance Directive / DNR',meta:'Added Jan 14 · PDF, 4 pages',preview:'📋',previewText:'Signed & witnessed Jan 2026',perm:'Visible to: whole Huddle'},
+  primaryDoctor:{icon:'👨‍⚕️',color:'var(--slate-light)',title:'Dr. Linda Chen: Primary Care',meta:'Kaiser Permanente · Rancho Bernardo',preview:'👨‍⚕️',previewText:'(858) 555-0142 · Patient portal linked',perm:'Visible to: whole Huddle'},
+  pharmacy:{icon:'💊',color:'var(--terracotta)',title:'CVS Pharmacy: Rancho Bernardo',meta:'Refill line · Delivery available',preview:'💊',previewText:'(858) 555-0198',perm:'Visible to: whole Huddle'},
+  allergies:{icon:'⚠️',color:'var(--crimson)',title:'Allergies & Conditions',meta:'Last updated Apr 8',preview:'⚠️',previewText:'Penicillin (rash) · Atrial fibrillation · Type 2 diabetes',perm:'Visible to: whole Huddle'},
+  emergencyContact:{icon:'📞',color:'var(--slate)',title:'Lisa M., Primary Coordinator',meta:'Chicago, IL · Available 24/7',preview:'📞',previewText:'(312) 555-0117',perm:'Visible to: whole Huddle'},
+  medicareCard:{icon:'🪪',color:'var(--slate)',title:'Medicare Part B Card',meta:'Added Mar 2 · PDF',preview:'🪪',previewText:'Front & back scan',perm:'Visible to: whole Huddle'},
+  supplemental:{icon:'🪪',color:'var(--slate-light)',title:'Supplemental Plan: Aetna',meta:'Added Mar 2 · PDF',preview:'🪪',previewText:'Policy #AE-2291-004',perm:'Visible to: whole Huddle'},
+  poa:{icon:'⚖️',color:'var(--stone)',title:'Power of Attorney',meta:'Added Jan 14 · PDF, 6 pages',preview:'⚖️',previewText:'Notarized · Lisa M. named agent',perm:'Visible to: Lisa only'},
+  livingWill:{icon:'📜',color:'var(--stone)',title:'Living Will',meta:'Added Jan 14 · PDF, 3 pages',preview:'📜',previewText:'Notarized Jan 2026',perm:'Visible to: Lisa only'},
+  dischargeSummary:{icon:'📄',color:'var(--sage)',title:'Cardiology Discharge Summary',meta:'Added Apr 8 · PDF, 2 pages',preview:'📄',previewText:'Dr. Patel · follow-up in 2 weeks',perm:'Visible to: whole Huddle'},
+  bloodwork:{icon:'🧪',color:'var(--sage)',title:'Bloodwork Results: March',meta:'Added Mar 20 · PDF',preview:'🧪',previewText:'A1C, CBC, lipid panel',perm:'Visible to: whole Huddle'},
+  medList:{icon:'💊',color:'var(--terracotta)',title:'Current Medication List',meta:'Updates automatically from Meds',preview:'💊',previewText:'6 active medications',perm:'Visible to: whole Huddle'}
+};
+
+function openDoc(key){
+  const d=VAULT_DOCS[key];
+  if(!d)return;
+  const icon=document.getElementById('doc-sheet-icon');
+  icon.textContent=d.icon;icon.style.background=d.color;
+  document.getElementById('doc-sheet-title').textContent=d.title;
+  document.getElementById('doc-sheet-meta').textContent=d.meta;
+  document.getElementById('doc-sheet-preview-icon').textContent=d.preview;
+  document.getElementById('doc-sheet-preview-text').textContent=d.previewText;
+  document.getElementById('doc-sheet-perm').textContent=d.perm;
+  document.getElementById('doc-sheet-status').textContent='';
+  document.getElementById('doc-sheet-overlay').style.display='flex';
+}
+
+function closeDoc(){
+  document.getElementById('doc-sheet-overlay').style.display='none';
+}
+
+function docAction(action){
+  const messages={
+    view:'Opening full-size document…',
+    share:'Shared with the whole Huddle ✓',
+    send:"Ready to attach to an email or message ✓",
+    download:'Saved to your device ✓'
+  };
+  document.getElementById('doc-sheet-status').textContent=messages[action]||'';
+}
+
+/* ── WELLNESS JOURNAL ── */
+let JOURNAL_ENTRIES=[
+  {id:1,initial:'D',color:'var(--terracotta)',who:'Dave',when:'Last night · 9:42 PM',text:"Mom seemed a little more tired than usual after dinner. Ate well though. Finished most of her plate. Forgot to log the BP med, I'll call her in the morning.",tag:null,photo:false,likes:2,liked:false,comments:1},
+  {id:2,initial:'S',color:'var(--slate)',who:'Sarah',when:'Tuesday · 3:15 PM',text:"Stopped by with groceries. Mom was in good spirits. We sat outside for a bit. She mentioned her knee's been bothering her more on stairs.",tag:null,photo:true,likes:3,liked:false,comments:0},
+  {id:3,initial:'L',color:'var(--sage)',who:'Lisa',when:'Monday · 11:02 AM',text:"Quick update before I fly back. Left detailed notes with Mary on the new dosing schedule. Call me anytime this week if anything's unclear.",tag:null,photo:false,likes:4,liked:true,comments:2}
+];
+let nextJournalId=4;
+
+function journalEntryHTML(e){
+  const tagHtml=e.tag?`<div class="journal-tag">${e.tag}</div>`:'';
+  const photoHtml=e.photo?`<div class="journal-photo">📷</div>`:'';
+  return `<div class="note-card" style="margin:0 14px 8px;">
+    ${tagHtml}
+    <div class="note-header"><div class="note-avatar" style="background:${e.color}">${e.initial}</div><div><div class="note-who">${e.who}</div><div class="note-when">${e.when}</div></div></div>
+    <div class="note-text">${e.text}</div>
+    ${photoHtml}
+    <div class="journal-footer">
+      <div class="journal-action ${e.liked?'liked':''}" onclick="toggleLike(${e.id})">${e.liked?'♥':'♡'} <span>${e.likes}</span></div>
+      <div class="journal-action">💬 <span>${e.comments} comment${e.comments===1?'':'s'}</span></div>
+    </div>
+  </div>`;
+}
+
+function renderJournal(){
+  const feed=document.getElementById('journal-feed');
+  if(feed) feed.innerHTML=JOURNAL_ENTRIES.map(journalEntryHTML).join('');
+}
+
+function renderHomePreview(){
+  const el=document.getElementById('home-journal-preview');
+  if(el && JOURNAL_ENTRIES.length) el.innerHTML=journalEntryHTML(JOURNAL_ENTRIES[0]);
+}
+
+function toggleLike(id){
+  const e=JOURNAL_ENTRIES.find(x=>x.id===id);
+  if(!e)return;
+  e.liked=!e.liked;
+  e.likes+=e.liked?1:-1;
+  renderJournal();renderHomePreview();
+}
+
+function openCompose(ctx){
+  const overlay=document.getElementById('compose-overlay-'+ctx);
+  if(overlay) overlay.style.display='flex';
+}
+function closeCompose(ctx){
+  const overlay=document.getElementById('compose-overlay-'+ctx);
+  if(overlay) overlay.style.display='none';
+}
+function openPostApptCompose(){ openCompose('appt'); }
+
+function toggleChip(el){
+  el.parentElement.querySelectorAll('.compose-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function submitNote(ctx){
+  const textarea=document.getElementById('compose-text-'+ctx);
+  const status=document.getElementById('compose-status-'+ctx);
+  const text=textarea.value.trim();
+  if(!text){ if(status) status.textContent='Add a few words before posting'; return; }
+  let tag=null;
+  if(ctx==='appt'){
+    const chip=document.querySelector('#compose-chips-appt .compose-chip.selected');
+    tag=chip?chip.textContent+' · PT visit':'Post-appointment note';
+  }
+  JOURNAL_ENTRIES.unshift({id:nextJournalId++,initial:'L',color:'var(--slate)',who:'Lisa',when:'Just now',text:text,tag:tag,photo:false,likes:0,liked:false,comments:0});
+  renderJournal();renderHomePreview();
+  textarea.value='';
+  if(status) status.textContent='Posted to the Journal ✓';
+  setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
+}
+
+/* ── CAREGIVER CHECK-IN ── */
+const CHECKIN_MOODS={
+  great:{emoji:'😊',label:'Actually good',color:'var(--sage)'},
+  okay:{emoji:'🙂',label:'Doing okay',color:'var(--slate)'},
+  tired:{emoji:'😮\u200d💨',label:'Running on empty',color:'var(--terracotta)'},
+  overwhelmed:{emoji:'😞',label:'Overwhelmed',color:'var(--crimson)'}
+};
+let CHECKIN_HISTORY=[{week:'3 wks ago',mood:'okay'},{week:'2 wks ago',mood:'tired'},{week:'Last week',mood:'tired'}];
+let checkedInThisWeek=false;
+
+function checkinHistoryHTML(){
+  return `<div class="checkin-history">${CHECKIN_HISTORY.map(h=>`<div class="checkin-dot" style="background:${CHECKIN_MOODS[h.mood].color}" title="${h.week}: ${CHECKIN_MOODS[h.mood].label}"></div>`).join('')}</div>`;
+}
+
+function stressPattern(){
+  const recent=CHECKIN_HISTORY.slice(-2);
+  return recent.length===2 && recent.every(h=>h.mood==='tired'||h.mood==='overwhelmed');
+}
+
+function renderCheckin(){
+  const body=document.getElementById('checkin-body');
+  if(!body)return;
+  if(!checkedInThisWeek){
+    body.innerHTML=`<div class="checkin-options">
+      ${Object.keys(CHECKIN_MOODS).map(k=>`<div class="checkin-opt" onclick="selectMood('${k}')"><div class="checkin-opt-emoji">${CHECKIN_MOODS[k].emoji}</div><div class="checkin-opt-label">${CHECKIN_MOODS[k].label}</div></div>`).join('')}
+    </div>${checkinHistoryHTML()}`;
+    return;
+  }
+  const last=CHECKIN_HISTORY[CHECKIN_HISTORY.length-1];
+  const m=CHECKIN_MOODS[last.mood];
+  let followup='';
+  if(stressPattern()){
+    followup=`<div class="checkin-followup">
+      <div class="checkin-followup-text">Two rough weeks in a row is worth noticing. You're carrying a lot right now. Want to loop someone else in?</div>
+      <div class="checkin-followup-actions">
+        <div class="checkin-followup-btn" onclick="checkinFollowup('Dave')">Ask Dave to step in</div>
+        <div class="checkin-followup-btn" onclick="checkinFollowup('Sarah')">Ask Sarah to step in</div>
+      </div>
+      <div class="checkin-followup-status" id="checkin-followup-status"></div>
+    </div>`;
+  }
+  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${followup}`;
+}
+
+function selectMood(key){
+  CHECKIN_HISTORY.push({week:'This week',mood:key});
+  checkedInThisWeek=true;
+  renderCheckin();
+}
+
+function checkinFollowup(name){
+  const status=document.getElementById('checkin-followup-status');
+  if(status) status.textContent=`Sent. ${name} will see a note asking them to check in more this week ✓`;
+}
+
+/* ── ONBOARDING ── */
+let OB_STEP=0;
+const OB_TOTAL=5;
+let OB_STATE={
+  recipientName:'',
+  relationship:'',
+  members:[{id:1,name:'Dave',role:'Contributor'},{id:2,name:'Sarah',role:'Contributor'}],
+  addingMember:false,
+  newMemberRole:'Contributor',
+  checklist:{meds:false,appt:false,doc:false}
+};
+
+function obDotsHTML(){
+  let d='';
+  for(let i=0;i<OB_TOTAL;i++) d+=`<div class="ob-dot ${i===OB_STEP?'active':''}"></div>`;
+  return d;
+}
+
+function obStepContent(){
+  if(OB_STEP===0){
+    return `<div class="ob-icon-big">💙</div>
+      <div class="ob-headline">Welcome to <em style="font-style:italic;color:var(--terracotta);">Handled</em> with Care</div>
+      <div class="ob-sub">One place for your whole family to help care for someone you love. No more scattered texts, sticky notes, or wondering who did what.</div>`;
+  }
+  if(OB_STEP===1){
+    return `<div class="ob-label">Who are you caring for?</div>
+      <input class="ob-input" id="ob-recipient-name" placeholder="e.g. Mom, Dad, Aunt Carol" value="${OB_STATE.recipientName}">
+      <div class="ob-label">Your relationship</div>
+      <div class="ob-chip-row" id="ob-relationship-chips">
+        ${['Daughter','Son','Spouse','Other'].map(r=>`<div class="ob-chip ${OB_STATE.relationship===r?'selected':''}" onclick="obSelectRelationship('${r}')">${r}</div>`).join('')}
+      </div>`;
+  }
+  if(OB_STEP===2){
+    const memberRows=OB_STATE.members.map(m=>`<div class="ob-member-row"><div class="ob-member-avatar">${m.name.charAt(0)}</div><div class="ob-member-info"><div class="ob-member-name">${m.name}</div><div class="ob-member-role">${m.role}</div></div></div>`).join('');
+    const addForm=OB_STATE.addingMember?`<div class="ob-add-member-form">
+        <input class="ob-input" id="ob-new-member-name" placeholder="Name">
+        <div class="ob-chip-row">
+          ${['Coordinator','Contributor','Viewer'].map(r=>`<div class="ob-chip ${OB_STATE.newMemberRole===r?'selected':''}" onclick="obSelectRole('${r}')">${r}</div>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <div class="ob-btn primary" style="padding:9px;font-size:12px;" onclick="obConfirmAddMember()">Add to Huddle</div>
+          <div class="ob-btn ghost" style="padding:9px;font-size:12px;" onclick="obCancelAddMember()">Cancel</div>
+        </div>
+      </div>`:`<div class="ob-inline-add" onclick="obShowAddMember()"><span style="font-size:16px;">+</span> Invite someone to the Huddle</div>`;
+    return `<div class="ob-label">Build your Huddle</div>
+      <div class="ob-sub" style="margin-top:0;">You're the Coordinator by default. Everyone else can be a Contributor (can log and update) or a Viewer (can see everything, can't edit).</div>
+      ${memberRows}
+      ${addForm}`;
+  }
+  if(OB_STEP===3){
+    const items=[
+      {key:'meds',label:'Add ' + (OB_STATE.recipientName||'their') + "'s first medication"},
+      {key:'appt',label:'Add an upcoming appointment'},
+      {key:'doc',label:'Upload one document to the Red Folder'}
+    ];
+    return `<div class="ob-label">Quick setup</div>
+      <div class="ob-sub" style="margin-top:0;">Optional, but these three take under two minutes and make the first week much smoother.</div>
+      ${items.map(it=>`<div class="ob-checklist-row" onclick="obToggleChecklist('${it.key}')"><div class="ob-checklist-circle ${OB_STATE.checklist[it.key]?'done':''}">${OB_STATE.checklist[it.key]?'✓':''}</div><div class="ob-checklist-text">${it.label}</div></div>`).join('')}
+      <div class="ob-skip" onclick="obNext()">Skip for now</div>`;
+  }
+  return `<div class="ob-icon-big">🎉</div>
+    <div class="ob-headline">You're all set</div>
+    <div class="ob-sub">${OB_STATE.recipientName?("Your Huddle for "+OB_STATE.recipientName+" is ready."):"Your Huddle is ready."} ${OB_STATE.members.length} member${OB_STATE.members.length===1?'':'s'} invited. You can add more anytime from Care Team.</div>`;
+}
+
+function obNavHTML(){
+  if(OB_STEP===0) return `<div class="ob-btn primary" onclick="obNext()">Get started</div>`;
+  if(OB_STEP===OB_TOTAL-1) return `<div class="ob-btn primary" onclick="obFinish()">Go to Today</div>`;
+  return `<div class="ob-btn ghost" onclick="obBack()">Back</div><div class="ob-btn primary" onclick="obNext()">Continue</div>`;
+}
+
+function renderOnboarding(){
+  document.getElementById('ob-dots').innerHTML=obDotsHTML();
+  document.getElementById('ob-body').innerHTML=obStepContent();
+  document.getElementById('ob-nav').innerHTML=obNavHTML();
+}
+
+function obSelectRelationship(r){ OB_STATE.relationship=r; renderOnboarding(); }
+function obShowAddMember(){ OB_STATE.addingMember=true; renderOnboarding(); }
+function obCancelAddMember(){ OB_STATE.addingMember=false; renderOnboarding(); }
+function obSelectRole(r){ OB_STATE.newMemberRole=r; renderOnboarding(); }
+function obConfirmAddMember(){
+  const nameInput=document.getElementById('ob-new-member-name');
+  const name=nameInput?nameInput.value.trim():'';
+  if(!name) return;
+  OB_STATE.members.push({id:Date.now(),name:name,role:OB_STATE.newMemberRole});
+  OB_STATE.addingMember=false;
+  OB_STATE.newMemberRole='Contributor';
+  renderOnboarding();
+}
+function obToggleChecklist(key){ OB_STATE.checklist[key]=!OB_STATE.checklist[key]; renderOnboarding(); }
+
+function obNext(){
+  if(OB_STEP===1){
+    const nameInput=document.getElementById('ob-recipient-name');
+    if(nameInput) OB_STATE.recipientName=nameInput.value.trim();
+  }
+  if(OB_STEP<OB_TOTAL-1) OB_STEP++;
+  renderOnboarding();
+}
+function obBack(){
+  if(OB_STEP>0) OB_STEP--;
+  renderOnboarding();
+}
+function obFinish(){
+  showScreen('home');
+}
+
+/* ── COST TRACKER ── */
+const COST_CATEGORIES={
+  'Medical':{icon:'🏥',color:'var(--crimson)'},
+  'Pharmacy':{icon:'💊',color:'var(--terracotta)'},
+  'Home Modifications':{icon:'🔨',color:'var(--slate)'},
+  'Supplies':{icon:'📦',color:'var(--sage)'},
+  'Travel/Mileage':{icon:'🚗',color:'var(--stone)'},
+  'Other':{icon:'📎',color:'var(--graphite)'}
+};
+const COST_PEOPLE=['Lisa','Dave','Sarah'];
+const TODAY_REF=new Date('2026-07-20');
+
+let COST_ENTRIES=[
+  {id:1,merchant:'CVS Pharmacy',date:'2026-07-08',amount:42.50,category:'Pharmacy',paidBy:'Lisa'},
+  {id:2,merchant:'Home Depot, grab bars',date:'2026-07-02',amount:186.30,category:'Home Modifications',paidBy:'Dave'},
+  {id:3,merchant:'Sharp Rehab copay',date:'2026-06-28',amount:35.00,category:'Medical',paidBy:'Lisa'},
+  {id:4,merchant:'Mileage: PT visits (3 trips)',date:'2026-06-28',amount:12.60,category:'Travel/Mileage',paidBy:'Sarah'}
+];
+let nextCostId=5;
+let costReviewData=null;
+
+function costMonthTotal(){
+  return COST_ENTRIES.filter(e=>{
+    const d=new Date(e.date);
+    return d.getFullYear()===TODAY_REF.getFullYear() && d.getMonth()===TODAY_REF.getMonth();
+  }).reduce((s,e)=>s+e.amount,0);
+}
+function costYTDTotal(){
+  return COST_ENTRIES.filter(e=>new Date(e.date).getFullYear()===TODAY_REF.getFullYear()).reduce((s,e)=>s+e.amount,0);
+}
+function costPersonTotal(name){
+  return COST_ENTRIES.filter(e=>e.paidBy===name).reduce((s,e)=>s+e.amount,0);
+}
+
+function renderCostBody(){
+  const body=document.getElementById('cost-body');
+  if(!body)return;
+  const monthTotal=costMonthTotal().toFixed(2);
+  const ytdTotal=costYTDTotal().toFixed(2);
+  const maxPerson=Math.max(1,...COST_PEOPLE.map(costPersonTotal));
+
+  let html=`<div class="cost-summary-card">
+    <div class="cost-summary-row">
+      <div><div class="cost-summary-label">This month</div><div class="cost-summary-figure">$${monthTotal}</div></div>
+      <div><div class="cost-summary-label">Year to date</div><div class="cost-summary-figure">$${ytdTotal}</div></div>
+    </div>
+    <div class="cost-person-breakdown">
+      ${COST_PEOPLE.map(p=>{
+        const amt=costPersonTotal(p);
+        const pct=Math.round((amt/maxPerson)*100);
+        return `<div class="cost-person-row"><div class="cost-person-name">${p}</div><div class="cost-person-track"><div class="cost-person-fill" style="width:${pct}%"></div></div><div class="cost-person-amt">$${amt.toFixed(2)}</div></div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="scan-btn" onclick="triggerReceiptPhoto()">📷 Scan a receipt</div>
+  <div class="manual-link" onclick="openCostReview(null)">or enter an expense manually</div>`;
+
+  if(costReviewData) html+=costReviewCardHTML();
+
+  html+=`<div class="slabel">Recent expenses</div>
+  <div class="doc-card">
+    ${COST_ENTRIES.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(costEntryRowHTML).join('')}
+  </div>
+  <div class="cost-disclaimer">These totals are for your own records. Talk to a tax preparer about what may be deductible for your family's situation.</div>`;
+
+  body.innerHTML=html;
+}
+
+function costEntryRowHTML(e){
+  const cat=COST_CATEGORIES[e.category]||COST_CATEGORIES['Other'];
+  return `<div class="cost-entry-row">
+    <div class="cost-entry-icon" style="background:${cat.color}">${cat.icon}</div>
+    <div class="cost-entry-info"><div class="cost-entry-name">${e.merchant}</div><div class="cost-entry-meta">${e.date} · ${e.category} · Paid by ${e.paidBy}</div></div>
+    <div class="cost-entry-amt">$${e.amount.toFixed(2)}</div>
+  </div>`;
+}
+
+function triggerReceiptPhoto(){
+  document.getElementById('cost-photo-input').click();
+}
+
+function handleReceiptPhoto(evt){
+  const file=evt.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const dataUrl=e.target.result;
+    const base64=dataUrl.split(',')[1];
+    showCostLoading(dataUrl);
+    let result;
+    let isDemo=false;
+    try{
+      const res=await fetch('/.netlify/functions/parse-receipt',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageBase64:base64,mediaType:file.type||'image/jpeg'})
+      });
+      if(!res.ok) throw new Error('backend not available');
+      result=await res.json();
+    }catch(err){
+      isDemo=true;
+      result=demoReceiptResult();
+      await new Promise(r=>setTimeout(r,900));
+    }
+    openCostReview(result,isDemo);
+  };
+  reader.readAsDataURL(file);
+  evt.target.value='';
+}
+
+function demoReceiptResult(){
+  const samples=[
+    {merchant:'Rite Aid Pharmacy',date:'2026-07-19',total:28.14,category:'Pharmacy',confidence:'demo'},
+    {merchant:'Lowe\'s, bathroom safety rail',date:'2026-07-15',total:64.99,category:'Home Modifications',confidence:'demo'},
+    {merchant:'Kaiser copay',date:'2026-07-11',total:40.00,category:'Medical',confidence:'demo'}
+  ];
+  return samples[Math.floor(Math.random()*samples.length)];
+}
+
+function showCostLoading(dataUrl){
+  const body=document.getElementById('cost-body');
+  const existing=document.getElementById('cost-loading-slot');
+  const html=`<div class="cost-loading" id="cost-loading-slot"><img src="${dataUrl}" class="cost-preview-thumb">Reading your receipt…</div>`;
+  if(existing) existing.outerHTML=html;
+  else body.insertAdjacentHTML('afterbegin',html);
+}
+
+function costReviewCardHTML(){
+  const d=costReviewData;
+  const catChips=Object.keys(COST_CATEGORIES).map(c=>`<div class="cost-chip ${d.category===c?'selected':''}" onclick="costSetCategory('${c}')">${c}</div>`).join('');
+  const personChips=COST_PEOPLE.map(p=>`<div class="cost-chip ${d.paidBy===p?'selected':''}" onclick="costSetPaidBy('${p}')">${p}</div>`).join('');
+  const mileageFields=d.category==='Travel/Mileage'?`<div class="cost-field-label">Miles &amp; rate (optional, auto-fills amount)</div>
+    <div class="cost-mileage-row">
+      <input class="cost-input" type="number" placeholder="Miles" id="cost-miles" value="${d.miles||''}" oninput="costRecalcMileage()">
+      <input class="cost-input" type="number" step="0.01" placeholder="Rate/mile" id="cost-rate" value="${d.rate||0.21}" oninput="costRecalcMileage()">
+    </div>
+    <div style="font-size:9.5px;color:var(--graphite);margin-top:3px;">Estimated rate, confirm the current mileage rate with a tax preparer.</div>`:'';
+  return `<div class="cost-review-card">
+    <div class="cost-review-title">Review expense</div>
+    ${d.isDemo?'<div class="cost-demo-flag">⚠ Demo result, backend function not connected yet</div>':''}
+    <div class="cost-field-label">Merchant / provider</div>
+    <input class="cost-input" id="cost-merchant" value="${d.merchant||''}" placeholder="Where was this?">
+    <div class="cost-field-label">Date</div>
+    <input class="cost-input" type="date" id="cost-date" value="${d.date||''}">
+    <div class="cost-field-label">Amount</div>
+    <input class="cost-input" type="number" step="0.01" id="cost-amount" value="${d.amount||''}">
+    <div class="cost-field-label">Category</div>
+    <div class="cost-chip-row">${catChips}</div>
+    ${mileageFields}
+    <div class="cost-field-label">Paid by</div>
+    <div class="cost-chip-row">${personChips}</div>
+    <div class="cost-save-btn" onclick="saveCostEntry()">Save expense</div>
+    <div class="cost-cancel-link" onclick="cancelCostReview()">Cancel</div>
+  </div>`;
+}
+
+function openCostReview(parsed,isDemo){
+  costReviewData={
+    merchant:parsed?parsed.merchant:'',
+    date:(parsed&&parsed.date)?parsed.date:'',
+    amount:parsed?parsed.total:'',
+    category:(parsed&&COST_CATEGORIES[parsed.category])?parsed.category:'Other',
+    paidBy:'Lisa',
+    isDemo:!!isDemo
+  };
+  renderCostBody();
+}
+function costSetCategory(c){ costReviewData.category=c; renderCostBody(); }
+function costSetPaidBy(p){ costReviewData.paidBy=p; renderCostBody(); }
+function costRecalcMileage(){
+  const miles=parseFloat(document.getElementById('cost-miles').value)||0;
+  const rate=parseFloat(document.getElementById('cost-rate').value)||0;
+  costReviewData.miles=miles;costReviewData.rate=rate;
+  const amtField=document.getElementById('cost-amount');
+  if(amtField) amtField.value=(miles*rate).toFixed(2);
+}
+function cancelCostReview(){ costReviewData=null; renderCostBody(); }
+
+function saveCostEntry(){
+  const merchant=document.getElementById('cost-merchant').value.trim();
+  const date=document.getElementById('cost-date').value;
+  const amount=parseFloat(document.getElementById('cost-amount').value);
+  if(!merchant||!date||!amount){
+    alert('Please fill in merchant, date, and amount.');
+    return;
+  }
+  COST_ENTRIES.push({id:nextCostId++,merchant:merchant,date:date,amount:amount,category:costReviewData.category,paidBy:costReviewData.paidBy});
+  costReviewData=null;
+  renderCostBody();
+}
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  const map={home:0,meds:1,appts:2,roster:3,vault:3,onboarding:4,costs:5};
+  const btn=document.querySelectorAll('.snav-btn')[map[name]];
+  if(btn) btn.classList.add('active');
+}
+
+function toggleHomeTask(row){
+  const check=row.querySelector('.task-check');
+  const isDone=row.classList.contains('done');
+  if(isDone){row.classList.remove('done');check.className='task-check open';check.textContent='';}
+  else{row.classList.add('done');check.className='task-check done';check.textContent='✓';}
+  updateHomeProgress();
+}
+
+function updateHomeProgress(){
+  const tasks=document.querySelectorAll('#screen-home .task-row');
+  const done=document.querySelectorAll('#screen-home .task-row.done');
+  const pct=Math.round((done.length/tasks.length)*100);
+  document.getElementById('home-pbar').style.width=pct+'%';
+  document.getElementById('home-pct').textContent=pct+'%';
+  document.getElementById('home-progress-label').textContent="Today's Huddle · "+done.length+" of "+tasks.length+" handled";
+}
+
+function cycleHomeMed(row,state){
+  const check=row.querySelector('.med-check');
+  const logged=row.querySelector('.med-logged');
+  if(check.classList.contains('done')){
+    check.className='med-check pending';check.textContent='';
+    if(logged){logged.className='med-logged';logged.textContent='Tap to confirm';}
+  } else {
+    check.className='med-check done';check.textContent='✓';
+    if(logged){logged.className='med-logged ok';logged.textContent='You · just now';}
+  }
+}
+
+function toggleMedDetail(id){
+  const el=document.getElementById(id);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function markMedTaken(id,btn){
+  const panel=document.getElementById(id);
+  const card=panel.closest('.full-med-card');
+  const stripe=card.querySelector('.med-stripe');
+  const check=card.querySelector('.med-check');
+  const confirmed=card.querySelector('.full-med-confirmed');
+  if(stripe){stripe.className='med-stripe done';}
+  if(check){check.className='med-check done';check.textContent='✓';}
+  if(confirmed){confirmed.className='full-med-confirmed done';confirmed.textContent='You · just now';}
+  if(panel) panel.style.display='none';
+}
+
+function switchApptView(v){
+  const cal=document.getElementById('cal-panel');
+  const list=document.getElementById('appt-list');
+  const label=document.getElementById('appt-list-label');
+  const lb=document.getElementById('list-btn');
+  const cb=document.getElementById('cal-btn');
+  if(v==='cal'){
+    cal.style.display='block';lb.classList.remove('active');cb.classList.add('active');
+    list.style.display='none';label.style.display='none';
+    buildCal();
+  } else {
+    cal.style.display='none';lb.classList.add('active');cb.classList.remove('active');
+    list.style.display='';label.style.display='';
+  }
+}
+
+function buildCal(){
+  const grid=document.getElementById('cal-grid');
+  if(grid.children.length>0)return;
+  const apptDays=[15,17,19,24];
+  const today=11;const firstDay=2;const daysInMonth=30;
+  for(let i=0;i<firstDay;i++){
+    const c=document.createElement('div');
+    c.style.cssText='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    grid.appendChild(c);
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const c=document.createElement('div');
+    c.style.cssText='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;position:relative;';
+    let numStyle='font-size:11px;color:var(--charcoal);';
+    let bg='';
+    if(d===today){bg='background:var(--slate);border-radius:50%;';numStyle='font-size:11px;color:white;font-weight:600;';}
+    else if(apptDays.includes(d)){numStyle='font-size:11px;color:var(--slate);font-weight:600;';}
+    c.style.cssText+=bg;
+    c.innerHTML='<span style="'+numStyle+'">'+d+'</span>'+(apptDays.includes(d)&&d!==today?'<span style="width:4px;height:4px;border-radius:50%;background:var(--terracotta);position:absolute;bottom:2px;"></span>':'');
+    grid.appendChild(c);
+  }
+}
+
+setTimeout(()=>{document.getElementById('home-pbar').style.width='60%';},400);
+renderJournal();
+renderHomePreview();
+renderCheckin();
+renderOnboarding();
+renderCostBody();
+</script>
+</body>
+</html>
