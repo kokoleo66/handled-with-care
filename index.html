@@ -166,6 +166,25 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .checkin-followup-btn{font-size:11px;font-weight:600;padding:7px 12px;border-radius:20px;border:1.5px solid var(--slate);color:var(--slate);cursor:pointer;background:var(--white);}
 .checkin-followup-btn:hover{background:var(--sage-light);}
 .checkin-followup-status{font-size:11px;color:var(--sage);font-weight:600;margin-top:8px;}
+.relief-prompt{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
+.relief-prompt-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
+.relief-options{display:flex;flex-direction:column;gap:7px;}
+.relief-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--sage);background:var(--sage-light);cursor:pointer;}
+.relief-btn:hover{background:#cbe8cb;}
+.relief-btn-icon{font-size:16px;flex-shrink:0;}
+.relief-btn-text{font-size:12px;font-weight:600;color:#245A2A;}
+.relief-overlay{display:none;position:absolute;inset:0;background:rgba(33,33,33,0.55);z-index:70;align-items:center;justify-content:center;}
+.relief-card{background:var(--white);border-radius:var(--radius-lg);padding:26px 22px;width:82%;text-align:center;}
+.relief-title{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:6px;}
+.relief-circle{width:110px;height:110px;border-radius:50%;background:var(--sage-light);border:2px solid var(--sage);margin:16px auto;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#245A2A;transition:transform 3s ease-in-out;}
+.relief-circle.in{transform:scale(1.25);}
+.relief-circle.out{transform:scale(0.85);}
+.relief-progress{font-size:11px;color:var(--graphite);margin-top:2px;}
+.relief-timer-num{font-family:'Lora',serif;font-size:38px;font-weight:700;color:var(--slate-dark);margin:14px 0 4px;}
+.relief-instructions{font-size:12.5px;color:var(--charcoal);line-height:1.6;margin:6px 0 16px;}
+.relief-done-btn{background:var(--slate);color:white;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;}
+.relief-done-btn:hover{background:var(--slate-dark);}
+.relief-skip-link{font-size:11px;color:var(--graphite);text-decoration:underline;cursor:pointer;margin-top:10px;}
 
 /* ── ONBOARDING ── */
 .ob-dots{display:flex;gap:6px;justify-content:center;padding:14px 0 4px;}
@@ -520,6 +539,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div id="home-journal-preview"></div>
     <div class="journal-link" onclick="showScreen('journal')">See full journal →</div>
     <div class="note-add" onclick="showScreen('journal');setTimeout(()=>openCompose('journal'),50);"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--graphite)">+</div><div class="note-add-text">Add a care note…</div></div>
+  </div>
+  <div class="relief-overlay" id="relief-overlay" onclick="if(event.target===this)closeRelief()">
+    <div class="relief-card" id="relief-card"></div>
   </div>
   <div class="bottom-nav">
     <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label" style="color:var(--slate)">Today</div></div>
@@ -1248,6 +1270,17 @@ function renderCheckin(){
   }
   const last=CHECKIN_HISTORY[CHECKIN_HISTORY.length-1];
   const m=CHECKIN_MOODS[last.mood];
+  const isStressed=(last.mood==='tired'||last.mood==='overwhelmed');
+  let relief='';
+  if(isStressed){
+    const trio=pickReliefTrio();
+    relief=`<div class="relief-prompt">
+      <div class="relief-prompt-text">That's a lot to be carrying right now. Got 30 seconds for one small thing, just for you?</div>
+      <div class="relief-options">
+        ${trio.map(ex=>`<div class="relief-btn" onclick="openReliefById('${ex.id}')"><div class="relief-btn-icon">${ex.icon}</div><div class="relief-btn-text">${ex.title}</div></div>`).join('')}
+      </div>
+    </div>`;
+  }
   let followup='';
   if(stressPattern()){
     followup=`<div class="checkin-followup">
@@ -1259,13 +1292,135 @@ function renderCheckin(){
       <div class="checkin-followup-status" id="checkin-followup-status"></div>
     </div>`;
   }
-  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${followup}`;
+  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${relief}${followup}`;
 }
 
 function selectMood(key){
   CHECKIN_HISTORY.push({week:'This week',mood:key});
   checkedInThisWeek=true;
   renderCheckin();
+}
+
+/* ── RELIEF NUDGE EXERCISES ── */
+let reliefInterval=null;
+
+const RELIEF_EXERCISES=[
+  {id:'box-breathing',icon:'🫁',title:'Box Breathing',mode:'breathing',cycles:3,phases:[{label:'Breathe in',seconds:4,action:'grow'},{label:'Hold',seconds:4,action:'hold'},{label:'Breathe out',seconds:4,action:'shrink'},{label:'Hold',seconds:4,action:'hold'}]},
+  {id:'physio-sigh',icon:'🫁',title:'The Physiological Sigh',mode:'breathing',cycles:3,phases:[{label:'Breathe in',seconds:2,action:'grow'},{label:'One more sip of air',seconds:1,action:'grow'},{label:'Long, slow exhale',seconds:6,action:'shrink'}]},
+  {id:'soft-belly',icon:'🫁',title:'Soft Belly Breathing',mode:'breathing',cycles:5,phases:[{label:'Belly in',seconds:4,action:'grow'},{label:'Belly out',seconds:4,action:'shrink'}]},
+  {id:'478-breathing',icon:'🫁',title:'4-7-8 Breathing',mode:'breathing',cycles:3,phases:[{label:'Breathe in',seconds:4,action:'grow'},{label:'Hold',seconds:7,action:'hold'},{label:'Breathe out',seconds:8,action:'shrink'}]},
+  {id:'coherent-breathing',icon:'🫁',title:'Coherent Breathing',mode:'breathing',cycles:6,phases:[{label:'Breathe in',seconds:5,action:'grow'},{label:'Breathe out',seconds:5,action:'shrink'}]},
+  {id:'ratio-breathing',icon:'🫁',title:'The 1:2 Ratio',mode:'breathing',cycles:5,phases:[{label:'Breathe in',seconds:3,action:'grow'},{label:'Breathe out',seconds:6,action:'shrink'}]},
+  {id:'grounding-54321',icon:'🌿',title:'5-4-3-2-1 Grounding',mode:'timer',durationSeconds:60,instructions:'Name 5 things you can see. 4 things you can feel. 3 things you can hear. 2 things you can smell. 1 thing you can taste.'},
+  {id:'tactile-reset',icon:'✋',title:'Tactile Texture Reset',mode:'timer',durationSeconds:30,instructions:'Find three different textures near you, something rough, something smooth, something soft. Just notice how each one feels.'},
+  {id:'facial-massage',icon:'🌿',title:'Facial Massage',mode:'timer',durationSeconds:45,instructions:'Using your fingertips, gently massage your temples, your jaw, and the spot between your eyebrows in small circles.'},
+  {id:'pressure-point',icon:'✋',title:'Pressure Point Hold',mode:'timer',durationSeconds:30,instructions:'Press firmly on the space between your thumb and index finger. Hold on each hand.'},
+  {id:'earlobe-massage',icon:'🌿',title:'Vagus Nerve Massage',mode:'timer',durationSeconds:30,instructions:'Gently massage your earlobes while you take slow, deep breaths.'},
+  {id:'bilateral-tapping',icon:'✋',title:'Bilateral Tapping',mode:'timer',durationSeconds:30,instructions:'Cross your arms over your chest. Gently tap your left shoulder, then your right, back and forth.'},
+  {id:'desk-stretch',icon:'🧘',title:'Desk Stretch',mode:'static',instructions:'Stand up. Reach your arms overhead, then roll your shoulders back, slowly, ten times.',doneLabel:'Done stretching'},
+  {id:'forward-fold',icon:'🧘',title:'Forward Fold',mode:'timer',durationSeconds:30,instructions:'Stand up, bend forward, and let your arms and head hang heavy. Just breathe.'},
+  {id:'isometric-squeeze',icon:'🧘',title:'The Isometric Squeeze',mode:'static',instructions:'Squeeze your whole body, fists, legs, shoulders, everything, as tight as you can for 5 seconds. Then let it all go.',doneLabel:'Done'},
+  {id:'shake-it-out',icon:'🧘',title:'Shake It Out',mode:'timer',durationSeconds:30,instructions:'Stand up and shake out your hands, arms, and legs, like you\'re shaking off water.'},
+  {id:'mindful-walk',icon:'🧘',title:'Mindful Walk',mode:'static',instructions:'Take a short walk, even just down the hall. Notice your feet hitting the floor with each step.',doneLabel:'Back and done'},
+  {id:'progressive-muscle',icon:'🧘',title:'Progressive Muscle Relaxation',mode:'timer',durationSeconds:60,instructions:'Starting at your toes and working up, tense each muscle group for 5 seconds, then completely let it go.'},
+  {id:'brain-dump',icon:'💭',title:'The Brain Dump',mode:'scratch',instructions:'Write down whatever\'s spinning in your head, tasks, worries, whatever. Nobody sees this but you, it clears when you close it.'},
+  {id:'gratitude-3',icon:'💭',title:'3 Things of Gratitude',mode:'static',instructions:'Name three specific things you\'re grateful for right now, big or small.',doneLabel:'Done'},
+  {id:'affect-labeling',icon:'💭',title:'Affect Labeling',mode:'static',instructions:'Name exactly what you\'re feeling, and rate how strong it is, 1 to 10. Just naming it helps.',doneLabel:'Done'},
+  {id:'one-visible-win',icon:'💭',title:'One Visible Win',mode:'static',instructions:'Do one small, visible thing, make the bed, wipe the counter, clear one email. Just one.',doneLabel:'Done'},
+  {id:'perspective-shift',icon:'💭',title:'Perspective Shift',mode:'static',instructions:'Ask yourself: will this matter in an hour? A week? A year?',doneLabel:'Done'},
+  {id:'category-countdown',icon:'💭',title:'Category Countdown',mode:'timer',durationSeconds:60,instructions:'Pick a topic, dog breeds, cities, colors, and silently name one for each letter of the alphabet, as far as you get.'},
+  {id:'inner-monologue',icon:'💭',title:'Inner Monologue Interrupt',mode:'static',instructions:'Say your anxious thought out loud in a silly voice, a chipmunk, a robot, whatever. It breaks the thought\'s grip.',doneLabel:'Done'}
+];
+
+let RELIEF_LAST_SHOWN=[];
+
+function pickReliefTrio(){
+  let pool=RELIEF_EXERCISES.filter(e=>!RELIEF_LAST_SHOWN.includes(e.id));
+  if(pool.length<3) pool=RELIEF_EXERCISES.slice();
+  const shuffled=pool.slice().sort(()=>Math.random()-0.5);
+  const picked=shuffled.slice(0,3);
+  RELIEF_LAST_SHOWN=picked.map(e=>e.id);
+  return picked;
+}
+
+function closeRelief(){
+  if(reliefInterval){ clearInterval(reliefInterval); clearTimeout(reliefInterval); reliefInterval=null; }
+  document.getElementById('relief-overlay').style.display='none';
+}
+
+function openReliefById(id){
+  if(reliefInterval){ clearInterval(reliefInterval); clearTimeout(reliefInterval); reliefInterval=null; }
+  const ex=RELIEF_EXERCISES.find(e=>e.id===id);
+  if(!ex)return;
+  document.getElementById('relief-overlay').style.display='flex';
+  if(ex.mode==='breathing') runBreathingExercise(ex);
+  else if(ex.mode==='timer') runTimerExercise(ex);
+  else if(ex.mode==='scratch') runScratchExercise(ex);
+  else runStaticExercise(ex);
+}
+
+function runBreathingExercise(ex){
+  const card=document.getElementById('relief-card');
+  let cycleNum=1;
+  let phaseIdx=0;
+  function showPhase(){
+    if(cycleNum>ex.cycles){
+      card.innerHTML=`<div class="relief-title">Nicely done</div>
+        <div class="relief-instructions">However you're feeling right now is okay. You took a moment for yourself, and that matters.</div>
+        <div class="relief-done-btn" onclick="closeRelief()">Close</div>`;
+      return;
+    }
+    const phase=ex.phases[phaseIdx];
+    const circleClass=phase.action==='grow'?'in':phase.action==='shrink'?'out':'';
+    card.innerHTML=`<div class="relief-title">${ex.title}</div>
+      <div class="relief-circle ${circleClass}" style="transition-duration:${phase.seconds}s;">${phase.label}</div>
+      <div class="relief-progress">Round ${cycleNum} of ${ex.cycles}</div>
+      <div class="relief-skip-link" onclick="closeRelief()">I'm okay, close this</div>`;
+    reliefInterval=setTimeout(()=>{
+      phaseIdx++;
+      if(phaseIdx>=ex.phases.length){ phaseIdx=0; cycleNum++; }
+      showPhase();
+    },phase.seconds*1000);
+  }
+  showPhase();
+}
+
+function runTimerExercise(ex){
+  let secondsLeft=ex.durationSeconds;
+  const card=document.getElementById('relief-card');
+  function render(){
+    card.innerHTML=`<div class="relief-title">${ex.title}</div>
+      <div class="relief-timer-num">${secondsLeft}</div>
+      <div class="relief-instructions">${ex.instructions}</div>
+      <div class="relief-skip-link" onclick="closeRelief()">I'm okay, close this</div>`;
+  }
+  render();
+  reliefInterval=setInterval(()=>{
+    secondsLeft--;
+    if(secondsLeft<=0){
+      clearInterval(reliefInterval);reliefInterval=null;
+      card.innerHTML=`<div class="relief-title">Nicely done</div>
+        <div class="relief-instructions">That's it, a small moment, but it counts. Come back to this anytime you need it.</div>
+        <div class="relief-done-btn" onclick="closeRelief()">Close</div>`;
+      return;
+    }
+    render();
+  },1000);
+}
+
+function runStaticExercise(ex){
+  const card=document.getElementById('relief-card');
+  card.innerHTML=`<div class="relief-title">${ex.title}</div>
+    <div class="relief-instructions">${ex.instructions}</div>
+    <div class="relief-done-btn" onclick="closeRelief()">${ex.doneLabel||'Done'}</div>`;
+}
+
+function runScratchExercise(ex){
+  const card=document.getElementById('relief-card');
+  card.innerHTML=`<div class="relief-title">${ex.title}</div>
+    <div class="relief-instructions">${ex.instructions}</div>
+    <textarea class="compose-textarea" id="relief-scratch-text" style="min-height:100px;" placeholder="Type here, it clears when you're done..."></textarea>
+    <div class="relief-done-btn" onclick="closeRelief()">Done, clear it</div>`;
 }
 
 function checkinFollowup(name){
