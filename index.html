@@ -215,6 +215,14 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .scan-btn:hover{background:#c93c1c;}
 .manual-link{text-align:center;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;margin:9px 0 4px;text-decoration:underline;}
 .cost-loading{margin:10px 14px 0;background:var(--stone-light);border-radius:var(--radius);padding:16px;text-align:center;font-size:12px;color:var(--graphite);}
+/* ── VOICE NOTE ── */
+.voice-row{display:flex;gap:8px;margin:2px 0 10px;}
+.voice-btn{flex:1;background:var(--stone-light);color:var(--slate);border-radius:var(--radius);padding:12px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+.voice-btn:hover{background:var(--stone);}
+.voice-btn.recording{background:var(--crimson);color:white;animation:voicePulse 1.4s ease-in-out infinite;}
+@keyframes voicePulse{0%,100%{opacity:1;}50%{opacity:.72;}}
+.voice-status{text-align:center;font-size:11.5px;color:var(--graphite);margin:0 0 8px;min-height:14px;}
+.voice-mode-note{text-align:center;font-size:10px;color:var(--graphite);opacity:.75;margin:-4px 0 10px;}
 .cost-preview-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;margin:0 auto 8px;display:block;}
 .cost-review-card{margin:10px 14px 0;background:var(--white);border:1.5px solid var(--slate);border-radius:var(--radius);padding:14px;}
 .cost-review-title{font-size:12px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;}
@@ -708,6 +716,11 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="compose-chip" onclick="toggleChip(this)">Follow-up needed</div>
       </div>
       <textarea class="compose-textarea" id="compose-text-appt" placeholder="What did the therapist say? Any next steps for the Huddle?"></textarea>
+      <div class="voice-row">
+        <div class="voice-btn" id="voice-btn-appt" onclick="toggleVoiceNote('appt')">🎤 Record instead</div>
+      </div>
+      <div class="voice-mode-note">We'll organize your recording into a summary, mood, meals, meds, and follow-up</div>
+      <div class="voice-status" id="voice-status-appt"></div>
       <div class="compose-submit" onclick="submitNote('appt')">Post to Journal</div>
       <div class="doc-sheet-status" id="compose-status-appt"></div>
     </div>
@@ -938,6 +951,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="doc-sheet-close" onclick="closeCompose('journal')">✕</div>
       </div>
       <textarea class="compose-textarea" id="compose-text-journal" placeholder="How's Mom doing today? What should the family know?"></textarea>
+      <div class="voice-row">
+        <div class="voice-btn" id="voice-btn-journal" onclick="toggleVoiceNote('journal')">🎤 Record instead</div>
+      </div>
+      <div class="voice-status" id="voice-status-journal"></div>
       <div class="compose-submit" onclick="submitNote('journal')">Post to Journal</div>
       <div class="doc-sheet-status" id="compose-status-journal"></div>
     </div>
@@ -1107,6 +1124,98 @@ function submitNote(ctx){
   textarea.value='';
   if(status) status.textContent='Posted to the Journal ✓';
   setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
+}
+
+/* ── VOICE NOTE RECORDING ── */
+// ctx 'journal' -> general note, lightly cleaned transcript
+// ctx 'appt'    -> after-visit note, structured into summary/mood/meals/meds/concerns/follow-up
+const VOICE_STATE={};
+
+function voiceModeForCtx(ctx){ return ctx==='appt' ? 'after-visit' : 'general'; }
+
+async function toggleVoiceNote(ctx){
+  const state=VOICE_STATE[ctx]||(VOICE_STATE[ctx]={recording:false,recorder:null,chunks:[],startedAt:0,timerId:null});
+  if(state.recording){ stopVoiceNote(ctx); return; }
+  await startVoiceNote(ctx);
+}
+
+async function startVoiceNote(ctx){
+  const btn=document.getElementById('voice-btn-'+ctx);
+  const status=document.getElementById('voice-status-'+ctx);
+  const state=VOICE_STATE[ctx];
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    if(status) status.textContent='Voice recording is not supported in this browser';
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const recorder=new MediaRecorder(stream);
+    state.chunks=[];
+    state.recorder=recorder;
+    state.recording=true;
+    state.startedAt=Date.now();
+    recorder.ondataavailable=(e)=>{ if(e.data && e.data.size>0) state.chunks.push(e.data); };
+    recorder.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      clearInterval(state.timerId);
+      const blob=new Blob(state.chunks,{type:recorder.mimeType||'audio/webm'});
+      processVoiceNote(ctx,blob);
+    };
+    recorder.start();
+    if(btn){ btn.classList.add('recording'); btn.textContent='⏹ Stop recording'; }
+    state.timerId=setInterval(()=>{
+      const secs=Math.floor((Date.now()-state.startedAt)/1000);
+      const m=Math.floor(secs/60), s=secs%60;
+      if(status) status.textContent=`Recording… ${m}:${s.toString().padStart(2,'0')}`;
+      if(secs>=120) stopVoiceNote(ctx); // keep recordings short and reliable
+    },250);
+  }catch(err){
+    console.error('mic access error',err);
+    if(status) status.textContent='Could not access the microphone. Check browser permissions.';
+  }
+}
+
+function stopVoiceNote(ctx){
+  const state=VOICE_STATE[ctx];
+  const btn=document.getElementById('voice-btn-'+ctx);
+  if(!state || !state.recording) return;
+  state.recording=false;
+  if(btn){ btn.classList.remove('recording'); btn.textContent='🎤 Record instead'; }
+  if(state.recorder && state.recorder.state!=='inactive') state.recorder.stop();
+}
+
+function processVoiceNote(ctx,blob){
+  const status=document.getElementById('voice-status-'+ctx);
+  const textarea=document.getElementById('compose-text-'+ctx);
+  if(status) status.textContent='Transcribing your note…';
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const base64=e.target.result.split(',')[1];
+    try{
+      const res=await fetch('/.netlify/functions/transcribe-note',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({audioBase64:base64,mimeType:blob.type,mode:voiceModeForCtx(ctx)})
+      });
+      if(!res.ok) throw new Error('transcription backend not available');
+      const data=await res.json();
+      if(textarea) textarea.value=formatVoiceNoteResult(data);
+      if(status) status.textContent=data.cleanupFailed?'Transcribed. Review before posting.':'Transcribed ✓ Review before posting';
+    }catch(err){
+      console.error('voice note error',err);
+      if(status) status.textContent='Could not transcribe that recording. Try again or type it instead.';
+    }
+  };
+  reader.readAsDataURL(blob);
+}
+
+function formatVoiceNoteResult(data){
+  if(data.mode==='after-visit' && data.note){
+    const n=data.note;
+    return `Summary: ${n.summary}\n\nMood: ${n.mood}\n\nMeals: ${n.meals}\n\nMedications: ${n.medications}\n\nConcerns: ${n.concerns}\n\nFollow-up: ${n.followUp}`;
+  }
+  if(data.note && data.note.cleanedNote) return data.note.cleanedNote;
+  return data.rawTranscript||'';
 }
 
 /* ── CAREGIVER CHECK-IN ── */
