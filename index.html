@@ -406,6 +406,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .auth-field-label{font-size:12px;font-weight:600;color:var(--graphite);margin:14px 0 5px;}
 .auth-input{width:100%;padding:11px 12px;border:1px solid var(--stone);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--ivory);}
 .auth-input:focus{outline:none;border-color:var(--slate);}
+.auth-password-wrap{position:relative;}
+.auth-password-wrap .auth-input{padding-right:52px;}
+.auth-password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--slate);cursor:pointer;user-select:none;}
 .auth-submit{width:100%;margin-top:20px;padding:12px;background:var(--slate);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;}
 .auth-submit:hover{background:var(--slate-dark);}
 .auth-submit:disabled{opacity:0.6;cursor:default;}
@@ -439,7 +442,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="auth-field-label">Email</div>
     <input class="auth-input" id="auth-email" type="email" placeholder="you@example.com" autocomplete="email">
     <div class="auth-field-label">Password</div>
-    <input class="auth-input" id="auth-password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+    <div class="auth-password-wrap">
+      <input class="auth-input" id="auth-password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+      <span class="auth-password-toggle" id="auth-password-toggle" onclick="togglePasswordVisibility()">Show</span>
+    </div>
 
     <button class="auth-submit" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
     <div class="auth-error" id="auth-error"></div>
@@ -1077,6 +1083,18 @@ let CURRENT_USER=null;
 let CURRENT_FAMILY_ID=null;
 let CURRENT_DISPLAY_NAME=null;
 let authMode='signin';
+
+function togglePasswordVisibility(){
+  const input=document.getElementById('auth-password');
+  const toggle=document.getElementById('auth-password-toggle');
+  if(input.type==='password'){
+    input.type='text';
+    toggle.textContent='Hide';
+  } else {
+    input.type='password';
+    toggle.textContent='Show';
+  }
+}
 
 function setAuthMode(mode){
   authMode=mode;
