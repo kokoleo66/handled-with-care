@@ -393,9 +393,62 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 /* ── BETA BANNER ── */
 .beta-banner{background:var(--slate);color:white;text-align:center;padding:10px 16px;font-size:12px;}
 .beta-banner a{color:var(--terracotta-light);text-decoration:underline;}
+/* ── AUTH SCREEN ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--ivory);}
+.auth-card{width:100%;max-width:380px;background:var(--white);border-radius:var(--radius-lg);box-shadow:0 4px 24px rgba(0,0,0,0.08);padding:32px 28px;}
+.auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:24px;}
+.auth-logo svg{width:26px;height:26px;fill:var(--crimson);}
+.auth-logo-text{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--slate-dark);}
+.auth-logo-text span{color:var(--terracotta);font-style:italic;}
+.auth-tabs{display:flex;margin-bottom:20px;border-bottom:1px solid var(--stone-light);}
+.auth-tab{flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;color:var(--graphite);cursor:pointer;border-bottom:2px solid transparent;}
+.auth-tab.active{color:var(--slate);border-bottom-color:var(--slate);}
+.auth-field-label{font-size:12px;font-weight:600;color:var(--graphite);margin:14px 0 5px;}
+.auth-input{width:100%;padding:11px 12px;border:1px solid var(--stone);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--ivory);}
+.auth-input:focus{outline:none;border-color:var(--slate);}
+.auth-submit{width:100%;margin-top:20px;padding:12px;background:var(--slate);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;}
+.auth-submit:hover{background:var(--slate-dark);}
+.auth-submit:disabled{opacity:0.6;cursor:default;}
+.auth-error{margin-top:12px;padding:10px 12px;background:var(--crimson-light);color:#8A1418;border-radius:var(--radius-sm);font-size:12px;display:none;}
+.auth-status{margin-top:12px;padding:10px 12px;background:var(--sage-light);color:#245A2A;border-radius:var(--radius-sm);font-size:12px;display:none;}
+.auth-onboard-note{font-size:11px;color:var(--graphite);text-align:center;margin-top:16px;line-height:1.5;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div class="auth-wrap" id="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>
+      <div class="auth-logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-signin" onclick="setAuthMode('signin')">Sign In</div>
+      <div class="auth-tab" id="tab-signup" onclick="setAuthMode('signup')">Create Account</div>
+    </div>
+
+    <div id="signup-only-fields" style="display:none;">
+      <div class="auth-field-label">Your name</div>
+      <input class="auth-input" id="auth-display-name" placeholder="e.g. Lisa" autocomplete="name">
+      <div class="auth-field-label">Who are you caring for?</div>
+      <input class="auth-input" id="auth-care-recipient" placeholder="e.g. Mom" autocomplete="off">
+    </div>
+
+    <div class="auth-field-label">Email</div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="you@example.com" autocomplete="email">
+    <div class="auth-field-label">Password</div>
+    <input class="auth-input" id="auth-password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+
+    <button class="auth-submit" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-status" id="auth-status"></div>
+    <div class="auth-onboard-note">Your data is only visible to the family members you invite. We never sell your information.</div>
+  </div>
+</div>
+
+<div id="app-root" style="display:none;">
 
 <!-- BETA BANNER -->
 <div class="beta-banner">
@@ -1012,7 +1065,123 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 
 </div><!-- end screens-wrap -->
 
+</div><!-- end app-root -->
+
 <script>
+/* ══════════ SUPABASE CONNECTION & AUTH ══════════ */
+const SUPABASE_URL='https://zrwnzqpghnpaqezgnbmc.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpyd256cXBnaG5wYXFlemduYm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyOTA5ODcsImV4cCI6MjEwMzg2Njk4N30.UNOlbAs60xla_xRgc6BN0-fgGkpAAAn_b2hfd78H6-A';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+let CURRENT_USER=null;
+let CURRENT_FAMILY_ID=null;
+let CURRENT_DISPLAY_NAME=null;
+let authMode='signin';
+
+function setAuthMode(mode){
+  authMode=mode;
+  document.getElementById('tab-signin').classList.toggle('active',mode==='signin');
+  document.getElementById('tab-signup').classList.toggle('active',mode==='signup');
+  document.getElementById('signup-only-fields').style.display=mode==='signup'?'block':'none';
+  document.getElementById('auth-submit-btn').textContent=mode==='signup'?'Create Account':'Sign In';
+  document.getElementById('auth-error').style.display='none';
+  document.getElementById('auth-status').style.display='none';
+}
+
+function showAuthError(msg){
+  const el=document.getElementById('auth-error');
+  el.textContent=msg;
+  el.style.display='block';
+  document.getElementById('auth-status').style.display='none';
+}
+
+function showAuthStatus(msg){
+  const el=document.getElementById('auth-status');
+  el.textContent=msg;
+  el.style.display='block';
+  document.getElementById('auth-error').style.display='none';
+}
+
+async function submitAuth(){
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  const btn=document.getElementById('auth-submit-btn');
+  if(!email||!password){showAuthError('Enter both email and password.');return;}
+  btn.disabled=true;
+  if(authMode==='signup'){
+    const displayName=document.getElementById('auth-display-name').value.trim();
+    const careRecipient=document.getElementById('auth-care-recipient').value.trim();
+    if(!displayName||!careRecipient){showAuthError('Fill in your name and who you\'re caring for.');btn.disabled=false;return;}
+    const {data,error}=await sb.auth.signUp({email,password});
+    if(error){showAuthError(error.message);btn.disabled=false;return;}
+    if(!data.session){
+      showAuthStatus('Check your email to confirm your account, then sign in.');
+      btn.disabled=false;
+      return;
+    }
+    await createFamilyForNewUser(data.user.id,displayName,careRecipient);
+    await enterApp(data.user,displayName);
+  } else {
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){showAuthError(error.message);btn.disabled=false;return;}
+    await loadFamilyAndEnter(data.user);
+  }
+  btn.disabled=false;
+}
+
+async function createFamilyForNewUser(userId,displayName,careRecipient){
+  const {data:family,error:famErr}=await sb.from('families').insert({
+    name:displayName+"'s Care Team",
+    care_recipient_name:careRecipient
+  }).select().single();
+  if(famErr){showAuthError('Could not create family: '+famErr.message);return;}
+  const {error:memberErr}=await sb.from('family_members').insert({
+    family_id:family.id,
+    user_id:userId,
+    display_name:displayName,
+    role:'coordinator'
+  });
+  if(memberErr){showAuthError('Could not join family: '+memberErr.message);return;}
+  CURRENT_FAMILY_ID=family.id;
+}
+
+async function loadFamilyAndEnter(user){
+  const {data:member,error}=await sb.from('family_members').select('*').eq('user_id',user.id).limit(1).single();
+  if(error||!member){
+    showAuthError('No family found for this account yet. Contact support if this seems wrong.');
+    return;
+  }
+  CURRENT_FAMILY_ID=member.family_id;
+  await enterApp(user,member.display_name);
+}
+
+async function enterApp(user,displayName){
+  CURRENT_USER=user;
+  CURRENT_DISPLAY_NAME=displayName;
+  document.getElementById('auth-wrap').style.display='none';
+  document.getElementById('app-root').style.display='block';
+  document.querySelectorAll('.nav-avatar').forEach(el=>{
+    el.textContent=(displayName||'?').charAt(0).toUpperCase();
+  });
+}
+
+async function signOutUser(){
+  await sb.auth.signOut();
+  CURRENT_USER=null;CURRENT_FAMILY_ID=null;CURRENT_DISPLAY_NAME=null;
+  document.getElementById('app-root').style.display='none';
+  document.getElementById('auth-wrap').style.display='flex';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-password').value='';
+}
+
+async function checkExistingSession(){
+  const {data}=await sb.auth.getSession();
+  if(data.session){
+    await loadFamilyAndEnter(data.session.user);
+  }
+}
+checkExistingSession();
+
 const VAULT_DOCS={
   insurance:{icon:'🪪',color:'var(--slate)',title:"Insurance Card: Medicare + Aetna Supplemental",meta:'Added Mar 2 · PDF, 2 pages',preview:'🪪',previewText:'Front & back of both cards',perm:'Visible to: whole Huddle'},
   dnr:{icon:'📋',color:'var(--crimson)',title:'Advance Directive / DNR',meta:'Added Jan 14 · PDF, 4 pages',preview:'📋',previewText:'Signed & witnessed Jan 2026',perm:'Visible to: whole Huddle'},
