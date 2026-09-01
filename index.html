@@ -161,9 +161,13 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .checkin-history{display:flex;gap:5px;margin-top:11px;justify-content:center;}
 .checkin-dot{width:9px;height:9px;border-radius:50%;}
 .checkin-exercise-intro{font-size:12px;color:var(--charcoal);margin:11px 0 8px;line-height:1.4;}
-.checkin-exercise-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;margin-bottom:7px;background:var(--sage-light);border:1px solid var(--sage);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:#245A2A;cursor:pointer;transition:background 0.15s;}
+.checkin-exercise-wrap{margin-bottom:7px;}
+.checkin-exercise-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--sage-light);border:1px solid var(--sage);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:#245A2A;cursor:pointer;transition:background 0.15s;}
+.checkin-exercise-btn.open{border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:none;}
 .checkin-exercise-btn:hover{background:#c8e8c8;}
-.checkin-exercise-btn.done{opacity:0.55;text-decoration:line-through;}
+.checkin-exercise-btn.done{opacity:0.55;text-decoration:line-through;cursor:default;}
+.checkin-exercise-how{font-size:12px;color:var(--charcoal);background:var(--white);border:1px solid var(--sage);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:9px 12px 10px;line-height:1.5;}
+.checkin-exercise-markdone{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:var(--sage);cursor:pointer;white-space:nowrap;}
 .checkin-exercise-refresh{text-align:center;font-size:11px;font-weight:600;color:var(--slate);cursor:pointer;margin-top:2px;padding:4px;}
 .checkin-followup{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
 .checkin-followup-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
@@ -1134,34 +1138,35 @@ const CHECKIN_MOODS={
   overwhelmed:{emoji:'😞',label:'Overwhelmed',color:'var(--crimson)'}
 };
 const CHECKIN_EXERCISES=[
-  {emoji:'🧘',label:'Desk Stretch'},
-  {emoji:'💭',label:'Inner Monologue Interrupt'},
-  {emoji:'🌿',label:'5-4-3-2-1 Grounding'},
-  {emoji:'🌬️',label:'Box Breathing'},
-  {emoji:'💧',label:'Cold Water Reset'},
-  {emoji:'🎵',label:'One Song Pause'},
-  {emoji:'📱',label:'Phone Face Down, 60 Seconds'},
-  {emoji:'🪟',label:'Window Gaze'},
-  {emoji:'👐',label:'Squeeze and Release'},
-  {emoji:'🚶',label:'Ten Slow Steps'},
-  {emoji:'☕',label:'Warm Sip, No Multitasking'},
-  {emoji:'📝',label:'One Sentence Brain Dump'},
-  {emoji:'🙆',label:'Shoulder Rolls'},
-  {emoji:'🎯',label:'Name One Win Today'},
-  {emoji:'🌤️',label:'Step Outside'},
-  {emoji:'🫁',label:'Long Exhale x3'},
-  {emoji:'🧊',label:'Hold Something Cold'},
-  {emoji:'🕯️',label:'Smell Something You Like'},
-  {emoji:'🖐️',label:'Palm Press'},
-  {emoji:'📖',label:'Read One Line Slowly'},
-  {emoji:'🎧',label:'Thirty Seconds of Silence'},
-  {emoji:'🤲',label:'Name One Small Good Thing'},
-  {emoji:'🚿',label:'Splash Cool Water on Your Face'},
-  {emoji:'🪑',label:'Feel Your Feet on the Floor'}
+  {emoji:'🧘',label:'Desk Stretch',how:'Reach both arms overhead and hold for 10 seconds.'},
+  {emoji:'💭',label:'Inner Monologue Interrupt',how:"Say the word 'pause' out loud, once."},
+  {emoji:'🌿',label:'5-4-3-2-1 Grounding',how:'Name 5 things you see, 4 you hear, 3 you feel, 2 you smell, 1 you taste.'},
+  {emoji:'🌬️',label:'Box Breathing',how:'Inhale 4 counts, hold 4, exhale 4, hold 4. Repeat twice.'},
+  {emoji:'💧',label:'Cold Water Reset',how:'Run cold water over your wrists for 15 seconds.'},
+  {emoji:'🎵',label:'One Song Pause',how:'Play one song and just listen. No multitasking.'},
+  {emoji:'📱',label:'Phone Face Down, 60 Seconds',how:'Set your phone face down and look up for one full minute.'},
+  {emoji:'🪟',label:'Window Gaze',how:'Look out a window and find three different colors.'},
+  {emoji:'👐',label:'Squeeze and Release',how:'Clench both fists for 5 seconds, then release slowly.'},
+  {emoji:'🚶',label:'Ten Slow Steps',how:'Walk ten steps, slower than you normally would.'},
+  {emoji:'☕',label:'Warm Sip, No Multitasking',how:'Take one sip of something warm. Do nothing else while you swallow.'},
+  {emoji:'📝',label:'One Sentence Brain Dump',how:"Write one sentence about whatever's stuck in your head."},
+  {emoji:'🙆',label:'Shoulder Rolls',how:'Roll your shoulders back slowly, 5 times.'},
+  {emoji:'🎯',label:'Name One Win Today',how:'Say one thing you did today, out loud, even a small one.'},
+  {emoji:'🌤️',label:'Step Outside',how:'Stand outside for 30 seconds and feel the air.'},
+  {emoji:'🫁',label:'Long Exhale x3',how:'Exhale twice as long as you inhale. Do this 3 times.'},
+  {emoji:'🧊',label:'Hold Something Cold',how:'Hold a cold drink or ice cube in your palm for 15 seconds.'},
+  {emoji:'🕯️',label:'Smell Something You Like',how:'Find something with a scent you like and breathe it in slowly.'},
+  {emoji:'🖐️',label:'Palm Press',how:'Press your palms together and push for 10 seconds.'},
+  {emoji:'📖',label:'Read One Line Slowly',how:'Read one sentence of anything, twice, slowly.'},
+  {emoji:'🎧',label:'Thirty Seconds of Silence',how:'Sit with no sound and no screen for 30 seconds.'},
+  {emoji:'🤲',label:'Name One Small Good Thing',how:'Think of one small thing that went okay today.'},
+  {emoji:'🚿',label:'Splash Cool Water on Your Face',how:'Splash cool water on your face and pat dry.'},
+  {emoji:'🪑',label:'Feel Your Feet on the Floor',how:'Notice your feet on the floor and the weight of your body in the chair.'}
 ];
 let CHECKIN_HISTORY=[{week:'3 wks ago',mood:'okay'},{week:'2 wks ago',mood:'tired'},{week:'Last week',mood:'tired'}];
 let checkedInThisWeek=false;
 let currentExercisePicks=[];
+let exerciseState={};
 
 function checkinHistoryHTML(){
   return `<div class="checkin-history">${CHECKIN_HISTORY.map(h=>`<div class="checkin-dot" style="background:${CHECKIN_MOODS[h.mood].color}" title="${h.week}: ${CHECKIN_MOODS[h.mood].label}"></div>`).join('')}</div>`;
@@ -1184,17 +1189,41 @@ function pickExercises(n){
 
 function exercisesHTML(){
   return `<div class="checkin-exercise-intro">That's a lot to be carrying right now. Got 30 seconds for one small thing, just for you?</div>
-    <div id="checkin-exercise-list">${currentExercisePicks.map((e,i)=>`<div class="checkin-exercise-btn" id="ex-${i}" onclick="doExercise(${i})">${e.emoji} ${e.label}</div>`).join('')}</div>
+    <div id="checkin-exercise-list">${currentExercisePicks.map((e,i)=>exerciseItemHTML(e,i)).join('')}</div>
     <div class="checkin-exercise-refresh" onclick="refreshExercises()">Show me different ones →</div>`;
 }
 
+function exerciseItemHTML(e,i){
+  const state=exerciseState[i]||{expanded:false,done:false};
+  const btnClass='checkin-exercise-btn'+(state.done?' done':'')+(state.expanded&&!state.done?' open':'');
+  let extra='';
+  if(state.done){
+    extra='';
+  } else if(state.expanded){
+    extra=`<div class="checkin-exercise-how">${e.how}<span class="checkin-exercise-markdone" onclick="markExerciseDone(${i})">Mark done ✓</span></div>`;
+  }
+  return `<div class="checkin-exercise-wrap"><div class="${btnClass}" onclick="toggleExercise(${i})">${e.emoji} ${e.label}</div>${extra}</div>`;
+}
+
+function toggleExercise(i){
+  if(!exerciseState[i]) exerciseState[i]={expanded:false,done:false};
+  if(exerciseState[i].done) return;
+  exerciseState[i].expanded=!exerciseState[i].expanded;
+  renderCheckin();
+}
+
+function markExerciseDone(i){
+  exerciseState[i]={expanded:false,done:true};
+  renderCheckin();
+}
+
 function doExercise(i){
-  const el=document.getElementById('ex-'+i);
-  if(el) el.classList.toggle('done');
+  toggleExercise(i);
 }
 
 function refreshExercises(){
   currentExercisePicks=pickExercises(3);
+  exerciseState={};
   renderCheckin();
 }
 
@@ -1232,6 +1261,7 @@ function selectMood(key){
   CHECKIN_HISTORY.push({week:'This week',mood:key});
   checkedInThisWeek=true;
   currentExercisePicks=[];
+  exerciseState={};
   renderCheckin();
 }
 
