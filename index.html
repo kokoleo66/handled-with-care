@@ -1357,14 +1357,23 @@ function renderMedsScreen(){
 }
 
 async function markMedTaken(medId){
-  const {error}=await sb.from('medication_logs').insert({
-    medication_id:medId,
-    family_id:CURRENT_FAMILY_ID,
-    status:'taken',
-    logged_by:CURRENT_USER.id
-  });
-  if(error){alert('Could not log medication: '+error.message);return;}
-  await loadMedications();
+  try{
+    if(!CURRENT_USER||!CURRENT_FAMILY_ID){
+      alert('Session issue: please refresh the page and sign in again.');
+      return;
+    }
+    const {error}=await sb.from('medication_logs').insert({
+      medication_id:medId,
+      family_id:CURRENT_FAMILY_ID,
+      status:'taken',
+      logged_by:CURRENT_USER.id
+    });
+    if(error){alert('Could not log medication: '+error.message);return;}
+    await loadMedications();
+  }catch(err){
+    console.error('markMedTaken failed:',err);
+    alert('Something went wrong marking this as taken: '+err.message);
+  }
 }
 
 function showAddMedForm(){
@@ -2009,18 +2018,6 @@ function cycleHomeMed(row,state){
 function toggleMedDetail(id){
   const el=document.getElementById(id);
   if(el) el.style.display=el.style.display==='none'?'block':'none';
-}
-
-function markMedTaken(id,btn){
-  const panel=document.getElementById(id);
-  const card=panel.closest('.full-med-card');
-  const stripe=card.querySelector('.med-stripe');
-  const check=card.querySelector('.med-check');
-  const confirmed=card.querySelector('.full-med-confirmed');
-  if(stripe){stripe.className='med-stripe done';}
-  if(check){check.className='med-check done';check.textContent='✓';}
-  if(confirmed){confirmed.className='full-med-confirmed done';confirmed.textContent='You · just now';}
-  if(panel) panel.style.display='none';
 }
 
 function switchApptView(v){
