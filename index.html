@@ -729,7 +729,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div id="cal-panel" style="display:none;margin:10px 14px 0;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--slate-dark);">April 2026</div>
+        <div style="font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--slate-dark);" id="cal-month-label">April 2026</div>
         <div style="display:flex;gap:6px;"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--graphite);">‹</div><div style="width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--graphite);">›</div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:3px;">
@@ -738,31 +738,27 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
     </div>
     <div class="post-appt" onclick="openPostApptCompose()"><div><div class="post-appt-text">How did PT go Tuesday?</div><div class="post-appt-sub">Add a note from Mom's Apr 8 visit → helps the whole Huddle</div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
-    <div class="slabel" id="appt-list-label">Coming up · next 14 days</div>
-    <div class="appt-card" id="appt-list">
-      <div class="appt-row">
-        <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">APR</div><div class="appt-day" style="color:var(--slate)">15</div></div>
-        <div class="appt-body"><div class="appt-name">Dr. Patel: Cardiology follow-up</div><div class="appt-meta"><span class="appt-tag medical">Medical</span><span class="appt-time">2:00 PM · Scripps Clinic</span></div><div class="appt-driver">🚗 Lisa driving</div></div>
-        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
-      </div>
-      <div class="appt-row">
-        <div class="appt-date-block"><div class="appt-month" style="color:var(--sage)">APR</div><div class="appt-day" style="color:var(--sage)">17</div></div>
-        <div class="appt-body"><div class="appt-name">Physical therapy: knee</div><div class="appt-meta"><span class="appt-tag personal">Therapy</span><span class="appt-time">10:30 AM · Sharp Rehab</span></div><div class="appt-driver">🚗 Dave driving</div></div>
-        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
-      </div>
-      <div class="appt-row">
-        <div class="appt-date-block"><div class="appt-month" style="color:var(--crimson)">APR</div><div class="appt-day" style="color:var(--crimson)">19</div></div>
-        <div class="appt-body"><div class="appt-name">Lab work: fasting bloodwork</div><div class="appt-meta"><span class="appt-tag urgent">Urgent</span><span class="appt-time">7:45 AM · Quest Diagnostics</span></div><div class="appt-driver" style="color:var(--crimson)">⚠ Driver needed, ask Huddle</div></div>
-        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
-      </div>
-      <div class="appt-row">
-        <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">APR</div><div class="appt-day" style="color:var(--slate)">24</div></div>
-        <div class="appt-body"><div class="appt-name">Dr. Chen: Primary care check-in</div><div class="appt-meta"><span class="appt-tag medical">Medical</span><span class="appt-time">11:00 AM · Kaiser Permanente</span></div><div class="appt-driver">🚗 Sarah driving</div></div>
-        <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
-      </div>
-    </div>
-    <div class="add-btn">
+    <div class="slabel" id="appt-list-label">Upcoming appointments</div>
+    <div class="appt-card" id="appt-list"></div>
+    <div class="add-btn" onclick="showAddApptForm()">
       <span style="font-size:18px;color:var(--graphite)">+</span>Add appointment
+    </div>
+    <div id="add-appt-form" style="display:none;margin:0 14px 10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div class="auth-field-label" style="margin-top:0;">What's the appointment</div>
+      <input class="auth-input" id="new-appt-title" placeholder="e.g. Dr. Patel: Cardiology follow-up">
+      <div class="auth-field-label">Provider (optional)</div>
+      <input class="auth-input" id="new-appt-provider" placeholder="e.g. Dr. Patel">
+      <div class="auth-field-label">Location (optional)</div>
+      <input class="auth-input" id="new-appt-location" placeholder="e.g. Scripps Clinic">
+      <div class="auth-field-label">Date & time</div>
+      <input class="auth-input" id="new-appt-datetime" type="datetime-local">
+      <div class="auth-field-label">Notes (optional)</div>
+      <input class="auth-input" id="new-appt-notes" placeholder="Anything else the Huddle should know">
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddApptForm()">Cancel</div>
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewAppointment()">Save</div>
+      </div>
+      <div class="auth-error" id="new-appt-error" style="margin-top:10px;"></div>
     </div>
   </div>
   <div class="doc-sheet-overlay" id="compose-overlay-appt" onclick="if(event.target===this)closeCompose('appt')">
@@ -1280,6 +1276,73 @@ async function enterApp(user,displayName){
     el.textContent=(displayName||'?').charAt(0).toUpperCase();
   });
   await loadMedications();
+  await loadAppointments();
+}
+
+/* ══════════ APPOINTMENTS (real data) ══════════ */
+let APPOINTMENTS=[];
+const MONTH_ABBR=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+async function loadAppointments(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('appointments')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID)
+    .gte('appointment_at',new Date(Date.now()-86400000).toISOString())
+    .order('appointment_at');
+  if(error){console.error('Failed to load appointments:',error.message);return;}
+  APPOINTMENTS=data||[];
+  renderAppointmentsList();
+}
+
+function renderAppointmentsList(){
+  const listEl=document.getElementById('appt-list');
+  if(!listEl)return;
+  if(APPOINTMENTS.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:24px 10px;color:var(--graphite);font-size:13px;">No upcoming appointments yet. Tap "+ Add appointment" to get started.</div>';
+    return;
+  }
+  listEl.innerHTML=APPOINTMENTS.map(a=>{
+    const dt=new Date(a.appointment_at);
+    const month=MONTH_ABBR[dt.getMonth()];
+    const day=dt.getDate();
+    const timeStr=dt.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    const metaBits=[a.provider,a.location].filter(Boolean).join(' · ');
+    return `<div class="appt-row">
+      <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">${month}</div><div class="appt-day" style="color:var(--slate)">${day}</div></div>
+      <div class="appt-body"><div class="appt-name">${a.title}</div><div class="appt-meta"><span class="appt-time">${timeStr}${metaBits?' · '+metaBits:''}</span></div>${a.notes?`<div class="appt-driver">${a.notes}</div>`:''}</div>
+      <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
+    </div>`;
+  }).join('');
+}
+
+function showAddApptForm(){document.getElementById('add-appt-form').style.display='block';}
+function hideAddApptForm(){
+  document.getElementById('add-appt-form').style.display='none';
+  ['new-appt-title','new-appt-provider','new-appt-location','new-appt-datetime','new-appt-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-appt-error').style.display='none';
+}
+
+async function saveNewAppointment(){
+  const title=document.getElementById('new-appt-title').value.trim();
+  const provider=document.getElementById('new-appt-provider').value.trim();
+  const location=document.getElementById('new-appt-location').value.trim();
+  const datetimeVal=document.getElementById('new-appt-datetime').value;
+  const notes=document.getElementById('new-appt-notes').value.trim();
+  const errEl=document.getElementById('new-appt-error');
+  if(!title||!datetimeVal){
+    errEl.textContent='Title and date/time are required.';
+    errEl.style.display='block';
+    return;
+  }
+  const {error}=await sb.from('appointments').insert({
+    family_id:CURRENT_FAMILY_ID,
+    title,provider,location,notes,
+    appointment_at:new Date(datetimeVal).toISOString(),
+    created_by:CURRENT_USER.id
+  });
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  hideAddApptForm();
+  await loadAppointments();
 }
 
 /* ══════════ MEDICATIONS (real data) ══════════ */
@@ -1984,6 +2047,7 @@ function showScreen(name){
   const btn=document.querySelectorAll('.snav-btn')[map[name]];
   if(btn) btn.classList.add('active');
   if(name==='meds') renderMedsScreen();
+  if(name==='appts') renderAppointmentsList();
 }
 
 function toggleHomeTask(row){
@@ -2038,9 +2102,20 @@ function switchApptView(v){
 
 function buildCal(){
   const grid=document.getElementById('cal-grid');
-  if(grid.children.length>0)return;
-  const apptDays=[15,17,19,24];
-  const today=11;const firstDay=2;const daysInMonth=30;
+  grid.innerHTML='';
+  const now=new Date();
+  const year=now.getFullYear();
+  const monthIdx=now.getMonth();
+  const today=now.getDate();
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const labelEl=document.getElementById('cal-month-label');
+  if(labelEl) labelEl.textContent=monthNames[monthIdx]+' '+year;
+  const firstDay=new Date(year,monthIdx,1).getDay();
+  const daysInMonth=new Date(year,monthIdx+1,0).getDate();
+  const apptDays=APPOINTMENTS
+    .map(a=>new Date(a.appointment_at))
+    .filter(d=>d.getFullYear()===year&&d.getMonth()===monthIdx)
+    .map(d=>d.getDate());
   for(let i=0;i<firstDay;i++){
     const c=document.createElement('div');
     c.style.cssText='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;';
