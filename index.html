@@ -656,83 +656,26 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="stab active">Meds</div>
     <div class="stab">History</div>
   </div>
-  <div class="app-body">
-    <div class="summary-row">
-      <div class="sum-card"><div class="sum-num" style="color:var(--sage)">2</div><div class="sum-label">Taken</div></div>
-      <div class="sum-card"><div class="sum-num" style="color:var(--crimson)">1</div><div class="sum-label">Missed</div></div>
-      <div class="sum-card"><div class="sum-num" style="color:var(--graphite)">1</div><div class="sum-label">Pending</div></div>
-      <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">4</div><div class="sum-label">Total</div></div>
-    </div>
-    <div class="refill-alert"><div><div class="refill-text">Lisinopril running low</div><div class="refill-sub">Est. 5 days · Sarah assigned · tap to follow up</div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
-    <div class="time-block">
-      <div class="time-header"><div class="time-pill morning">Morning · 8:00 AM</div><div class="time-line"></div></div>
-      <div class="full-med-card">
-        <div class="full-med-row" onclick="toggleMedDetail('md1')">
-          <div class="med-stripe done"></div>
-          <div class="full-med-content">
-            <div class="med-check done">✓</div>
-            <div class="full-med-info"><div class="full-med-name">Lisinopril 10mg</div><div class="full-med-details">Blood pressure · 1 tablet · with food · avoid grapefruit</div></div>
-            <div class="full-med-right"><div class="full-med-time">8:00 AM</div><div class="full-med-confirmed done">Lisa · 8:14 AM</div></div>
-          </div>
-        </div>
-        <div id="md1" style="display:none;padding:0 12px 12px;border-top:1px solid var(--stone-light);background:var(--ivory);">
-          <div style="height:8px"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;">
-            <div><div style="font-size:9px;font-weight:600;color:var(--graphite);text-transform:uppercase;margin-bottom:2px;">Doctor</div><div style="font-size:11px;color:var(--charcoal)">Dr. Linda Chen</div></div>
-            <div><div style="font-size:9px;font-weight:600;color:var(--graphite);text-transform:uppercase;margin-bottom:2px;">Refill by</div><div style="font-size:11px;color:var(--charcoal)">Apr 16 · CVS</div></div>
-          </div>
-          <div style="font-size:11px;color:var(--charcoal);background:var(--white);border-radius:var(--radius-sm);border:1px solid var(--stone-light);padding:7px 9px;margin-bottom:8px;">⚠ Monitor potassium if taking with Metformin. Dr. Chen aware.</div>
-          <div style="display:flex;gap:5px;">
-            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Drug info</div>
-            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Set refill</div>
-            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;">Edit</div>
-          </div>
-        </div>
-      </div>
-      <div class="full-med-card">
-        <div class="full-med-row">
-          <div class="med-stripe done"></div>
-          <div class="full-med-content">
-            <div class="med-check done">✓</div>
-            <div class="full-med-info"><div class="full-med-name">Metformin 500mg</div><div class="full-med-details">Diabetes · 1 tablet · with breakfast</div></div>
-            <div class="full-med-right"><div class="full-med-time">8:00 AM</div><div class="full-med-confirmed done">Lisa · 8:14 AM</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="time-block">
-      <div class="time-header"><div class="time-pill evening">Evening · 8:00 PM</div><div class="time-line"></div></div>
-      <div class="full-med-card">
-        <div class="full-med-row" onclick="toggleMedDetail('md3')">
-          <div class="med-stripe missed"></div>
-          <div class="full-med-content">
-            <div class="med-check missed">!</div>
-            <div class="full-med-info"><div class="full-med-name">Atorvastatin 20mg</div><div class="full-med-details">Cholesterol · 1 tablet · evening</div></div>
-            <div class="full-med-right"><div class="full-med-time">8:00 PM</div><div class="full-med-confirmed missed">Not logged</div></div>
-          </div>
-        </div>
-        <div id="md3" style="display:none;padding:0 12px 12px;border-top:1px solid var(--stone-light);background:var(--ivory);">
-          <div style="height:8px"></div>
-          <div style="font-size:11px;color:var(--crimson);background:var(--crimson-light);border-radius:var(--radius-sm);border:1px solid var(--crimson);padding:7px 9px;margin-bottom:8px;">Dave was assigned last night. Dose not confirmed. Send a nudge?</div>
-          <div style="display:flex;gap:5px;">
-            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Nudge Dave</div>
-            <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="markMedTaken('md3',this)">Mark taken</div>
-          </div>
-        </div>
-      </div>
-      <div class="full-med-card">
-        <div class="full-med-row">
-          <div class="med-stripe pending"></div>
-          <div class="full-med-content">
-            <div class="med-check pending"></div>
-            <div class="full-med-info"><div class="full-med-name">Aspirin 81mg</div><div class="full-med-details">Cardiac protection · with dinner</div></div>
-            <div class="full-med-right"><div class="full-med-time">8:00 PM</div><div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Scheduled</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="add-btn" style="margin-top:10px;">
+  <div class="app-body" id="meds-app-body">
+    <div class="summary-row" id="meds-summary-row"></div>
+    <div id="meds-list-container"></div>
+    <div class="add-btn" style="margin-top:10px;" onclick="showAddMedForm()">
       <span style="font-size:18px;color:var(--graphite)">+</span>Add medication
+    </div>
+    <div id="add-med-form" style="display:none;margin-top:10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div class="auth-field-label" style="margin-top:0;">Medication name</div>
+      <input class="auth-input" id="new-med-name" placeholder="e.g. Lisinopril 10mg">
+      <div class="auth-field-label">Dosage</div>
+      <input class="auth-input" id="new-med-dosage" placeholder="e.g. 1 tablet">
+      <div class="auth-field-label">Schedule</div>
+      <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM">
+      <div class="auth-field-label">Instructions (optional)</div>
+      <input class="auth-input" id="new-med-instructions" placeholder="e.g. with food">
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddMedForm()">Cancel</div>
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
+      </div>
+      <div class="auth-error" id="new-med-error" style="margin-top:10px;"></div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -1299,6 +1242,119 @@ async function enterApp(user,displayName){
   document.querySelectorAll('.nav-avatar').forEach(el=>{
     el.textContent=(displayName||'?').charAt(0).toUpperCase();
   });
+  await loadMedications();
+}
+
+/* ══════════ MEDICATIONS (real data) ══════════ */
+let MEDICATIONS=[];
+let MED_LOGS_TODAY=[];
+
+function todayStart(){
+  const d=new Date();
+  d.setHours(0,0,0,0);
+  return d.toISOString();
+}
+
+async function loadMedications(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data:meds,error:medErr}=await sb.from('medications')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).eq('active',true).order('schedule_time');
+  if(medErr){console.error('Failed to load medications:',medErr.message);return;}
+  MEDICATIONS=meds||[];
+  const {data:logs,error:logErr}=await sb.from('medication_logs')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).gte('logged_at',todayStart());
+  if(logErr){console.error('Failed to load medication logs:',logErr.message);return;}
+  MED_LOGS_TODAY=logs||[];
+  renderMedsScreen();
+}
+
+function latestLogFor(medId){
+  const logs=MED_LOGS_TODAY.filter(l=>l.medication_id===medId);
+  if(!logs.length)return null;
+  return logs.sort((a,b)=>new Date(b.logged_at)-new Date(a.logged_at))[0];
+}
+
+function renderMedsScreen(){
+  const summaryEl=document.getElementById('meds-summary-row');
+  const listEl=document.getElementById('meds-list-container');
+  if(!summaryEl||!listEl)return;
+
+  if(MEDICATIONS.length===0){
+    summaryEl.innerHTML='';
+    listEl.innerHTML='<div style="text-align:center;padding:30px 10px;color:var(--graphite);font-size:13px;">No medications added yet. Tap "+ Add medication" below to get started.</div>';
+    return;
+  }
+
+  let taken=0,pending=0;
+  MEDICATIONS.forEach(m=>{
+    const log=latestLogFor(m.id);
+    if(log&&log.status==='taken')taken++;else pending++;
+  });
+
+  summaryEl.innerHTML=`
+    <div class="sum-card"><div class="sum-num" style="color:var(--sage)">${taken}</div><div class="sum-label">Taken</div></div>
+    <div class="sum-card"><div class="sum-num" style="color:var(--graphite)">${pending}</div><div class="sum-label">Pending</div></div>
+    <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">${MEDICATIONS.length}</div><div class="sum-label">Total</div></div>
+  `;
+
+  listEl.innerHTML=MEDICATIONS.map(m=>{
+    const log=latestLogFor(m.id);
+    const isTaken=log&&log.status==='taken';
+    const details=[m.dosage,m.instructions].filter(Boolean).join(' · ');
+    const rightInfo=isTaken
+      ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>`
+      : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Not logged</div>`;
+    const actionBtn=isTaken?'':`<div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="markMedTaken('${m.id}')">Mark taken</div>`;
+    return `<div class="full-med-card">
+      <div class="full-med-row">
+        <div class="med-stripe ${isTaken?'done':'pending'}"></div>
+        <div class="full-med-content">
+          <div class="med-check ${isTaken?'done':'pending'}">${isTaken?'✓':''}</div>
+          <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div></div>
+          <div class="full-med-right"><div class="full-med-time">${m.schedule_time||''}</div>${rightInfo}</div>
+        </div>
+      </div>
+      ${actionBtn?`<div style="display:flex;gap:5px;padding:0 12px 10px;">${actionBtn}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function markMedTaken(medId){
+  const {error}=await sb.from('medication_logs').insert({
+    medication_id:medId,
+    family_id:CURRENT_FAMILY_ID,
+    status:'taken',
+    logged_by:CURRENT_USER.id
+  });
+  if(error){alert('Could not log medication: '+error.message);return;}
+  await loadMedications();
+}
+
+function showAddMedForm(){
+  document.getElementById('add-med-form').style.display='block';
+}
+function hideAddMedForm(){
+  document.getElementById('add-med-form').style.display='none';
+  document.getElementById('new-med-name').value='';
+  document.getElementById('new-med-dosage').value='';
+  document.getElementById('new-med-schedule').value='';
+  document.getElementById('new-med-instructions').value='';
+  document.getElementById('new-med-error').style.display='none';
+}
+
+async function saveNewMedication(){
+  const name=document.getElementById('new-med-name').value.trim();
+  const dosage=document.getElementById('new-med-dosage').value.trim();
+  const schedule_time=document.getElementById('new-med-schedule').value.trim();
+  const instructions=document.getElementById('new-med-instructions').value.trim();
+  const errEl=document.getElementById('new-med-error');
+  if(!name){errEl.textContent='Medication name is required.';errEl.style.display='block';return;}
+  const {error}=await sb.from('medications').insert({
+    family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions
+  });
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  hideAddMedForm();
+  await loadMedications();
 }
 
 async function signOutUser(){
@@ -1881,6 +1937,7 @@ function showScreen(name){
   const map={home:0,meds:1,appts:2,roster:3,vault:3,onboarding:4,costs:5};
   const btn=document.querySelectorAll('.snav-btn')[map[name]];
   if(btn) btn.classList.add('active');
+  if(name==='meds') renderMedsScreen();
 }
 
 function toggleHomeTask(row){
