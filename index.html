@@ -166,25 +166,6 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .checkin-followup-btn{font-size:11px;font-weight:600;padding:7px 12px;border-radius:20px;border:1.5px solid var(--slate);color:var(--slate);cursor:pointer;background:var(--white);}
 .checkin-followup-btn:hover{background:var(--sage-light);}
 .checkin-followup-status{font-size:11px;color:var(--sage);font-weight:600;margin-top:8px;}
-.relief-prompt{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
-.relief-prompt-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
-.relief-options{display:flex;flex-direction:column;gap:7px;}
-.relief-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--sage);background:var(--sage-light);cursor:pointer;}
-.relief-btn:hover{background:#cbe8cb;}
-.relief-btn-icon{font-size:16px;flex-shrink:0;}
-.relief-btn-text{font-size:12px;font-weight:600;color:#245A2A;}
-.relief-overlay{display:none;position:absolute;inset:0;background:rgba(33,33,33,0.55);z-index:70;align-items:center;justify-content:center;}
-.relief-card{background:var(--white);border-radius:var(--radius-lg);padding:26px 22px;width:82%;text-align:center;}
-.relief-title{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:6px;}
-.relief-circle{width:110px;height:110px;border-radius:50%;background:var(--sage-light);border:2px solid var(--sage);margin:16px auto;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#245A2A;transition:transform 3s ease-in-out;}
-.relief-circle.in{transform:scale(1.25);}
-.relief-circle.out{transform:scale(0.85);}
-.relief-progress{font-size:11px;color:var(--graphite);margin-top:2px;}
-.relief-timer-num{font-family:'Lora',serif;font-size:38px;font-weight:700;color:var(--slate-dark);margin:14px 0 4px;}
-.relief-instructions{font-size:12.5px;color:var(--charcoal);line-height:1.6;margin:6px 0 16px;}
-.relief-done-btn{background:var(--slate);color:white;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;}
-.relief-done-btn:hover{background:var(--slate-dark);}
-.relief-skip-link{font-size:11px;color:var(--graphite);text-decoration:underline;cursor:pointer;margin-top:10px;}
 
 /* ── ONBOARDING ── */
 .ob-dots{display:flex;gap:6px;justify-content:center;padding:14px 0 4px;}
@@ -234,14 +215,6 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .scan-btn:hover{background:#c93c1c;}
 .manual-link{text-align:center;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;margin:9px 0 4px;text-decoration:underline;}
 .cost-loading{margin:10px 14px 0;background:var(--stone-light);border-radius:var(--radius);padding:16px;text-align:center;font-size:12px;color:var(--graphite);}
-/* ── VOICE NOTE ── */
-.voice-row{display:flex;gap:8px;margin:2px 0 10px;}
-.voice-btn{flex:1;background:var(--stone-light);color:var(--slate);border-radius:var(--radius);padding:12px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
-.voice-btn:hover{background:var(--stone);}
-.voice-btn.recording{background:var(--crimson);color:white;animation:voicePulse 1.4s ease-in-out infinite;}
-@keyframes voicePulse{0%,100%{opacity:1;}50%{opacity:.72;}}
-.voice-status{text-align:center;font-size:11.5px;color:var(--graphite);margin:0 0 8px;min-height:14px;}
-.voice-mode-note{text-align:center;font-size:10px;color:var(--graphite);opacity:.75;margin:-4px 0 10px;}
 .cost-preview-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;margin:0 auto 8px;display:block;}
 .cost-review-card{margin:10px 14px 0;background:var(--white);border:1.5px solid var(--slate);border-radius:var(--radius);padding:14px;}
 .cost-review-title{font-size:12px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;}
@@ -466,6 +439,11 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="alert-dot"></div>
       <div class="alert-text">Evening BP med not logged. <span>Tap to follow up with Dave</span></div>
     </div>
+    <div class="emergency-banner" onclick="showScreen('vault')" style="background:var(--crimson);">
+      <div class="em-label" style="color:rgba(255,255,255,0.7);">Emergency quick access</div>
+      <div class="em-title">Mom's Red Folder</div>
+      <div class="em-sub">Insurance, DNR, doctor, pharmacy. One tap, no searching.</div>
+    </div>
     <div class="slabel" id="home-progress-label">Today's Huddle · 3 of 5 handled</div>
     <div class="progress-wrap">
       <div class="progress-label">
@@ -540,14 +518,12 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="journal-link" onclick="showScreen('journal')">See full journal →</div>
     <div class="note-add" onclick="showScreen('journal');setTimeout(()=>openCompose('journal'),50);"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--graphite)">+</div><div class="note-add-text">Add a care note…</div></div>
   </div>
-  <div class="relief-overlay" id="relief-overlay" onclick="if(event.target===this)closeRelief()">
-    <div class="relief-card" id="relief-card"></div>
-  </div>
   <div class="bottom-nav">
     <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label" style="color:var(--slate)">Today</div></div>
     <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
     <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -655,6 +631,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label" style="color:var(--slate)">Meds</div></div>
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
     <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -738,11 +715,6 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="compose-chip" onclick="toggleChip(this)">Follow-up needed</div>
       </div>
       <textarea class="compose-textarea" id="compose-text-appt" placeholder="What did the therapist say? Any next steps for the Huddle?"></textarea>
-      <div class="voice-row">
-        <div class="voice-btn" id="voice-btn-appt" onclick="toggleVoiceNote('appt')">🎤 Record instead</div>
-      </div>
-      <div class="voice-mode-note">We'll organize your recording into a summary, mood, meals, meds, and follow-up</div>
-      <div class="voice-status" id="voice-status-appt"></div>
       <div class="compose-submit" onclick="submitNote('appt')">Post to Journal</div>
       <div class="doc-sheet-status" id="compose-status-appt"></div>
     </div>
@@ -752,6 +724,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
     <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label" style="color:var(--slate)">Calendar</div></div>
     <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -813,6 +786,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
     <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -937,7 +911,8 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
     <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item active" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen(\'roster\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+    <div class="nav-item active" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1272D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label" style="color:var(--crimson)">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -973,10 +948,6 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="doc-sheet-close" onclick="closeCompose('journal')">✕</div>
       </div>
       <textarea class="compose-textarea" id="compose-text-journal" placeholder="How's Mom doing today? What should the family know?"></textarea>
-      <div class="voice-row">
-        <div class="voice-btn" id="voice-btn-journal" onclick="toggleVoiceNote('journal')">🎤 Record instead</div>
-      </div>
-      <div class="voice-status" id="voice-status-journal"></div>
       <div class="compose-submit" onclick="submitNote('journal')">Post to Journal</div>
       <div class="doc-sheet-status" id="compose-status-journal"></div>
     </div>
@@ -986,6 +957,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
     <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -1024,6 +996,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
     <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -1148,98 +1121,6 @@ function submitNote(ctx){
   setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
 }
 
-/* ── VOICE NOTE RECORDING ── */
-// ctx 'journal' -> general note, lightly cleaned transcript
-// ctx 'appt'    -> after-visit note, structured into summary/mood/meals/meds/concerns/follow-up
-const VOICE_STATE={};
-
-function voiceModeForCtx(ctx){ return ctx==='appt' ? 'after-visit' : 'general'; }
-
-async function toggleVoiceNote(ctx){
-  const state=VOICE_STATE[ctx]||(VOICE_STATE[ctx]={recording:false,recorder:null,chunks:[],startedAt:0,timerId:null});
-  if(state.recording){ stopVoiceNote(ctx); return; }
-  await startVoiceNote(ctx);
-}
-
-async function startVoiceNote(ctx){
-  const btn=document.getElementById('voice-btn-'+ctx);
-  const status=document.getElementById('voice-status-'+ctx);
-  const state=VOICE_STATE[ctx];
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    if(status) status.textContent='Voice recording is not supported in this browser';
-    return;
-  }
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    const recorder=new MediaRecorder(stream);
-    state.chunks=[];
-    state.recorder=recorder;
-    state.recording=true;
-    state.startedAt=Date.now();
-    recorder.ondataavailable=(e)=>{ if(e.data && e.data.size>0) state.chunks.push(e.data); };
-    recorder.onstop=()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      clearInterval(state.timerId);
-      const blob=new Blob(state.chunks,{type:recorder.mimeType||'audio/webm'});
-      processVoiceNote(ctx,blob);
-    };
-    recorder.start();
-    if(btn){ btn.classList.add('recording'); btn.textContent='⏹ Stop recording'; }
-    state.timerId=setInterval(()=>{
-      const secs=Math.floor((Date.now()-state.startedAt)/1000);
-      const m=Math.floor(secs/60), s=secs%60;
-      if(status) status.textContent=`Recording… ${m}:${s.toString().padStart(2,'0')}`;
-      if(secs>=120) stopVoiceNote(ctx); // keep recordings short and reliable
-    },250);
-  }catch(err){
-    console.error('mic access error',err);
-    if(status) status.textContent='Could not access the microphone. Check browser permissions.';
-  }
-}
-
-function stopVoiceNote(ctx){
-  const state=VOICE_STATE[ctx];
-  const btn=document.getElementById('voice-btn-'+ctx);
-  if(!state || !state.recording) return;
-  state.recording=false;
-  if(btn){ btn.classList.remove('recording'); btn.textContent='🎤 Record instead'; }
-  if(state.recorder && state.recorder.state!=='inactive') state.recorder.stop();
-}
-
-function processVoiceNote(ctx,blob){
-  const status=document.getElementById('voice-status-'+ctx);
-  const textarea=document.getElementById('compose-text-'+ctx);
-  if(status) status.textContent='Transcribing your note…';
-  const reader=new FileReader();
-  reader.onload=async function(e){
-    const base64=e.target.result.split(',')[1];
-    try{
-      const res=await fetch('/.netlify/functions/transcribe-note',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({audioBase64:base64,mimeType:blob.type,mode:voiceModeForCtx(ctx)})
-      });
-      if(!res.ok) throw new Error('transcription backend not available');
-      const data=await res.json();
-      if(textarea) textarea.value=formatVoiceNoteResult(data);
-      if(status) status.textContent=data.cleanupFailed?'Transcribed. Review before posting.':'Transcribed ✓ Review before posting';
-    }catch(err){
-      console.error('voice note error',err);
-      if(status) status.textContent='Could not transcribe that recording. Try again or type it instead.';
-    }
-  };
-  reader.readAsDataURL(blob);
-}
-
-function formatVoiceNoteResult(data){
-  if(data.mode==='after-visit' && data.note){
-    const n=data.note;
-    return `Summary: ${n.summary}\n\nMood: ${n.mood}\n\nMeals: ${n.meals}\n\nMedications: ${n.medications}\n\nConcerns: ${n.concerns}\n\nFollow-up: ${n.followUp}`;
-  }
-  if(data.note && data.note.cleanedNote) return data.note.cleanedNote;
-  return data.rawTranscript||'';
-}
-
 /* ── CAREGIVER CHECK-IN ── */
 const CHECKIN_MOODS={
   great:{emoji:'😊',label:'Actually good',color:'var(--sage)'},
@@ -1270,17 +1151,6 @@ function renderCheckin(){
   }
   const last=CHECKIN_HISTORY[CHECKIN_HISTORY.length-1];
   const m=CHECKIN_MOODS[last.mood];
-  const isStressed=(last.mood==='tired'||last.mood==='overwhelmed');
-  let relief='';
-  if(isStressed){
-    const trio=pickReliefTrio();
-    relief=`<div class="relief-prompt">
-      <div class="relief-prompt-text">That's a lot to be carrying right now. Got 30 seconds for one small thing, just for you?</div>
-      <div class="relief-options">
-        ${trio.map(ex=>`<div class="relief-btn" onclick="openReliefById('${ex.id}')"><div class="relief-btn-icon">${ex.icon}</div><div class="relief-btn-text">${ex.title}</div></div>`).join('')}
-      </div>
-    </div>`;
-  }
   let followup='';
   if(stressPattern()){
     followup=`<div class="checkin-followup">
@@ -1292,135 +1162,13 @@ function renderCheckin(){
       <div class="checkin-followup-status" id="checkin-followup-status"></div>
     </div>`;
   }
-  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${relief}${followup}`;
+  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${followup}`;
 }
 
 function selectMood(key){
   CHECKIN_HISTORY.push({week:'This week',mood:key});
   checkedInThisWeek=true;
   renderCheckin();
-}
-
-/* ── RELIEF NUDGE EXERCISES ── */
-let reliefInterval=null;
-
-const RELIEF_EXERCISES=[
-  {id:'box-breathing',icon:'🫁',title:'Box Breathing',mode:'breathing',cycles:3,phases:[{label:'Breathe in',seconds:4,action:'grow'},{label:'Hold',seconds:4,action:'hold'},{label:'Breathe out',seconds:4,action:'shrink'},{label:'Hold',seconds:4,action:'hold'}]},
-  {id:'physio-sigh',icon:'🫁',title:'The Physiological Sigh',mode:'breathing',cycles:3,phases:[{label:'Breathe in',seconds:2,action:'grow'},{label:'One more sip of air',seconds:1,action:'grow'},{label:'Long, slow exhale',seconds:6,action:'shrink'}]},
-  {id:'soft-belly',icon:'🫁',title:'Soft Belly Breathing',mode:'breathing',cycles:5,phases:[{label:'Belly in',seconds:4,action:'grow'},{label:'Belly out',seconds:4,action:'shrink'}]},
-  {id:'478-breathing',icon:'🫁',title:'4-7-8 Breathing',mode:'breathing',cycles:3,phases:[{label:'Breathe in',seconds:4,action:'grow'},{label:'Hold',seconds:7,action:'hold'},{label:'Breathe out',seconds:8,action:'shrink'}]},
-  {id:'coherent-breathing',icon:'🫁',title:'Coherent Breathing',mode:'breathing',cycles:6,phases:[{label:'Breathe in',seconds:5,action:'grow'},{label:'Breathe out',seconds:5,action:'shrink'}]},
-  {id:'ratio-breathing',icon:'🫁',title:'The 1:2 Ratio',mode:'breathing',cycles:5,phases:[{label:'Breathe in',seconds:3,action:'grow'},{label:'Breathe out',seconds:6,action:'shrink'}]},
-  {id:'grounding-54321',icon:'🌿',title:'5-4-3-2-1 Grounding',mode:'timer',durationSeconds:60,instructions:'Name 5 things you can see. 4 things you can feel. 3 things you can hear. 2 things you can smell. 1 thing you can taste.'},
-  {id:'tactile-reset',icon:'✋',title:'Tactile Texture Reset',mode:'timer',durationSeconds:30,instructions:'Find three different textures near you, something rough, something smooth, something soft. Just notice how each one feels.'},
-  {id:'facial-massage',icon:'🌿',title:'Facial Massage',mode:'timer',durationSeconds:45,instructions:'Using your fingertips, gently massage your temples, your jaw, and the spot between your eyebrows in small circles.'},
-  {id:'pressure-point',icon:'✋',title:'Pressure Point Hold',mode:'timer',durationSeconds:30,instructions:'Press firmly on the space between your thumb and index finger. Hold on each hand.'},
-  {id:'earlobe-massage',icon:'🌿',title:'Vagus Nerve Massage',mode:'timer',durationSeconds:30,instructions:'Gently massage your earlobes while you take slow, deep breaths.'},
-  {id:'bilateral-tapping',icon:'✋',title:'Bilateral Tapping',mode:'timer',durationSeconds:30,instructions:'Cross your arms over your chest. Gently tap your left shoulder, then your right, back and forth.'},
-  {id:'desk-stretch',icon:'🧘',title:'Desk Stretch',mode:'static',instructions:'Stand up. Reach your arms overhead, then roll your shoulders back, slowly, ten times.',doneLabel:'Done stretching'},
-  {id:'forward-fold',icon:'🧘',title:'Forward Fold',mode:'timer',durationSeconds:30,instructions:'Stand up, bend forward, and let your arms and head hang heavy. Just breathe.'},
-  {id:'isometric-squeeze',icon:'🧘',title:'The Isometric Squeeze',mode:'static',instructions:'Squeeze your whole body, fists, legs, shoulders, everything, as tight as you can for 5 seconds. Then let it all go.',doneLabel:'Done'},
-  {id:'shake-it-out',icon:'🧘',title:'Shake It Out',mode:'timer',durationSeconds:30,instructions:'Stand up and shake out your hands, arms, and legs, like you\'re shaking off water.'},
-  {id:'mindful-walk',icon:'🧘',title:'Mindful Walk',mode:'static',instructions:'Take a short walk, even just down the hall. Notice your feet hitting the floor with each step.',doneLabel:'Back and done'},
-  {id:'progressive-muscle',icon:'🧘',title:'Progressive Muscle Relaxation',mode:'timer',durationSeconds:60,instructions:'Starting at your toes and working up, tense each muscle group for 5 seconds, then completely let it go.'},
-  {id:'brain-dump',icon:'💭',title:'The Brain Dump',mode:'scratch',instructions:'Write down whatever\'s spinning in your head, tasks, worries, whatever. Nobody sees this but you, it clears when you close it.'},
-  {id:'gratitude-3',icon:'💭',title:'3 Things of Gratitude',mode:'static',instructions:'Name three specific things you\'re grateful for right now, big or small.',doneLabel:'Done'},
-  {id:'affect-labeling',icon:'💭',title:'Affect Labeling',mode:'static',instructions:'Name exactly what you\'re feeling, and rate how strong it is, 1 to 10. Just naming it helps.',doneLabel:'Done'},
-  {id:'one-visible-win',icon:'💭',title:'One Visible Win',mode:'static',instructions:'Do one small, visible thing, make the bed, wipe the counter, clear one email. Just one.',doneLabel:'Done'},
-  {id:'perspective-shift',icon:'💭',title:'Perspective Shift',mode:'static',instructions:'Ask yourself: will this matter in an hour? A week? A year?',doneLabel:'Done'},
-  {id:'category-countdown',icon:'💭',title:'Category Countdown',mode:'timer',durationSeconds:60,instructions:'Pick a topic, dog breeds, cities, colors, and silently name one for each letter of the alphabet, as far as you get.'},
-  {id:'inner-monologue',icon:'💭',title:'Inner Monologue Interrupt',mode:'static',instructions:'Say your anxious thought out loud in a silly voice, a chipmunk, a robot, whatever. It breaks the thought\'s grip.',doneLabel:'Done'}
-];
-
-let RELIEF_LAST_SHOWN=[];
-
-function pickReliefTrio(){
-  let pool=RELIEF_EXERCISES.filter(e=>!RELIEF_LAST_SHOWN.includes(e.id));
-  if(pool.length<3) pool=RELIEF_EXERCISES.slice();
-  const shuffled=pool.slice().sort(()=>Math.random()-0.5);
-  const picked=shuffled.slice(0,3);
-  RELIEF_LAST_SHOWN=picked.map(e=>e.id);
-  return picked;
-}
-
-function closeRelief(){
-  if(reliefInterval){ clearInterval(reliefInterval); clearTimeout(reliefInterval); reliefInterval=null; }
-  document.getElementById('relief-overlay').style.display='none';
-}
-
-function openReliefById(id){
-  if(reliefInterval){ clearInterval(reliefInterval); clearTimeout(reliefInterval); reliefInterval=null; }
-  const ex=RELIEF_EXERCISES.find(e=>e.id===id);
-  if(!ex)return;
-  document.getElementById('relief-overlay').style.display='flex';
-  if(ex.mode==='breathing') runBreathingExercise(ex);
-  else if(ex.mode==='timer') runTimerExercise(ex);
-  else if(ex.mode==='scratch') runScratchExercise(ex);
-  else runStaticExercise(ex);
-}
-
-function runBreathingExercise(ex){
-  const card=document.getElementById('relief-card');
-  let cycleNum=1;
-  let phaseIdx=0;
-  function showPhase(){
-    if(cycleNum>ex.cycles){
-      card.innerHTML=`<div class="relief-title">Nicely done</div>
-        <div class="relief-instructions">However you're feeling right now is okay. You took a moment for yourself, and that matters.</div>
-        <div class="relief-done-btn" onclick="closeRelief()">Close</div>`;
-      return;
-    }
-    const phase=ex.phases[phaseIdx];
-    const circleClass=phase.action==='grow'?'in':phase.action==='shrink'?'out':'';
-    card.innerHTML=`<div class="relief-title">${ex.title}</div>
-      <div class="relief-circle ${circleClass}" style="transition-duration:${phase.seconds}s;">${phase.label}</div>
-      <div class="relief-progress">Round ${cycleNum} of ${ex.cycles}</div>
-      <div class="relief-skip-link" onclick="closeRelief()">I'm okay, close this</div>`;
-    reliefInterval=setTimeout(()=>{
-      phaseIdx++;
-      if(phaseIdx>=ex.phases.length){ phaseIdx=0; cycleNum++; }
-      showPhase();
-    },phase.seconds*1000);
-  }
-  showPhase();
-}
-
-function runTimerExercise(ex){
-  let secondsLeft=ex.durationSeconds;
-  const card=document.getElementById('relief-card');
-  function render(){
-    card.innerHTML=`<div class="relief-title">${ex.title}</div>
-      <div class="relief-timer-num">${secondsLeft}</div>
-      <div class="relief-instructions">${ex.instructions}</div>
-      <div class="relief-skip-link" onclick="closeRelief()">I'm okay, close this</div>`;
-  }
-  render();
-  reliefInterval=setInterval(()=>{
-    secondsLeft--;
-    if(secondsLeft<=0){
-      clearInterval(reliefInterval);reliefInterval=null;
-      card.innerHTML=`<div class="relief-title">Nicely done</div>
-        <div class="relief-instructions">That's it, a small moment, but it counts. Come back to this anytime you need it.</div>
-        <div class="relief-done-btn" onclick="closeRelief()">Close</div>`;
-      return;
-    }
-    render();
-  },1000);
-}
-
-function runStaticExercise(ex){
-  const card=document.getElementById('relief-card');
-  card.innerHTML=`<div class="relief-title">${ex.title}</div>
-    <div class="relief-instructions">${ex.instructions}</div>
-    <div class="relief-done-btn" onclick="closeRelief()">${ex.doneLabel||'Done'}</div>`;
-}
-
-function runScratchExercise(ex){
-  const card=document.getElementById('relief-card');
-  card.innerHTML=`<div class="relief-title">${ex.title}</div>
-    <div class="relief-instructions">${ex.instructions}</div>
-    <textarea class="compose-textarea" id="relief-scratch-text" style="min-height:100px;" placeholder="Type here, it clears when you're done..."></textarea>
-    <div class="relief-done-btn" onclick="closeRelief()">Done, clear it</div>`;
 }
 
 function checkinFollowup(name){
@@ -1621,43 +1369,26 @@ function handleReceiptPhoto(evt){
   const file=evt.target.files[0];
   if(!file)return;
   const reader=new FileReader();
-  reader.onload=function(e){
-    const img=new Image();
-    img.onload=async function(){
-      // Phone camera photos are often several MB, too large for a serverless
-      // function's request body. Shrink to a max 1200px edge and re-encode
-      // as JPEG so the upload is small, fast, and reliable.
-      const maxDim=1200;
-      let w=img.width, h=img.height;
-      if(w>h && w>maxDim){ h=Math.round(h*(maxDim/w)); w=maxDim; }
-      else if(h>=w && h>maxDim){ w=Math.round(w*(maxDim/h)); h=maxDim; }
-      const canvas=document.createElement('canvas');
-      canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      const resizedDataUrl=canvas.toDataURL('image/jpeg',0.82);
-      const base64=resizedDataUrl.split(',')[1];
-      showCostLoading(resizedDataUrl);
-      let result;
-      let isDemo=false;
-      try{
-        const res=await fetch('/.netlify/functions/parse-receipt',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({imageBase64:base64,mediaType:'image/jpeg'})
-        });
-        if(!res.ok) throw new Error('backend not available');
-        result=await res.json();
-      }catch(err){
-        isDemo=true;
-        result=demoReceiptResult();
-        await new Promise(r=>setTimeout(r,900));
-      }
-      openCostReview(result,isDemo);
-    };
-    img.onerror=function(){
-      openCostReview(demoReceiptResult(),true);
-    };
-    img.src=e.target.result;
+  reader.onload=async function(e){
+    const dataUrl=e.target.result;
+    const base64=dataUrl.split(',')[1];
+    showCostLoading(dataUrl);
+    let result;
+    let isDemo=false;
+    try{
+      const res=await fetch('/.netlify/functions/parse-receipt',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageBase64:base64,mediaType:file.type||'image/jpeg'})
+      });
+      if(!res.ok) throw new Error('backend not available');
+      result=await res.json();
+    }catch(err){
+      isDemo=true;
+      result=demoReceiptResult();
+      await new Promise(r=>setTimeout(r,900));
+    }
+    openCostReview(result,isDemo);
   };
   reader.readAsDataURL(file);
   evt.target.value='';
