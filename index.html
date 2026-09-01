@@ -493,6 +493,21 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="auth-error" id="new-password-error"></div>
     <div class="auth-status" id="new-password-status"></div>
   </div>
+
+  <div class="auth-card" id="finish-setup-card" style="display:none;">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>
+      <div class="auth-logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="auth-forgot-title">Finish setting up</div>
+    <div class="auth-forgot-sub">Your account is confirmed, but we still need a couple of details before your Huddle exists.</div>
+    <div class="auth-field-label">Your name</div>
+    <input class="auth-input" id="finish-display-name" placeholder="e.g. Lisa">
+    <div class="auth-field-label">Who are you caring for?</div>
+    <input class="auth-input" id="finish-care-recipient" placeholder="e.g. Mom">
+    <button class="auth-submit" id="finish-setup-btn" onclick="submitFinishSetup()">Continue</button>
+    <div class="auth-error" id="finish-setup-error"></div>
+  </div>
 </div>
 
 <div id="app-root" style="display:none;">
@@ -1224,14 +1239,36 @@ async function createFamilyForNewUser(userId,displayName,careRecipient){
   CURRENT_FAMILY_ID=family.id;
 }
 
+let PENDING_SETUP_USER=null;
+
 async function loadFamilyAndEnter(user){
   const {data:member,error}=await sb.from('family_members').select('*').eq('user_id',user.id).limit(1).single();
   if(error||!member){
-    showAuthError('No family found for this account yet. Contact support if this seems wrong.');
+    PENDING_SETUP_USER=user;
+    document.getElementById('main-auth-card').style.display='none';
+    document.getElementById('finish-setup-card').style.display='block';
     return;
   }
   CURRENT_FAMILY_ID=member.family_id;
   await enterApp(user,member.display_name);
+}
+
+async function submitFinishSetup(){
+  const displayName=document.getElementById('finish-display-name').value.trim();
+  const careRecipient=document.getElementById('finish-care-recipient').value.trim();
+  const errEl=document.getElementById('finish-setup-error');
+  errEl.style.display='none';
+  if(!displayName||!careRecipient){
+    errEl.textContent='Fill in both fields to continue.';
+    errEl.style.display='block';
+    return;
+  }
+  const btn=document.getElementById('finish-setup-btn');
+  btn.disabled=true;
+  await createFamilyForNewUser(PENDING_SETUP_USER.id,displayName,careRecipient);
+  document.getElementById('finish-setup-card').style.display='none';
+  await enterApp(PENDING_SETUP_USER,displayName);
+  btn.disabled=false;
 }
 
 async function enterApp(user,displayName){
