@@ -418,6 +418,8 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .auth-forgot-link{text-align:center;font-size:12px;font-weight:600;color:var(--slate);cursor:pointer;margin-top:14px;}
 .auth-forgot-title{font-size:16px;font-weight:700;color:var(--slate-dark);text-align:center;margin-bottom:6px;}
 .auth-forgot-sub{font-size:12px;color:var(--graphite);text-align:center;margin-bottom:18px;line-height:1.5;}
+.auth-remember-row{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--graphite);cursor:pointer;}
+.auth-remember-row input{width:15px;height:15px;cursor:pointer;accent-color:var(--slate);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -449,6 +451,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <input class="auth-input" id="auth-password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
       <span class="auth-password-toggle" id="auth-password-toggle" onclick="togglePasswordVisibility()">Show</span>
     </div>
+    <label class="auth-remember-row" id="auth-remember-row">
+      <input type="checkbox" id="auth-remember-me" checked>
+      <span>Stay signed in on this device</span>
+    </label>
 
     <button class="auth-submit" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
     <div class="auth-forgot-link" id="auth-forgot-link" onclick="showForgotPassword()">Forgot password?</div>
@@ -1112,7 +1118,23 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 /* ══════════ SUPABASE CONNECTION & AUTH ══════════ */
 const SUPABASE_URL='https://zrwnzqpghnpaqezgnbmc.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpyd256cXBnaG5wYXFlemduYm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyOTA5ODcsImV4cCI6MjEwMzg2Njk4N30.UNOlbAs60xla_xRgc6BN0-fgGkpAAAn_b2hfd78H6-A';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const authStorage={
+  getItem:(key)=>sessionStorage.getItem(key)||localStorage.getItem(key),
+  setItem:(key,value)=>{
+    if(localStorage.getItem('hwc-remember-me')==='false'){
+      sessionStorage.setItem(key,value);
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key,value);
+      sessionStorage.removeItem(key);
+    }
+  },
+  removeItem:(key)=>{
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+};
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{storage:authStorage,persistSession:true,autoRefreshToken:true}});
 
 let CURRENT_USER=null;
 let CURRENT_FAMILY_ID=null;
@@ -1194,6 +1216,7 @@ function setAuthMode(mode){
   document.getElementById('tab-signin').classList.toggle('active',mode==='signin');
   document.getElementById('tab-signup').classList.toggle('active',mode==='signup');
   document.getElementById('signup-only-fields').style.display=mode==='signup'?'block':'none';
+  document.getElementById('auth-remember-row').style.display=mode==='signup'?'none':'flex';
   document.getElementById('auth-submit-btn').textContent=mode==='signup'?'Create Account':'Sign In';
   document.getElementById('auth-error').style.display='none';
   document.getElementById('auth-status').style.display='none';
@@ -1218,6 +1241,8 @@ async function submitAuth(){
   const password=document.getElementById('auth-password').value;
   const btn=document.getElementById('auth-submit-btn');
   if(!email||!password){showAuthError('Enter both email and password.');return;}
+  const rememberMe=document.getElementById('auth-remember-me').checked;
+  localStorage.setItem('hwc-remember-me',rememberMe?'true':'false');
   btn.disabled=true;
   if(authMode==='signup'){
     const displayName=document.getElementById('auth-display-name').value.trim();
