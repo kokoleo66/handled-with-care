@@ -54,8 +54,11 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .stab.active{color:var(--slate);border-bottom-color:var(--slate);font-weight:700;}
 
 /* ── APP BODY ── */
-.app-body{height:580px;overflow-y:auto;padding:0 0 12px;scrollbar-width:none;}
-.app-body::-webkit-scrollbar{display:none;}
+.app-body{height:580px;overflow-y:auto;padding:0 0 12px;scrollbar-width:thin;scrollbar-color:var(--stone) transparent;}
+.app-body::-webkit-scrollbar{width:10px;}
+.app-body::-webkit-scrollbar-track{background:transparent;}
+.app-body::-webkit-scrollbar-thumb{background:var(--stone);border-radius:6px;border:2px solid var(--ivory);}
+.app-body::-webkit-scrollbar-thumb:hover{background:var(--graphite);}
 
 /* ── SECTION LABEL ── */
 .slabel{font-size:10px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.9px;padding:12px 18px 7px;}
@@ -438,10 +441,13 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
 
     <div id="signup-only-fields" style="display:none;">
+      <div id="invite-join-note" style="display:none;font-size:12px;color:var(--sage);background:var(--sage-light);border-radius:var(--radius-sm);padding:9px 11px;margin-bottom:12px;">You've been invited to join an existing care team. You'll join their Huddle instead of starting a new one.</div>
       <div class="auth-field-label">Your name</div>
       <input class="auth-input" id="auth-display-name" placeholder="e.g. Lisa" autocomplete="name">
-      <div class="auth-field-label">Who are you caring for?</div>
-      <input class="auth-input" id="auth-care-recipient" placeholder="e.g. Mom" autocomplete="off">
+      <div id="signup-care-recipient-group">
+        <div class="auth-field-label">Who are you caring for?</div>
+        <input class="auth-input" id="auth-care-recipient" placeholder="e.g. Mom" autocomplete="off">
+      </div>
     </div>
 
     <div class="auth-field-label">Email</div>
@@ -503,8 +509,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="auth-forgot-sub">Your account is confirmed, but we still need a couple of details before your Huddle exists.</div>
     <div class="auth-field-label">Your name</div>
     <input class="auth-input" id="finish-display-name" placeholder="e.g. Lisa">
-    <div class="auth-field-label">Who are you caring for?</div>
-    <input class="auth-input" id="finish-care-recipient" placeholder="e.g. Mom">
+    <div id="finish-care-recipient-group">
+      <div class="auth-field-label">Who are you caring for?</div>
+      <input class="auth-input" id="finish-care-recipient" placeholder="e.g. Mom">
+    </div>
     <button class="auth-submit" id="finish-setup-btn" onclick="submitFinishSetup()">Continue</button>
     <div class="auth-error" id="finish-setup-error"></div>
   </div>
@@ -625,14 +633,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="auth-error" id="new-task-error" style="margin-top:10px;"></div>
     </div>
     <div class="slabel">The Huddle · Mom's Care Circle</div>
-    <div class="huddle-card">
-      <div class="huddle-header"><div class="huddle-title">Who's <span>in</span></div><div class="huddle-count">4 members</div></div>
-      <div class="huddle-members">
-        <div class="member-pill"><div class="member-avatar" style="background:var(--slate)">L</div><div><div class="member-name">Lisa</div><div class="member-role">Coordinator</div></div></div>
-        <div class="member-pill"><div class="member-avatar" style="background:var(--sage)">D</div><div><div class="member-name">Dave</div><div class="member-role">Sibling</div></div></div>
-        <div class="member-pill"><div class="member-avatar" style="background:var(--terracotta)">S</div><div><div class="member-name">Sarah</div><div class="member-role">Sibling</div></div></div>
-        <div class="member-pill"><div class="member-avatar" style="background:var(--stone);color:var(--charcoal)">M</div><div><div class="member-name">Mary</div><div class="member-role">Home aide</div></div></div>
-      </div>
+    <div class="huddle-card" onclick="showScreen('roster')" style="cursor:pointer;">
+      <div class="huddle-header"><div class="huddle-title">Who's <span>in</span></div><div class="huddle-count" id="home-huddle-count">1 member</div></div>
+      <div class="huddle-members" id="home-huddle-members"></div>
     </div>
     <div class="slabel">Wellness Journal</div>
     <div id="home-journal-preview"></div>
@@ -831,14 +834,19 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div class="contact-section">
       <div class="contact-section-label">The Huddle · Family</div>
-      <div class="contact-card">
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate)">L</div><div class="contact-info"><div class="contact-name">Lisa M. &nbsp;<span style="color:var(--terracotta);font-size:10px;font-weight:500">Coordinator</span></div><div class="contact-role">Chicago, IL · Primary caregiver</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--sage)">D</div><div class="contact-info"><div class="contact-name">Dave M.</div><div class="contact-role">San Diego, CA · Local contact</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--terracotta)">S</div><div class="contact-info"><div class="contact-name">Sarah M.</div><div class="contact-role">Phoenix, AZ · Backup coordinator</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-      </div>
+      <div class="contact-card" id="huddle-family-list"></div>
     </div>
-    <div class="add-btn" style="margin:4px 14px 14px;">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Add care team member
+    <div class="add-btn" style="margin:4px 14px 14px;" onclick="showInviteForm()">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Invite a family member
+    </div>
+    <div id="invite-form" style="display:none;margin:0 14px 14px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div style="font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:10px;">Share this link with the person you want to add. When they sign up through it, they'll join this same Huddle instead of starting a new one.</div>
+      <div style="display:flex;gap:6px;">
+        <input class="auth-input" id="invite-link-box" readonly style="font-size:11px;">
+        <div style="padding:11px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;white-space:nowrap;" onclick="copyInviteLink()">Copy</div>
+      </div>
+      <div class="auth-status" id="invite-copy-status" style="margin-top:8px;"></div>
+      <div class="auth-forgot-link" onclick="hideInviteForm()" style="margin-top:12px;">Close</div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -1091,6 +1099,7 @@ let CURRENT_USER=null;
 let CURRENT_FAMILY_ID=null;
 let CURRENT_DISPLAY_NAME=null;
 let authMode='signin';
+const PENDING_INVITE_FAMILY_ID=new URLSearchParams(window.location.search).get('invite');
 
 function togglePasswordVisibility(){
   const input=document.getElementById('auth-password');
@@ -1171,6 +1180,17 @@ function setAuthMode(mode){
   document.getElementById('auth-submit-btn').textContent=mode==='signup'?'Create Account':'Sign In';
   document.getElementById('auth-error').style.display='none';
   document.getElementById('auth-status').style.display='none';
+  if(mode==='signup'&&PENDING_INVITE_FAMILY_ID){
+    document.getElementById('invite-join-note').style.display='block';
+    document.getElementById('signup-care-recipient-group').style.display='none';
+  } else if(mode==='signup'){
+    document.getElementById('invite-join-note').style.display='none';
+    document.getElementById('signup-care-recipient-group').style.display='block';
+  }
+}
+
+if(PENDING_INVITE_FAMILY_ID){
+  setAuthMode('signup');
 }
 
 function showAuthError(msg){
@@ -1197,16 +1217,20 @@ async function submitAuth(){
   btn.disabled=true;
   if(authMode==='signup'){
     const displayName=document.getElementById('auth-display-name').value.trim();
-    const careRecipient=document.getElementById('auth-care-recipient').value.trim();
-    if(!displayName||!careRecipient){showAuthError('Fill in your name and who you\'re caring for.');btn.disabled=false;return;}
-    const {data,error}=await sb.auth.signUp({email,password});
+    const careRecipient=PENDING_INVITE_FAMILY_ID?'':document.getElementById('auth-care-recipient').value.trim();
+    if(!displayName||(!PENDING_INVITE_FAMILY_ID&&!careRecipient)){
+      showAuthError(PENDING_INVITE_FAMILY_ID?'Enter your name to continue.':'Fill in your name and who you\'re caring for.');
+      btn.disabled=false;return;
+    }
+    const redirectUrl=PENDING_INVITE_FAMILY_ID?window.location.origin+window.location.pathname+'?invite='+PENDING_INVITE_FAMILY_ID:window.location.origin+window.location.pathname;
+    const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl}});
     if(error){showAuthError(error.message);btn.disabled=false;return;}
     if(!data.session){
       showAuthStatus('Check your email to confirm your account, then sign in.');
       btn.disabled=false;
       return;
     }
-    await createFamilyForNewUser(data.user.id,displayName,careRecipient);
+    await completeAccountSetup(data.user.id,displayName,careRecipient);
     await enterApp(data.user,displayName);
   } else {
     const {data,error}=await sb.auth.signInWithPassword({email,password});
@@ -1214,6 +1238,25 @@ async function submitAuth(){
     await loadFamilyAndEnter(data.user);
   }
   btn.disabled=false;
+}
+
+async function completeAccountSetup(userId,displayName,careRecipient){
+  if(PENDING_INVITE_FAMILY_ID){
+    await joinFamilyViaInvite(userId,displayName,PENDING_INVITE_FAMILY_ID);
+  } else {
+    await createFamilyForNewUser(userId,displayName,careRecipient);
+  }
+}
+
+async function joinFamilyViaInvite(userId,displayName,familyId){
+  const {error}=await sb.from('family_members').insert({
+    family_id:familyId,
+    user_id:userId,
+    display_name:displayName,
+    role:'member'
+  });
+  if(error){showAuthError('Could not join that Huddle: '+error.message);return;}
+  CURRENT_FAMILY_ID=familyId;
 }
 
 async function createFamilyForNewUser(userId,displayName,careRecipient){
@@ -1240,6 +1283,7 @@ async function loadFamilyAndEnter(user){
     PENDING_SETUP_USER=user;
     document.getElementById('main-auth-card').style.display='none';
     document.getElementById('finish-setup-card').style.display='block';
+    document.getElementById('finish-care-recipient-group').style.display=PENDING_INVITE_FAMILY_ID?'none':'block';
     return;
   }
   CURRENT_FAMILY_ID=member.family_id;
@@ -1248,17 +1292,17 @@ async function loadFamilyAndEnter(user){
 
 async function submitFinishSetup(){
   const displayName=document.getElementById('finish-display-name').value.trim();
-  const careRecipient=document.getElementById('finish-care-recipient').value.trim();
+  const careRecipient=PENDING_INVITE_FAMILY_ID?'':document.getElementById('finish-care-recipient').value.trim();
   const errEl=document.getElementById('finish-setup-error');
   errEl.style.display='none';
-  if(!displayName||!careRecipient){
-    errEl.textContent='Fill in both fields to continue.';
+  if(!displayName||(!PENDING_INVITE_FAMILY_ID&&!careRecipient)){
+    errEl.textContent='Fill in the required fields to continue.';
     errEl.style.display='block';
     return;
   }
   const btn=document.getElementById('finish-setup-btn');
   btn.disabled=true;
-  await createFamilyForNewUser(PENDING_SETUP_USER.id,displayName,careRecipient);
+  await completeAccountSetup(PENDING_SETUP_USER.id,displayName,careRecipient);
   document.getElementById('finish-setup-card').style.display='none';
   await enterApp(PENDING_SETUP_USER,displayName);
   btn.disabled=false;
@@ -1283,7 +1327,7 @@ let FAMILY_MEMBERS=[];
 
 async function loadFamilyMembers(){
   if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('family_members').select('*').eq('family_id',CURRENT_FAMILY_ID);
+  const {data,error}=await sb.from('family_members').select('*').eq('family_id',CURRENT_FAMILY_ID).order('joined_at');
   if(error){console.error('Failed to load family members:',error.message);return;}
   FAMILY_MEMBERS=data||[];
   const select=document.getElementById('new-task-assignee');
@@ -1291,6 +1335,52 @@ async function loadFamilyMembers(){
     select.innerHTML='<option value="">Unassigned</option>'+
       FAMILY_MEMBERS.map(m=>`<option value="${m.user_id}">${m.display_name}</option>`).join('');
   }
+  renderHuddleMembers();
+}
+
+const MEMBER_COLORS=['var(--slate)','var(--sage)','var(--terracotta)','var(--crimson)','var(--stone)'];
+
+function renderHuddleMembers(){
+  const rosterList=document.getElementById('huddle-family-list');
+  const homeList=document.getElementById('home-huddle-members');
+  const homeCount=document.getElementById('home-huddle-count');
+  if(homeCount) homeCount.textContent=FAMILY_MEMBERS.length+(FAMILY_MEMBERS.length===1?' member':' members');
+
+  if(rosterList){
+    rosterList.innerHTML=FAMILY_MEMBERS.map((m,i)=>{
+      const initial=(m.display_name||'?').charAt(0).toUpperCase();
+      const color=MEMBER_COLORS[i%MEMBER_COLORS.length];
+      const roleTag=m.role==='coordinator'?` &nbsp;<span style="color:var(--terracotta);font-size:10px;font-weight:500">Coordinator</span>`:'';
+      const you=m.user_id===CURRENT_USER?.id?' (you)':'';
+      return `<div class="contact-row"><div class="contact-avatar" style="background:${color}">${initial}</div><div class="contact-info"><div class="contact-name">${m.display_name}${you}${roleTag}</div><div class="contact-role">${m.relationship||'Family member'}</div></div></div>`;
+    }).join('');
+  }
+  if(homeList){
+    homeList.innerHTML=FAMILY_MEMBERS.map((m,i)=>{
+      const initial=(m.display_name||'?').charAt(0).toUpperCase();
+      const color=MEMBER_COLORS[i%MEMBER_COLORS.length];
+      const roleLabel=m.role==='coordinator'?'Coordinator':(m.relationship||'Member');
+      return `<div class="member-pill"><div class="member-avatar" style="background:${color}">${initial}</div><div><div class="member-name">${m.display_name}</div><div class="member-role">${roleLabel}</div></div></div>`;
+    }).join('');
+  }
+}
+
+function showInviteForm(){
+  const link=window.location.origin+window.location.pathname+'?invite='+CURRENT_FAMILY_ID;
+  document.getElementById('invite-link-box').value=link;
+  document.getElementById('invite-form').style.display='block';
+}
+function hideInviteForm(){
+  document.getElementById('invite-form').style.display='none';
+  document.getElementById('invite-copy-status').style.display='none';
+}
+function copyInviteLink(){
+  const box=document.getElementById('invite-link-box');
+  box.select();
+  navigator.clipboard?.writeText(box.value);
+  const status=document.getElementById('invite-copy-status');
+  status.textContent='Link copied.';
+  status.style.display='block';
 }
 
 function memberNameFor(userId){
