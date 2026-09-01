@@ -160,6 +160,11 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .checkin-done{text-align:center;font-size:12px;color:var(--sage);font-weight:600;padding:6px 0 2px;}
 .checkin-history{display:flex;gap:5px;margin-top:11px;justify-content:center;}
 .checkin-dot{width:9px;height:9px;border-radius:50%;}
+.checkin-exercise-intro{font-size:12px;color:var(--charcoal);margin:11px 0 8px;line-height:1.4;}
+.checkin-exercise-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;margin-bottom:7px;background:var(--sage-light);border:1px solid var(--sage);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:#245A2A;cursor:pointer;transition:background 0.15s;}
+.checkin-exercise-btn:hover{background:#c8e8c8;}
+.checkin-exercise-btn.done{opacity:0.55;text-decoration:line-through;}
+.checkin-exercise-refresh{text-align:center;font-size:11px;font-weight:600;color:var(--slate);cursor:pointer;margin-top:2px;padding:4px;}
 .checkin-followup{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
 .checkin-followup-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
 .checkin-followup-actions{display:flex;gap:7px;flex-wrap:wrap;}
@@ -1128,8 +1133,35 @@ const CHECKIN_MOODS={
   tired:{emoji:'😮\u200d💨',label:'Running on empty',color:'var(--terracotta)'},
   overwhelmed:{emoji:'😞',label:'Overwhelmed',color:'var(--crimson)'}
 };
+const CHECKIN_EXERCISES=[
+  {emoji:'🧘',label:'Desk Stretch'},
+  {emoji:'💭',label:'Inner Monologue Interrupt'},
+  {emoji:'🌿',label:'5-4-3-2-1 Grounding'},
+  {emoji:'🌬️',label:'Box Breathing'},
+  {emoji:'💧',label:'Cold Water Reset'},
+  {emoji:'🎵',label:'One Song Pause'},
+  {emoji:'📱',label:'Phone Face Down, 60 Seconds'},
+  {emoji:'🪟',label:'Window Gaze'},
+  {emoji:'👐',label:'Squeeze and Release'},
+  {emoji:'🚶',label:'Ten Slow Steps'},
+  {emoji:'☕',label:'Warm Sip, No Multitasking'},
+  {emoji:'📝',label:'One Sentence Brain Dump'},
+  {emoji:'🙆',label:'Shoulder Rolls'},
+  {emoji:'🎯',label:'Name One Win Today'},
+  {emoji:'🌤️',label:'Step Outside'},
+  {emoji:'🫁',label:'Long Exhale x3'},
+  {emoji:'🧊',label:'Hold Something Cold'},
+  {emoji:'🕯️',label:'Smell Something You Like'},
+  {emoji:'🖐️',label:'Palm Press'},
+  {emoji:'📖',label:'Read One Line Slowly'},
+  {emoji:'🎧',label:'Thirty Seconds of Silence'},
+  {emoji:'🤲',label:'Name One Small Good Thing'},
+  {emoji:'🚿',label:'Splash Cool Water on Your Face'},
+  {emoji:'🪑',label:'Feel Your Feet on the Floor'}
+];
 let CHECKIN_HISTORY=[{week:'3 wks ago',mood:'okay'},{week:'2 wks ago',mood:'tired'},{week:'Last week',mood:'tired'}];
 let checkedInThisWeek=false;
+let currentExercisePicks=[];
 
 function checkinHistoryHTML(){
   return `<div class="checkin-history">${CHECKIN_HISTORY.map(h=>`<div class="checkin-dot" style="background:${CHECKIN_MOODS[h.mood].color}" title="${h.week}: ${CHECKIN_MOODS[h.mood].label}"></div>`).join('')}</div>`;
@@ -1138,6 +1170,32 @@ function checkinHistoryHTML(){
 function stressPattern(){
   const recent=CHECKIN_HISTORY.slice(-2);
   return recent.length===2 && recent.every(h=>h.mood==='tired'||h.mood==='overwhelmed');
+}
+
+function pickExercises(n){
+  const pool=CHECKIN_EXERCISES.slice();
+  const picks=[];
+  while(picks.length<n && pool.length){
+    const i=Math.floor(Math.random()*pool.length);
+    picks.push(pool.splice(i,1)[0]);
+  }
+  return picks;
+}
+
+function exercisesHTML(){
+  return `<div class="checkin-exercise-intro">That's a lot to be carrying right now. Got 30 seconds for one small thing, just for you?</div>
+    <div id="checkin-exercise-list">${currentExercisePicks.map((e,i)=>`<div class="checkin-exercise-btn" id="ex-${i}" onclick="doExercise(${i})">${e.emoji} ${e.label}</div>`).join('')}</div>
+    <div class="checkin-exercise-refresh" onclick="refreshExercises()">Show me different ones →</div>`;
+}
+
+function doExercise(i){
+  const el=document.getElementById('ex-'+i);
+  if(el) el.classList.toggle('done');
+}
+
+function refreshExercises(){
+  currentExercisePicks=pickExercises(3);
+  renderCheckin();
 }
 
 function renderCheckin(){
@@ -1151,6 +1209,11 @@ function renderCheckin(){
   }
   const last=CHECKIN_HISTORY[CHECKIN_HISTORY.length-1];
   const m=CHECKIN_MOODS[last.mood];
+  let exercises='';
+  if(last.mood==='tired'||last.mood==='overwhelmed'){
+    if(currentExercisePicks.length===0) currentExercisePicks=pickExercises(3);
+    exercises=exercisesHTML();
+  }
   let followup='';
   if(stressPattern()){
     followup=`<div class="checkin-followup">
@@ -1162,12 +1225,13 @@ function renderCheckin(){
       <div class="checkin-followup-status" id="checkin-followup-status"></div>
     </div>`;
   }
-  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${followup}`;
+  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${exercises}${followup}`;
 }
 
 function selectMood(key){
   CHECKIN_HISTORY.push({week:'This week',mood:key});
   checkedInThisWeek=true;
+  currentExercisePicks=[];
   renderCheckin();
 }
 
