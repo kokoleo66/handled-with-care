@@ -605,27 +605,24 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       </div>
     </div>
     <div class="slabel">Tasks</div>
-    <div class="task-card">
-      <div class="task-row done" onclick="toggleHomeTask(this)">
-        <div class="task-check done">✓</div>
-        <div class="task-body"><div class="task-name">Morning medications confirmed</div><div class="task-meta"><span class="task-assignee">Lisa</span><span class="task-due">Done 8:14 AM</span></div></div>
+    <div class="task-card" id="home-task-list"></div>
+    <div class="add-btn" style="margin:0 14px 8px;" onclick="showAddTaskForm()">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Add task
+    </div>
+    <div id="add-task-form" style="display:none;margin:0 14px 10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div class="auth-field-label" style="margin-top:0;">Task</div>
+      <input class="auth-input" id="new-task-title" placeholder="e.g. Refill Lisinopril">
+      <div class="auth-field-label">Assign to</div>
+      <select class="auth-input" id="new-task-assignee">
+        <option value="">Unassigned</option>
+      </select>
+      <div class="auth-field-label">Due date (optional)</div>
+      <input class="auth-input" id="new-task-due" type="date">
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddTaskForm()">Cancel</div>
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewTask()">Save</div>
       </div>
-      <div class="task-row done" onclick="toggleHomeTask(this)">
-        <div class="task-check done">✓</div>
-        <div class="task-body"><div class="task-name">Grocery pickup: Trader Joe's</div><div class="task-meta"><span class="task-assignee b">Dave</span><span class="task-due">Done yesterday</span></div></div>
-      </div>
-      <div class="task-row" onclick="toggleHomeTask(this)">
-        <div class="task-check open"></div>
-        <div class="task-body"><div class="task-name">Drive Mom to cardiology: Tue 2pm</div><div class="task-meta"><span class="task-assignee">Lisa</span><span class="task-due">Apr 15</span></div></div>
-      </div>
-      <div class="task-row" onclick="toggleHomeTask(this)">
-        <div class="task-check open"></div>
-        <div class="task-body"><div class="task-name">Refill Lisinopril: running low</div><div class="task-meta"><span class="task-assignee c">Sarah</span><span class="task-due">By Sunday</span></div></div>
-      </div>
-      <div class="task-row" onclick="toggleHomeTask(this)">
-        <div class="task-check open"></div>
-        <div class="task-body"><div class="task-name">Log evening BP reading</div><div class="task-meta"><span class="task-assignee b">Dave</span><span class="task-due">Tonight</span></div></div>
-      </div>
+      <div class="auth-error" id="new-task-error" style="margin-top:10px;"></div>
     </div>
     <div class="slabel">The Huddle · Mom's Care Circle</div>
     <div class="huddle-card">
@@ -1277,6 +1274,107 @@ async function enterApp(user,displayName){
   });
   await loadMedications();
   await loadAppointments();
+  await loadFamilyMembers();
+  await loadTasks();
+}
+
+/* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
+let FAMILY_MEMBERS=[];
+
+async function loadFamilyMembers(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('family_members').select('*').eq('family_id',CURRENT_FAMILY_ID);
+  if(error){console.error('Failed to load family members:',error.message);return;}
+  FAMILY_MEMBERS=data||[];
+  const select=document.getElementById('new-task-assignee');
+  if(select){
+    select.innerHTML='<option value="">Unassigned</option>'+
+      FAMILY_MEMBERS.map(m=>`<option value="${m.user_id}">${m.display_name}</option>`).join('');
+  }
+}
+
+function memberNameFor(userId){
+  if(!userId)return null;
+  const m=FAMILY_MEMBERS.find(fm=>fm.user_id===userId);
+  return m?m.display_name:'Someone';
+}
+
+/* ══════════ TASKS (real data) ══════════ */
+let TASKS=[];
+
+async function loadTasks(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('tasks')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID)
+    .order('status').order('due_date',{nullsFirst:false});
+  if(error){console.error('Failed to load tasks:',error.message);return;}
+  TASKS=data||[];
+  renderTasksList();
+}
+
+function formatDueDate(dateStr){
+  if(!dateStr)return'';
+  const d=new Date(dateStr+'T00:00:00');
+  const today=new Date();today.setHours(0,0,0,0);
+  const diffDays=Math.round((d-today)/86400000);
+  if(diffDays===0)return'Today';
+  if(diffDays===1)return'Tomorrow';
+  if(diffDays<0)return d.toLocaleDateString([],{month:'short',day:'numeric'});
+  return d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+
+function renderTasksList(){
+  const listEl=document.getElementById('home-task-list');
+  if(!listEl)return;
+  if(TASKS.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:20px 10px;color:var(--graphite);font-size:13px;">No tasks yet. Tap "+ Add task" to assign the first one.</div>';
+    updateHomeProgress();
+    return;
+  }
+  listEl.innerHTML=TASKS.map(t=>{
+    const isDone=t.status==='done';
+    const assignee=memberNameFor(t.assigned_to);
+    const dueLabel=isDone?'Done':(t.due_date?formatDueDate(t.due_date):'No due date');
+    return `<div class="task-row${isDone?' done':''}" onclick="toggleTaskStatus('${t.id}','${t.status}')">
+      <div class="task-check ${isDone?'done':'open'}">${isDone?'✓':''}</div>
+      <div class="task-body"><div class="task-name">${t.title}</div><div class="task-meta">${assignee?`<span class="task-assignee">${assignee}</span>`:''}<span class="task-due">${dueLabel}</span></div></div>
+    </div>`;
+  }).join('');
+  updateHomeProgress();
+}
+
+async function toggleTaskStatus(taskId,currentStatus){
+  const newStatus=currentStatus==='done'?'open':'done';
+  const {error}=await sb.from('tasks').update({status:newStatus}).eq('id',taskId);
+  if(error){alert('Could not update task: '+error.message);return;}
+  await loadTasks();
+}
+
+function showAddTaskForm(){document.getElementById('add-task-form').style.display='block';}
+function hideAddTaskForm(){
+  document.getElementById('add-task-form').style.display='none';
+  document.getElementById('new-task-title').value='';
+  document.getElementById('new-task-assignee').value='';
+  document.getElementById('new-task-due').value='';
+  document.getElementById('new-task-error').style.display='none';
+}
+
+async function saveNewTask(){
+  const title=document.getElementById('new-task-title').value.trim();
+  const assignedTo=document.getElementById('new-task-assignee').value||null;
+  const dueDate=document.getElementById('new-task-due').value||null;
+  const errEl=document.getElementById('new-task-error');
+  if(!title){errEl.textContent='Task name is required.';errEl.style.display='block';return;}
+  const {error}=await sb.from('tasks').insert({
+    family_id:CURRENT_FAMILY_ID,
+    title,
+    assigned_to:assignedTo,
+    due_date:dueDate,
+    created_by:CURRENT_USER.id
+  });
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  hideAddTaskForm();
+  await loadTasks();
 }
 
 /* ══════════ APPOINTMENTS (real data) ══════════ */
@@ -2050,18 +2148,10 @@ function showScreen(name){
   if(name==='appts') renderAppointmentsList();
 }
 
-function toggleHomeTask(row){
-  const check=row.querySelector('.task-check');
-  const isDone=row.classList.contains('done');
-  if(isDone){row.classList.remove('done');check.className='task-check open';check.textContent='';}
-  else{row.classList.add('done');check.className='task-check done';check.textContent='✓';}
-  updateHomeProgress();
-}
-
 function updateHomeProgress(){
   const tasks=document.querySelectorAll('#screen-home .task-row');
   const done=document.querySelectorAll('#screen-home .task-row.done');
-  const pct=Math.round((done.length/tasks.length)*100);
+  const pct=tasks.length?Math.round((done.length/tasks.length)*100):0;
   document.getElementById('home-pbar').style.width=pct+'%';
   document.getElementById('home-pct').textContent=pct+'%';
   document.getElementById('home-progress-label').textContent="Today's Huddle · "+done.length+" of "+tasks.length+" handled";
@@ -2134,7 +2224,6 @@ function buildCal(){
   }
 }
 
-setTimeout(()=>{document.getElementById('home-pbar').style.width='60%';},400);
 renderJournal();
 renderHomePreview();
 renderCheckin();
