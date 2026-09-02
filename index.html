@@ -1303,6 +1303,7 @@ async function enterApp(user,displayName){
   await loadAppointments();
   await loadPendingDebrief();
   await loadFamilyMembers();
+  await loadCheckinHistory();
   await loadTasks();
   await loadVaultDocs();
   await loadCostEntries();
@@ -2320,13 +2321,47 @@ const CHECKIN_EXERCISES=[
   {emoji:'🚿',label:'Splash Cool Water on Your Face',how:'Splash cool water on your face and pat dry.'},
   {emoji:'🪑',label:'Feel Your Feet on the Floor',how:'Notice your feet on the floor and the weight of your body in the chair.'}
 ];
-let CHECKIN_HISTORY=[{week:'3 wks ago',mood:'okay'},{week:'2 wks ago',mood:'tired'},{week:'Last week',mood:'tired'}];
+let CHECKIN_HISTORY=[];
 let checkedInThisWeek=false;
 let currentExercisePicks=[];
 let exerciseState={};
 
+function getMondayOf(d){
+  const date=new Date(d);
+  const day=date.getDay();
+  const diff=(day===0?-6:1-day);
+  date.setDate(date.getDate()+diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function isoDate(d){ return d.toISOString().split('T')[0]; }
+
+async function loadCheckinHistory(){
+  if(!CURRENT_FAMILY_ID||!CURRENT_USER)return;
+  const {data,error}=await sb.from('checkin_entries')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).eq('user_id',CURRENT_USER.id)
+    .order('week_of',{ascending:true});
+  if(error){console.error('Failed to load checkin history:',error.message);return;}
+  CHECKIN_HISTORY=data||[];
+  const thisMonday=isoDate(getMondayOf(new Date()));
+  checkedInThisWeek=CHECKIN_HISTORY.some(h=>h.week_of===thisMonday);
+  currentExercisePicks=[];
+  exerciseState={};
+  renderCheckin();
+}
+
+function weekLabel(weekOf){
+  const thisMonday=getMondayOf(new Date());
+  const entryMonday=new Date(weekOf+'T00:00:00');
+  const diffWeeks=Math.round((thisMonday-entryMonday)/(7*86400000));
+  if(diffWeeks===0)return'This week';
+  if(diffWeeks===1)return'Last week';
+  if(diffWeeks>1)return diffWeeks+' weeks ago';
+  return new Date(weekOf).toLocaleDateString();
+}
+
 function checkinHistoryHTML(){
-  return `<div class="checkin-history">${CHECKIN_HISTORY.map(h=>`<div class="checkin-dot" style="background:${CHECKIN_MOODS[h.mood].color}" title="${h.week}: ${CHECKIN_MOODS[h.mood].label}"></div>`).join('')}</div>`;
+  return `<div class="checkin-history">${CHECKIN_HISTORY.map(h=>`<div class="checkin-dot" style="background:${CHECKIN_MOODS[h.mood].color}" title="${weekLabel(h.week_of)}: ${CHECKIN_MOODS[h.mood].label}"></div>`).join('')}</div>`;
 }
 
 function stressPattern(){
@@ -2394,6 +2429,7 @@ function renderCheckin(){
     return;
   }
   const last=CHECKIN_HISTORY[CHECKIN_HISTORY.length-1];
+  if(!last){checkedInThisWeek=false;renderCheckin();return;}
   const m=CHECKIN_MOODS[last.mood];
   let exercises='';
   if(last.mood==='tired'||last.mood==='overwhelmed'){
@@ -2402,24 +2438,31 @@ function renderCheckin(){
   }
   let followup='';
   if(stressPattern()){
-    followup=`<div class="checkin-followup">
-      <div class="checkin-followup-text">Two rough weeks in a row is worth noticing. You're carrying a lot right now. Want to loop someone else in?</div>
-      <div class="checkin-followup-actions">
-        <div class="checkin-followup-btn" onclick="checkinFollowup('Dave')">Ask Dave to step in</div>
-        <div class="checkin-followup-btn" onclick="checkinFollowup('Sarah')">Ask Sarah to step in</div>
-      </div>
-      <div class="checkin-followup-status" id="checkin-followup-status"></div>
-    </div>`;
+    const others=FAMILY_MEMBERS.filter(fm=>fm.user_id!==CURRENT_USER.id);
+    if(others.length>0){
+      followup=`<div class="checkin-followup">
+        <div class="checkin-followup-text">Two rough weeks in a row is worth noticing. You're carrying a lot right now. Want to loop someone else in?</div>
+        <div class="checkin-followup-actions">
+          ${others.map(o=>`<div class="checkin-followup-btn" onclick="checkinFollowup('${o.display_name.replace(/'/g,"\\'")}')">Ask ${o.display_name} to step in</div>`).join('')}
+        </div>
+        <div class="checkin-followup-status" id="checkin-followup-status"></div>
+      </div>`;
+    }
   }
   body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${exercises}${followup}`;
 }
 
-function selectMood(key){
-  CHECKIN_HISTORY.push({week:'This week',mood:key});
-  checkedInThisWeek=true;
-  currentExercisePicks=[];
-  exerciseState={};
-  renderCheckin();
+async function selectMood(key){
+  if(!CURRENT_USER||!CURRENT_FAMILY_ID)return;
+  const weekOf=isoDate(getMondayOf(new Date()));
+  const {error}=await sb.from('checkin_entries').insert({
+    family_id:CURRENT_FAMILY_ID,
+    user_id:CURRENT_USER.id,
+    mood:key,
+    week_of:weekOf
+  });
+  if(error){alert('Could not save check-in: '+error.message);return;}
+  await loadCheckinHistory();
 }
 
 function checkinFollowup(name){
