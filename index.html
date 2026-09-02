@@ -1897,6 +1897,8 @@ async function openVaultEditor(category,docId){
   document.getElementById('doc-sheet-title-label').textContent=meta?meta.label:'Document note';
   document.getElementById('doc-sheet-meta').textContent=doc?('Updated '+new Date(doc.updated_at).toLocaleDateString()):'Not added yet';
   document.getElementById('doc-sheet-title-input').value=doc?doc.title:'';
+  document.getElementById('doc-sheet-title-input').style.borderColor='';
+  document.getElementById('doc-sheet-title-input').style.borderWidth='';
   document.getElementById('doc-sheet-content-input').value=doc?(doc.content||''):'';
   document.getElementById('doc-sheet-content-input').placeholder=meta?meta.placeholder:'Notes about this document';
   document.getElementById('doc-delete-btn').style.display=doc?'flex':'none';
@@ -1948,43 +1950,64 @@ function closeDoc(){
 }
 
 async function saveVaultDoc(){
-  const title=document.getElementById('doc-sheet-title-input').value.trim();
-  const content=document.getElementById('doc-sheet-content-input').value.trim();
   const statusEl=document.getElementById('doc-sheet-status');
-  statusEl.style.color='var(--sage)';
-  if(!title){statusEl.style.color='var(--crimson)';statusEl.textContent='A title is required.';return;}
-  if(!editingVaultDoc){return;}
-
-  let fileUrl=existingVaultPhotoPath;
-
-  if(pendingVaultPhotoFile){
-    statusEl.textContent='Uploading photo...';
-    const ext=(pendingVaultPhotoFile.name.split('.').pop()||'jpg').toLowerCase();
-    const path=`${CURRENT_FAMILY_ID}/${editingVaultDoc.category}-${Date.now()}.${ext}`;
-    const {error:uploadErr}=await sb.storage.from('vault-documents').upload(path,pendingVaultPhotoFile);
-    if(uploadErr){statusEl.style.color='var(--crimson)';statusEl.textContent='Photo upload failed: '+uploadErr.message;return;}
-    if(existingVaultPhotoPath){
-      await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
+  try{
+    const title=document.getElementById('doc-sheet-title-input').value.trim();
+    const content=document.getElementById('doc-sheet-content-input').value.trim();
+    statusEl.style.color='var(--sage)';
+    if(!title){
+      statusEl.style.color='var(--crimson)';
+      statusEl.textContent='A title is required.';
+      const titleInput=document.getElementById('doc-sheet-title-input');
+      titleInput.style.borderColor='var(--crimson)';
+      titleInput.style.borderWidth='2px';
+      titleInput.scrollIntoView({behavior:'smooth',block:'center'});
+      titleInput.focus();
+      return;
     }
-    fileUrl=path;
-  } else if(removeExistingVaultPhoto&&existingVaultPhotoPath){
-    await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
-    fileUrl=null;
-  }
+    if(!editingVaultDoc){return;}
+    if(!CURRENT_USER||!CURRENT_FAMILY_ID){
+      statusEl.style.color='var(--crimson)';
+      statusEl.textContent='Session issue: please refresh the page and sign in again.';
+      return;
+    }
 
-  let error;
-  if(editingVaultDoc.id){
-    ({error}=await sb.from('vault_documents').update({
-      title,content,file_url:fileUrl,updated_by:CURRENT_USER.id,updated_at:new Date().toISOString()
-    }).eq('id',editingVaultDoc.id));
-  } else {
-    ({error}=await sb.from('vault_documents').insert({
-      family_id:CURRENT_FAMILY_ID,category:editingVaultDoc.category,title,content,file_url:fileUrl,updated_by:CURRENT_USER.id
-    }));
+    let fileUrl=existingVaultPhotoPath;
+
+    if(pendingVaultPhotoFile){
+      statusEl.style.color='var(--graphite)';
+      statusEl.textContent='Uploading photo...';
+      const ext=(pendingVaultPhotoFile.name.split('.').pop()||'jpg').toLowerCase();
+      const path=`${CURRENT_FAMILY_ID}/${editingVaultDoc.category}-${Date.now()}.${ext}`;
+      const {error:uploadErr}=await sb.storage.from('vault-documents').upload(path,pendingVaultPhotoFile);
+      if(uploadErr){statusEl.style.color='var(--crimson)';statusEl.textContent='Photo upload failed: '+uploadErr.message;return;}
+      if(existingVaultPhotoPath){
+        await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
+      }
+      fileUrl=path;
+    } else if(removeExistingVaultPhoto&&existingVaultPhotoPath){
+      await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
+      fileUrl=null;
+    }
+
+    let error;
+    if(editingVaultDoc.id){
+      ({error}=await sb.from('vault_documents').update({
+        title,content,file_url:fileUrl,updated_by:CURRENT_USER.id,updated_at:new Date().toISOString()
+      }).eq('id',editingVaultDoc.id));
+    } else {
+      ({error}=await sb.from('vault_documents').insert({
+        family_id:CURRENT_FAMILY_ID,category:editingVaultDoc.category,title,content,file_url:fileUrl,updated_by:CURRENT_USER.id
+      }));
+    }
+    if(error){statusEl.style.color='var(--crimson)';statusEl.textContent=error.message;return;}
+    closeDoc();
+    await loadVaultDocs();
+  }catch(err){
+    console.error('saveVaultDoc failed:',err);
+    statusEl.style.color='var(--crimson)';
+    statusEl.textContent='Something went wrong saving this: '+err.message;
   }
-  if(error){statusEl.style.color='var(--crimson)';statusEl.textContent=error.message;return;}
-  closeDoc();
-  await loadVaultDocs();
 }
 
 async function deleteVaultDoc(){
