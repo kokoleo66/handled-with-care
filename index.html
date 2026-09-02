@@ -591,16 +591,16 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
   </div>
   <div class="app-body">
     <div class="greeting-bar">
-      <div class="greeting-time">Friday, April 11 · Good morning</div>
-      <div class="greeting-name">Here's <em>Mom's</em> morning snapshot</div>
+      <div class="greeting-time" id="greeting-time">Friday, April 11 · Good morning</div>
+      <div class="greeting-name">Here's <em id="greeting-recipient-name">Mom's</em> morning snapshot</div>
     </div>
-    <div class="alert-strip" onclick="this.style.display='none'">
+    <div class="alert-strip" id="home-alert-strip" style="display:none;" onclick="showScreen('meds')">
       <div class="alert-dot"></div>
-      <div class="alert-text">Evening BP med not logged. <span>Tap to follow up with Dave</span></div>
+      <div class="alert-text" id="home-alert-text"></div>
     </div>
     <div class="emergency-banner" onclick="showScreen('vault')" style="background:var(--crimson);">
       <div class="em-label" style="color:rgba(255,255,255,0.7);">Emergency quick access</div>
-      <div class="em-title">Mom's Red Folder</div>
+      <div class="em-title care-recipient-title">Mom's Red Folder</div>
       <div class="em-sub">Insurance, DNR, doctor, pharmacy. One tap, no searching.</div>
     </div>
     <div class="slabel" id="home-progress-label">Today's Huddle · 3 of 5 handled</div>
@@ -659,7 +659,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       </div>
       <div class="auth-error" id="new-task-error" style="margin-top:10px;"></div>
     </div>
-    <div class="slabel">The Huddle · Mom's Care Circle</div>
+    <div class="slabel">The Huddle · <span id="huddle-recipient-name-1">Mom's</span> Care Circle</div>
     <div class="huddle-card" onclick="showScreen('roster')" style="cursor:pointer;">
       <div class="huddle-header"><div class="huddle-title">Who's <span>in</span></div><div class="huddle-count" id="home-huddle-count">1 member</div></div>
       <div class="huddle-members" id="home-huddle-members"></div>
@@ -841,7 +841,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
   <div class="app-body">
     <div class="emergency-banner">
       <div class="em-label">Emergency quick access</div>
-      <div class="em-title">Mom's Red Folder</div>
+      <div class="em-title care-recipient-title">Mom's Red Folder</div>
       <div class="em-sub">Insurance · DNR · Primary doctor · Pharmacy · one tap</div>
     </div>
     <div class="contact-section">
@@ -908,7 +908,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
   <div class="app-body">
     <div class="emergency-banner">
       <div class="em-label">Emergency quick access</div>
-      <div class="em-title">Mom's Red Folder</div>
+      <div class="em-title care-recipient-title">Mom's Red Folder</div>
       <div class="em-sub">The 6 things you'd need at 2am. One tap, no searching</div>
     </div>
     <div class="redfolder-grid" id="redfolder-grid"></div>
@@ -968,7 +968,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-avatar">L</div>
   </div>
   <div class="screen-tabs">
-    <div class="stab active">Mom's Care Circle</div>
+    <div class="stab active"><span id="huddle-recipient-name-2">Mom's</span> Care Circle</div>
   </div>
   <div class="app-body" id="journal-feed"></div>
   <div class="journal-fab" onclick="openCompose('journal')">+</div>
@@ -1284,6 +1284,8 @@ async function enterApp(user,displayName){
   document.querySelectorAll('.nav-avatar').forEach(el=>{
     el.textContent=(displayName||'?').charAt(0).toUpperCase();
   });
+  await loadCareRecipientName();
+  updateGreeting();
   await loadMedications();
   await loadAppointments();
   await loadFamilyMembers();
@@ -1291,6 +1293,87 @@ async function enterApp(user,displayName){
   await loadVaultDocs();
   await loadCostEntries();
   await loadJournalEntries();
+}
+
+/* ══════════ CARE RECIPIENT NAME (real, not hardcoded "Mom") ══════════ */
+let CARE_RECIPIENT_NAME='them';
+
+async function loadCareRecipientName(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('families').select('care_recipient_name').eq('id',CURRENT_FAMILY_ID).single();
+  if(error||!data){console.error('Failed to load care recipient name:',error?.message);return;}
+  CARE_RECIPIENT_NAME=data.care_recipient_name||'them';
+  applyCareRecipientName();
+}
+
+function applyCareRecipientName(){
+  const possessive=CARE_RECIPIENT_NAME+"'s";
+  const recipEl=document.getElementById('greeting-recipient-name');
+  if(recipEl) recipEl.textContent=possessive;
+  document.querySelectorAll('.care-recipient-title').forEach(el=>{el.textContent=possessive+' Red Folder';});
+  const h1=document.getElementById('huddle-recipient-name-1');
+  if(h1) h1.textContent=possessive;
+  const h2=document.getElementById('huddle-recipient-name-2');
+  if(h2) h2.textContent=possessive;
+}
+
+/* ══════════ REAL GREETING (real date, real time-of-day) ══════════ */
+function updateGreeting(){
+  const el=document.getElementById('greeting-time');
+  if(!el)return;
+  const now=new Date();
+  const dayName=now.toLocaleDateString([],{weekday:'long'});
+  const monthDay=now.toLocaleDateString([],{month:'long',day:'numeric'});
+  const hour=now.getHours();
+  const partOfDay=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  el.textContent=`${dayName}, ${monthDay} · ${partOfDay}`;
+}
+
+/* ══════════ REAL "IS EVERYTHING COVERED TODAY" ALERT ══════════ */
+function parseScheduleHour(text){
+  if(!text)return null;
+  const t=text.toLowerCase();
+  const timeMatch=t.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
+  if(timeMatch){
+    let hour=parseInt(timeMatch[1],10);
+    const meridiem=timeMatch[3];
+    if(meridiem==='pm' && hour<12) hour+=12;
+    if(meridiem==='am' && hour===12) hour=0;
+    if(!meridiem && hour>=1 && hour<=7) hour+=12;
+    if(hour>=0 && hour<=23) return hour;
+  }
+  if(t.includes('morning')||t.includes('breakfast'))return 9;
+  if(t.includes('noon')||t.includes('lunch'))return 12;
+  if(t.includes('afternoon'))return 14;
+  if(t.includes('evening')||t.includes('dinner'))return 18;
+  if(t.includes('night')||t.includes('bedtime'))return 21;
+  return null;
+}
+
+function getOverdueMedications(){
+  const currentHour=new Date().getHours();
+  return MEDICATIONS.filter(m=>{
+    const schedHour=parseScheduleHour(m.schedule_time);
+    if(schedHour===null||currentHour<schedHour)return false;
+    const log=latestLogFor(m.id);
+    return !(log&&log.status==='taken');
+  });
+}
+
+function updateHomeAlertBanner(){
+  const strip=document.getElementById('home-alert-strip');
+  const textEl=document.getElementById('home-alert-text');
+  if(!strip||!textEl)return;
+  const overdue=getOverdueMedications();
+  if(overdue.length===0){
+    strip.style.display='none';
+    return;
+  }
+  const label=overdue.length===1
+    ? `${overdue[0].name} not logged.`
+    : `${overdue.length} medications not logged.`;
+  textEl.innerHTML=`${label} <span>Tap to check Meds</span>`;
+  strip.style.display='flex';
 }
 
 /* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
@@ -1525,6 +1608,7 @@ async function loadMedications(){
   if(logErr){console.error('Failed to load medication logs:',logErr.message);return;}
   MED_LOGS_TODAY=logs||[];
   renderMedsScreen();
+  updateHomeAlertBanner();
 }
 
 function latestLogFor(medId){
