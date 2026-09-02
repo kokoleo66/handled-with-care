@@ -764,7 +764,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       </div>
       <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
     </div>
-    <div class="post-appt" onclick="openPostApptCompose()"><div><div class="post-appt-text">How did PT go Tuesday?</div><div class="post-appt-sub">Add a note from Mom's Apr 8 visit → helps the whole Huddle</div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
+    <div class="post-appt" id="pending-debrief-banner" style="display:none;" onclick="openDebriefForm()"><div><div class="post-appt-text" id="pending-debrief-text"></div><div class="post-appt-sub" id="pending-debrief-sub"></div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
     <div class="slabel" id="appt-list-label">Upcoming appointments</div>
     <div class="appt-card" id="appt-list"></div>
     <div class="add-btn" onclick="showAddApptForm()">
@@ -788,25 +788,25 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="auth-error" id="new-appt-error" style="margin-top:10px;"></div>
     </div>
   </div>
-  <div class="doc-sheet-overlay" id="compose-overlay-appt" onclick="if(event.target===this)closeCompose('appt')">
+  <div class="doc-sheet-overlay" id="debrief-overlay" onclick="if(event.target===this)closeDebriefForm()">
     <div class="doc-sheet">
       <div class="doc-sheet-handle"></div>
       <div class="doc-sheet-header">
         <div class="doc-sheet-icon" style="background:var(--terracotta)">🩺</div>
         <div style="flex:1;">
-          <div class="doc-sheet-title">How did PT go Tuesday?</div>
-          <div class="doc-sheet-meta">Physical therapy · Apr 8 · Sharp Rehab</div>
+          <div class="doc-sheet-title" id="debrief-title">Appointment debrief</div>
+          <div class="doc-sheet-meta" id="debrief-meta"></div>
         </div>
-        <div class="doc-sheet-close" onclick="closeCompose('appt')">✕</div>
+        <div class="doc-sheet-close" onclick="closeDebriefForm()">✕</div>
       </div>
-      <div class="compose-chips" id="compose-chips-appt">
-        <div class="compose-chip" onclick="toggleChip(this)">All good</div>
-        <div class="compose-chip" onclick="toggleChip(this)">New prescription</div>
-        <div class="compose-chip" onclick="toggleChip(this)">Follow-up needed</div>
-      </div>
-      <textarea class="compose-textarea" id="compose-text-appt" placeholder="What did the therapist say? Any next steps for the Huddle?"></textarea>
-      <div class="compose-submit" onclick="submitNote('appt')">Post to Journal</div>
-      <div class="doc-sheet-status" id="compose-status-appt"></div>
+      <div class="auth-field-label" style="margin-top:4px;">What did the doctor say?</div>
+      <textarea class="auth-input" id="debrief-doctor-said" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Summary of what was discussed"></textarea>
+      <div class="auth-field-label">New prescriptions?</div>
+      <textarea class="auth-input" id="debrief-new-rx" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Any new medications or changes"></textarea>
+      <div class="auth-field-label">Next steps / follow-up?</div>
+      <textarea class="auth-input" id="debrief-next-steps" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="What needs to happen next"></textarea>
+      <div class="compose-submit" onclick="submitDebrief()">Save debrief and share with Huddle</div>
+      <div class="doc-sheet-status" id="debrief-status"></div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -1288,6 +1288,7 @@ async function enterApp(user,displayName){
   updateGreeting();
   await loadMedications();
   await loadAppointments();
+  await loadPendingDebrief();
   await loadFamilyMembers();
   await loadTasks();
   await loadVaultDocs();
@@ -1896,7 +1897,6 @@ function closeCompose(ctx){
   const overlay=document.getElementById('compose-overlay-'+ctx);
   if(overlay) overlay.style.display='none';
 }
-function openPostApptCompose(){ openCompose('appt'); }
 
 function toggleChip(el){
   el.parentElement.querySelectorAll('.compose-chip').forEach(c=>c.classList.remove('selected'));
@@ -1908,22 +1908,103 @@ async function submitNote(ctx){
   const status=document.getElementById('compose-status-'+ctx);
   const text=textarea.value.trim();
   if(!text){ if(status) status.textContent='Add a few words before posting'; return; }
-  let content=text;
-  if(ctx==='appt'){
-    const chip=document.querySelector('#compose-chips-appt .compose-chip.selected');
-    const tag=chip?chip.textContent+' · PT visit':'Post-appointment note';
-    content=`[${tag}] ${text}`;
-  }
   const {error}=await sb.from('journal_entries').insert({
     family_id:CURRENT_FAMILY_ID,
     author_id:CURRENT_USER.id,
-    content
+    content:text
   });
   if(error){ if(status) status.textContent=error.message; return; }
   await loadJournalEntries();
   textarea.value='';
   if(status) status.textContent='Posted to the Journal ✓';
   setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
+}
+
+/* ══════════ POST-APPOINTMENT DEBRIEF (real table) ══════════ */
+let PENDING_DEBRIEF_APPT=null;
+
+async function loadPendingDebrief(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data:pastAppts,error}=await sb.from('appointments')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID)
+    .lt('appointment_at',new Date().toISOString())
+    .order('appointment_at',{ascending:false})
+    .limit(10);
+  if(error||!pastAppts||pastAppts.length===0){
+    hideDebriefBanner();
+    return;
+  }
+  const ids=pastAppts.map(a=>a.id);
+  const {data:existingDebriefs}=await sb.from('appointment_debriefs')
+    .select('appointment_id').in('appointment_id',ids);
+  const debriefedIds=new Set((existingDebriefs||[]).map(d=>d.appointment_id));
+  const needsDebrief=pastAppts.find(a=>!debriefedIds.has(a.id));
+  if(!needsDebrief){
+    hideDebriefBanner();
+    return;
+  }
+  PENDING_DEBRIEF_APPT=needsDebrief;
+  const banner=document.getElementById('pending-debrief-banner');
+  const dt=new Date(needsDebrief.appointment_at);
+  document.getElementById('pending-debrief-text').textContent=`How did "${needsDebrief.title}" go?`;
+  document.getElementById('pending-debrief-sub').textContent=`${dt.toLocaleDateString([],{month:'short',day:'numeric'})} → helps the whole Huddle`;
+  if(banner) banner.style.display='flex';
+}
+
+function hideDebriefBanner(){
+  PENDING_DEBRIEF_APPT=null;
+  const banner=document.getElementById('pending-debrief-banner');
+  if(banner) banner.style.display='none';
+}
+
+function openDebriefForm(){
+  if(!PENDING_DEBRIEF_APPT)return;
+  document.getElementById('debrief-title').textContent=PENDING_DEBRIEF_APPT.title;
+  const dt=new Date(PENDING_DEBRIEF_APPT.appointment_at);
+  const metaBits=[dt.toLocaleDateString(),PENDING_DEBRIEF_APPT.provider,PENDING_DEBRIEF_APPT.location].filter(Boolean).join(' · ');
+  document.getElementById('debrief-meta').textContent=metaBits;
+  document.getElementById('debrief-doctor-said').value='';
+  document.getElementById('debrief-new-rx').value='';
+  document.getElementById('debrief-next-steps').value='';
+  document.getElementById('debrief-status').textContent='';
+  document.getElementById('debrief-overlay').style.display='flex';
+}
+function closeDebriefForm(){
+  document.getElementById('debrief-overlay').style.display='none';
+}
+
+async function submitDebrief(){
+  const doctorSaid=document.getElementById('debrief-doctor-said').value.trim();
+  const newRx=document.getElementById('debrief-new-rx').value.trim();
+  const nextSteps=document.getElementById('debrief-next-steps').value.trim();
+  const status=document.getElementById('debrief-status');
+  if(!doctorSaid&&!newRx&&!nextSteps){
+    status.textContent='Add at least a note before saving.';
+    return;
+  }
+  const {error}=await sb.from('appointment_debriefs').insert({
+    appointment_id:PENDING_DEBRIEF_APPT.id,
+    family_id:CURRENT_FAMILY_ID,
+    doctor_said:doctorSaid,
+    new_prescriptions:newRx,
+    next_steps:nextSteps,
+    created_by:CURRENT_USER.id
+  });
+  if(error){status.textContent=error.message;return;}
+
+  const summaryParts=[];
+  if(doctorSaid) summaryParts.push(`Doctor said: ${doctorSaid}`);
+  if(newRx) summaryParts.push(`New prescriptions: ${newRx}`);
+  if(nextSteps) summaryParts.push(`Next steps: ${nextSteps}`);
+  await sb.from('journal_entries').insert({
+    family_id:CURRENT_FAMILY_ID,
+    author_id:CURRENT_USER.id,
+    content:`[Post-appointment debrief · ${PENDING_DEBRIEF_APPT.title}] ${summaryParts.join(' — ')}`
+  });
+  await loadJournalEntries();
+
+  status.textContent='Saved and shared with the Huddle ✓';
+  setTimeout(()=>{closeDebriefForm();loadPendingDebrief();},900);
 }
 
 /* ── CAREGIVER CHECK-IN ── */
