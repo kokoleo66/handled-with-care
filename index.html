@@ -1821,16 +1821,16 @@ let VAULT_DOCS_DATA=[];
 let editingVaultDoc=null;
 
 const VAULT_CATEGORY_META={
-  insurance:{icon:'🪪',color:'var(--slate)',label:'Insurance (Primary)',titlePlaceholder:'e.g. Kaiser, Blue Cross',placeholder:'Provider, policy number, plan details'},
-  insurance_secondary:{icon:'🪪',color:'var(--slate-light)',label:'Insurance (Secondary)',titlePlaceholder:'e.g. Aetna Supplemental',placeholder:'Provider, policy number, plan details'},
-  legal:{icon:'📋',color:'var(--crimson)',label:'Advance Directive',titlePlaceholder:'e.g. Advance Directive, DNR',placeholder:'DNR status, POA, where the original is kept'},
-  doctor:{icon:'👨‍⚕️',color:'var(--slate-light)',label:'Primary Doctor',titlePlaceholder:'e.g. Dr. Linda Chen',placeholder:'Name, practice, phone number'},
-  pharmacy:{icon:'💊',color:'var(--terracotta)',label:'Pharmacy',titlePlaceholder:'e.g. CVS, Walgreens',placeholder:'Pharmacy name, location, phone'},
-  allergies:{icon:'⚠️',color:'var(--crimson)',label:'Allergies',titlePlaceholder:'e.g. Penicillin, Peanuts',placeholder:'List each allergy and its reaction, one per line, e.g.\nPenicillin: hives, shortness of breath\nPeanuts: swelling'},
-  conditions:{icon:'🩺',color:'var(--terracotta)',label:'Conditions',titlePlaceholder:'e.g. High Blood Pressure, COPD',placeholder:'List each condition and any notes, one per line'},
-  emergency_contact:{icon:'📞',color:'var(--slate)',label:'Emergency Contact',titlePlaceholder:'e.g. Lisa M., Daughter',placeholder:'Name, relationship, phone number'}
+  doctor:{icon:'👨‍⚕️',color:'var(--sage)',bg:'var(--sage-light)',label:'Primary Doctor',titlePlaceholder:'e.g. Dr. Linda Chen',placeholder:'Name, practice, phone number'},
+  pharmacy:{icon:'💊',color:'var(--terracotta)',bg:'var(--terracotta-light)',label:'Pharmacy',titlePlaceholder:'e.g. CVS, Walgreens',placeholder:'Pharmacy name, location, phone'},
+  conditions:{icon:'🩺',color:'var(--crimson)',bg:'var(--crimson-light)',label:'Conditions',titlePlaceholder:'e.g. High Blood Pressure, COPD',placeholder:'List each condition and any notes, one per line'},
+  allergies:{icon:'⚠️',color:'#B8860B',bg:'#FBEFD2',label:'Allergies',titlePlaceholder:'e.g. Penicillin, Peanuts',placeholder:'List each allergy and its reaction, one per line, e.g.\nPenicillin: hives, shortness of breath\nPeanuts: swelling'},
+  insurance:{icon:'🪪',color:'var(--slate)',bg:'var(--slate-light)',label:'Insurance (Primary)',titlePlaceholder:'e.g. Kaiser, Blue Cross',placeholder:'Provider, policy number, plan details'},
+  insurance_secondary:{icon:'🪪',color:'var(--slate-light)',bg:'#EAF4FC',label:'Insurance (Secondary)',titlePlaceholder:'e.g. Aetna Supplemental',placeholder:'Provider, policy number, plan details'},
+  emergency_contact:{icon:'📞',color:'var(--stone)',bg:'var(--stone-light)',label:'Emergency Contact',titlePlaceholder:'e.g. Lisa M., Daughter',placeholder:'Name, relationship, phone number'},
+  legal:{icon:'📋',color:'#7B4B8A',bg:'#F0E4F0',label:'Advance Directive',titlePlaceholder:'e.g. Advance Directive, DNR',placeholder:'DNR status, POA, where the original is kept'}
 };
-const VAULT_TILE_ORDER=['insurance','insurance_secondary','legal','doctor','pharmacy','allergies','conditions','emergency_contact'];
+const VAULT_TILE_ORDER=['doctor','pharmacy','conditions','allergies','insurance','insurance_secondary','emergency_contact','legal'];
 
 async function loadVaultDocs(){
   if(!CURRENT_FAMILY_ID)return;
@@ -1853,7 +1853,7 @@ function renderVaultGrid(){
     const meta=VAULT_CATEGORY_META[cat];
     const doc=findVaultDoc(cat);
     const sub=doc?(doc.title||'Added'):'Tap to add';
-    return `<div class="redfolder-tile" onclick="openVaultEditor('${cat}',${doc?`'${doc.id}'`:'null'})"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
+    return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openVaultEditor('${cat}',${doc?`'${doc.id}'`:'null'})"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
   }).join('');
 }
 
