@@ -922,11 +922,15 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <input class="auth-input" id="doc-sheet-title-input" placeholder="Enter a title">
       </div>
       <div id="conditions-checklist-wrap" style="display:none;">
-        <div class="auth-field-label">Common conditions (tap all that apply)</div>
+        <div id="conditions-selected-row" style="margin-bottom:12px;"></div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <input class="auth-input" id="conditions-custom-input" placeholder="Add a condition not listed below" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCondition();}">
+          <div style="padding:11px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;text-align:center;cursor:pointer;background:var(--slate);color:white;white-space:nowrap;" onclick="addCustomCondition()">Add</div>
+        </div>
+        <div class="auth-field-label" style="margin-top:0;">Common conditions (tap all that apply)</div>
         <div class="cost-chip-row" id="conditions-chip-row" style="margin-top:4px;"></div>
-        <div id="conditions-selected-row" style="margin-top:10px;"></div>
       </div>
-      <div class="auth-field-label">Details</div>
+      <div class="auth-field-label" id="doc-sheet-details-label">Details</div>
       <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
       <div class="auth-field-label">Photo</div>
       <div id="vault-photo-area">
@@ -1863,7 +1867,9 @@ function renderVaultGrid(){
   grid.innerHTML=VAULT_TILE_ORDER.map(cat=>{
     const meta=VAULT_CATEGORY_META[cat];
     const doc=findVaultDoc(cat);
-    const sub=doc?(doc.title||'Added'):'Tap to add';
+    const sub=cat==='conditions'
+      ?(doc?'Listed':'Tap to add')
+      :(doc?(doc.title||'Added'):'Tap to add');
     return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openVaultEditor('${cat}',${doc?`'${doc.id}'`:'null'})"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
   }).join('');
 }
@@ -1963,10 +1969,10 @@ function renderSelectedConditionsRow(){
   const el=document.getElementById('conditions-selected-row');
   if(!el)return;
   if(selectedConditions.size===0){
-    el.innerHTML='<div style="font-size:11px;color:var(--graphite);">Nothing selected yet.</div>';
+    el.innerHTML='<div class="auth-field-label" style="margin-top:0;">Known Conditions</div><div style="font-size:11px;color:var(--graphite);">Nothing added yet.</div>';
     return;
   }
-  el.innerHTML=`<div class="auth-field-label" style="margin-top:0;">Selected (${selectedConditions.size})</div>
+  el.innerHTML=`<div class="auth-field-label" style="margin-top:0;">Known Conditions (${selectedConditions.size})</div>
     <div class="cost-chip-row">${[...selectedConditions].map(c=>
       `<div class="cost-chip selected" style="padding-right:8px;">${c} <span onclick="event.stopPropagation();removeSelectedCondition('${c.replace(/'/g,"\\'")}')" style="margin-left:5px;font-weight:800;cursor:pointer;">✕</span></div>`
     ).join('')}</div>`;
@@ -1974,6 +1980,15 @@ function renderSelectedConditionsRow(){
 
 function removeSelectedCondition(name){
   selectedConditions.delete(name);
+  renderConditionChips();
+}
+
+function addCustomCondition(){
+  const input=document.getElementById('conditions-custom-input');
+  const name=input.value.trim();
+  if(!name)return;
+  selectedConditions.add(name);
+  input.value='';
   renderConditionChips();
 }
 
