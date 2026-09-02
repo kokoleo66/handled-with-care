@@ -919,6 +919,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       </div>
       <div class="auth-field-label" style="margin-top:4px;">Name</div>
       <input class="auth-input" id="doc-sheet-title-input" placeholder="Enter a title">
+      <div id="conditions-checklist-wrap" style="display:none;">
+        <div class="auth-field-label">Common conditions (tap all that apply)</div>
+        <div class="cost-chip-row" id="conditions-chip-row" style="margin-top:4px;"></div>
+      </div>
       <div class="auth-field-label">Details</div>
       <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
       <div class="auth-field-label">Photo</div>
@@ -1832,6 +1836,10 @@ const VAULT_CATEGORY_META={
 };
 const VAULT_TILE_ORDER=['doctor','pharmacy','conditions','allergies','insurance','insurance_secondary','emergency_contact','legal'];
 
+const COMMON_CONDITIONS=['Anemia','Anxiety disorders','Arthritis','Asthma','Atrial fibrillation','BPH','Cancer','Cataracts','Chronic back pain','Chronic constipation','Chronic kidney disease','Chronic liver disease','Chronic pain','Chronic sinusitis','Chronic venous insufficiency','COPD','Coronary heart disease','Dementia','Depression','Diabetic retinopathy','Diverticulosis','Erectile dysfunction','Fatty liver disease','Fibromyalgia','Gallstones','GERD','Glaucoma','Gout','Hearing loss','Heart failure','High blood pressure','High cholesterol','Hypothyroidism','Irritable bowel syndrome','Low bone mass','Macular degeneration','Migraine',"Parkinson's disease",'Pelvic organ prolapse','Peripheral artery disease','Peripheral neuropathy','Prediabetes','Psoriasis','Rheumatoid arthritis','Sleep apnea','Type 2 diabetes','Urinary incontinence','Vision impairment','Obesity','Osteoporosis'].sort();
+
+let selectedConditions=new Set();
+
 async function loadVaultDocs(){
   if(!CURRENT_FAMILY_ID)return;
   const {data,error}=await sb.from('vault_documents')
@@ -1902,7 +1910,23 @@ async function openVaultEditor(category,docId){
   document.getElementById('doc-sheet-title-input').placeholder=meta?meta.titlePlaceholder:'Enter a title';
   document.getElementById('doc-sheet-title-input').style.borderColor='';
   document.getElementById('doc-sheet-title-input').style.borderWidth='';
-  document.getElementById('doc-sheet-content-input').value=doc?(doc.content||''):'';
+
+  selectedConditions=new Set();
+  let remainingContent=doc?(doc.content||''):'';
+  const checklistWrap=document.getElementById('conditions-checklist-wrap');
+  if(category==='conditions'){
+    checklistWrap.style.display='block';
+    const match=remainingContent.match(/^Conditions:\s*(.+?)(?:\n\n|$)/s);
+    if(match){
+      match[1].split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>selectedConditions.add(c));
+      remainingContent=remainingContent.slice(match[0].length).replace(/^\n+/,'');
+    }
+    renderConditionChips();
+  } else {
+    checklistWrap.style.display='none';
+  }
+
+  document.getElementById('doc-sheet-content-input').value=remainingContent;
   document.getElementById('doc-sheet-content-input').placeholder=meta?meta.placeholder:'Notes about this document';
   document.getElementById('doc-delete-btn').style.display=doc?'flex':'none';
   document.getElementById('doc-sheet-status').textContent='';
@@ -1919,6 +1943,19 @@ async function openVaultEditor(category,docId){
       document.getElementById('vault-photo-remove-btn').style.display='block';
     }
   }
+}
+
+function renderConditionChips(){
+  const row=document.getElementById('conditions-chip-row');
+  row.innerHTML=COMMON_CONDITIONS.map(c=>
+    `<div class="cost-chip ${selectedConditions.has(c)?'selected':''}" onclick="toggleConditionChip('${c.replace(/'/g,"\\'")}')">${c}</div>`
+  ).join('');
+}
+
+function toggleConditionChip(name){
+  if(selectedConditions.has(name)) selectedConditions.delete(name);
+  else selectedConditions.add(name);
+  renderConditionChips();
 }
 
 function handleVaultPhotoSelect(event){
@@ -1956,7 +1993,10 @@ async function saveVaultDoc(){
   const statusEl=document.getElementById('doc-sheet-status');
   try{
     const title=document.getElementById('doc-sheet-title-input').value.trim();
-    const content=document.getElementById('doc-sheet-content-input').value.trim();
+    let content=document.getElementById('doc-sheet-content-input').value.trim();
+    if(editingVaultDoc&&editingVaultDoc.category==='conditions'&&selectedConditions.size>0){
+      content=`Conditions: ${[...selectedConditions].join(', ')}${content?'\n\n'+content:''}`;
+    }
     statusEl.style.color='var(--sage)';
     if(!title){
       statusEl.style.color='var(--crimson)';
