@@ -1262,6 +1262,7 @@ async function enterApp(user,displayName){
   await loadFamilyMembers();
   await loadTasks();
   await loadVaultDocs();
+  await loadCostEntries();
 }
 
 /* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
@@ -2051,29 +2052,31 @@ const COST_CATEGORIES={
   'Travel/Mileage':{icon:'🚗',color:'var(--stone)'},
   'Other':{icon:'📎',color:'var(--graphite)'}
 };
-const COST_PEOPLE=['Lisa','Dave','Sarah'];
-const TODAY_REF=new Date('2026-07-20');
+const TODAY_REF=new Date();
 
-let COST_ENTRIES=[
-  {id:1,merchant:'CVS Pharmacy',date:'2026-07-08',amount:42.50,category:'Pharmacy',paidBy:'Lisa'},
-  {id:2,merchant:'Home Depot, grab bars',date:'2026-07-02',amount:186.30,category:'Home Modifications',paidBy:'Dave'},
-  {id:3,merchant:'Sharp Rehab copay',date:'2026-06-28',amount:35.00,category:'Medical',paidBy:'Lisa'},
-  {id:4,merchant:'Mileage: PT visits (3 trips)',date:'2026-06-28',amount:12.60,category:'Travel/Mileage',paidBy:'Sarah'}
-];
-let nextCostId=5;
+let COST_ENTRIES=[];
 let costReviewData=null;
+
+async function loadCostEntries(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('cost_entries')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('entry_date',{ascending:false});
+  if(error){console.error('Failed to load cost entries:',error.message);return;}
+  COST_ENTRIES=data||[];
+  renderCostBody();
+}
 
 function costMonthTotal(){
   return COST_ENTRIES.filter(e=>{
-    const d=new Date(e.date);
+    const d=new Date(e.entry_date);
     return d.getFullYear()===TODAY_REF.getFullYear() && d.getMonth()===TODAY_REF.getMonth();
-  }).reduce((s,e)=>s+e.amount,0);
+  }).reduce((s,e)=>s+Number(e.amount),0);
 }
 function costYTDTotal(){
-  return COST_ENTRIES.filter(e=>new Date(e.date).getFullYear()===TODAY_REF.getFullYear()).reduce((s,e)=>s+e.amount,0);
+  return COST_ENTRIES.filter(e=>new Date(e.entry_date).getFullYear()===TODAY_REF.getFullYear()).reduce((s,e)=>s+Number(e.amount),0);
 }
-function costPersonTotal(name){
-  return COST_ENTRIES.filter(e=>e.paidBy===name).reduce((s,e)=>s+e.amount,0);
+function costPersonTotal(userId){
+  return COST_ENTRIES.filter(e=>e.paid_by===userId).reduce((s,e)=>s+Number(e.amount),0);
 }
 
 function renderCostBody(){
@@ -2081,7 +2084,7 @@ function renderCostBody(){
   if(!body)return;
   const monthTotal=costMonthTotal().toFixed(2);
   const ytdTotal=costYTDTotal().toFixed(2);
-  const maxPerson=Math.max(1,...COST_PEOPLE.map(costPersonTotal));
+  const maxPerson=Math.max(1,...FAMILY_MEMBERS.map(m=>costPersonTotal(m.user_id)));
 
   let html=`<div class="cost-summary-card">
     <div class="cost-summary-row">
@@ -2089,10 +2092,10 @@ function renderCostBody(){
       <div><div class="cost-summary-label">Year to date</div><div class="cost-summary-figure">$${ytdTotal}</div></div>
     </div>
     <div class="cost-person-breakdown">
-      ${COST_PEOPLE.map(p=>{
-        const amt=costPersonTotal(p);
+      ${FAMILY_MEMBERS.map(m=>{
+        const amt=costPersonTotal(m.user_id);
         const pct=Math.round((amt/maxPerson)*100);
-        return `<div class="cost-person-row"><div class="cost-person-name">${p}</div><div class="cost-person-track"><div class="cost-person-fill" style="width:${pct}%"></div></div><div class="cost-person-amt">$${amt.toFixed(2)}</div></div>`;
+        return `<div class="cost-person-row"><div class="cost-person-name">${m.display_name}</div><div class="cost-person-track"><div class="cost-person-fill" style="width:${pct}%"></div></div><div class="cost-person-amt">$${amt.toFixed(2)}</div></div>`;
       }).join('')}
     </div>
   </div>
@@ -2101,21 +2104,27 @@ function renderCostBody(){
 
   if(costReviewData) html+=costReviewCardHTML();
 
-  html+=`<div class="slabel">Recent expenses</div>
-  <div class="doc-card">
-    ${COST_ENTRIES.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(costEntryRowHTML).join('')}
-  </div>
-  <div class="cost-disclaimer">These totals are for your own records. Talk to a tax preparer about what may be deductible for your family's situation.</div>`;
+  if(COST_ENTRIES.length===0){
+    html+=`<div class="slabel">Recent expenses</div>
+    <div style="text-align:center;padding:20px 10px;color:var(--graphite);font-size:13px;">No expenses logged yet. Scan a receipt or enter one manually.</div>`;
+  } else {
+    html+=`<div class="slabel">Recent expenses</div>
+    <div class="doc-card">
+      ${COST_ENTRIES.map(costEntryRowHTML).join('')}
+    </div>`;
+  }
+  html+=`<div class="cost-disclaimer">These totals are for your own records. Talk to a tax preparer about what may be deductible for your family's situation.</div>`;
 
   body.innerHTML=html;
 }
 
 function costEntryRowHTML(e){
   const cat=COST_CATEGORIES[e.category]||COST_CATEGORIES['Other'];
+  const paidByName=memberNameFor(e.paid_by)||'Unknown';
   return `<div class="cost-entry-row">
     <div class="cost-entry-icon" style="background:${cat.color}">${cat.icon}</div>
-    <div class="cost-entry-info"><div class="cost-entry-name">${e.merchant}</div><div class="cost-entry-meta">${e.date} · ${e.category} · Paid by ${e.paidBy}</div></div>
-    <div class="cost-entry-amt">$${e.amount.toFixed(2)}</div>
+    <div class="cost-entry-info"><div class="cost-entry-name">${e.merchant}</div><div class="cost-entry-meta">${e.entry_date} · ${e.category} · Paid by ${paidByName}</div></div>
+    <div class="cost-entry-amt">$${Number(e.amount).toFixed(2)}</div>
   </div>`;
 }
 
@@ -2172,7 +2181,7 @@ function showCostLoading(dataUrl){
 function costReviewCardHTML(){
   const d=costReviewData;
   const catChips=Object.keys(COST_CATEGORIES).map(c=>`<div class="cost-chip ${d.category===c?'selected':''}" onclick="costSetCategory('${c}')">${c}</div>`).join('');
-  const personChips=COST_PEOPLE.map(p=>`<div class="cost-chip ${d.paidBy===p?'selected':''}" onclick="costSetPaidBy('${p}')">${p}</div>`).join('');
+  const personChips=FAMILY_MEMBERS.map(m=>`<div class="cost-chip ${d.paidBy===m.user_id?'selected':''}" onclick="costSetPaidBy('${m.user_id}')">${m.display_name}</div>`).join('');
   const mileageFields=d.category==='Travel/Mileage'?`<div class="cost-field-label">Miles &amp; rate (optional, auto-fills amount)</div>
     <div class="cost-mileage-row">
       <input class="cost-input" type="number" placeholder="Miles" id="cost-miles" value="${d.miles||''}" oninput="costRecalcMileage()">
@@ -2204,13 +2213,13 @@ function openCostReview(parsed,isDemo){
     date:(parsed&&parsed.date)?parsed.date:'',
     amount:parsed?parsed.total:'',
     category:(parsed&&COST_CATEGORIES[parsed.category])?parsed.category:'Other',
-    paidBy:'Lisa',
+    paidBy:CURRENT_USER?.id||'',
     isDemo:!!isDemo
   };
   renderCostBody();
 }
 function costSetCategory(c){ costReviewData.category=c; renderCostBody(); }
-function costSetPaidBy(p){ costReviewData.paidBy=p; renderCostBody(); }
+function costSetPaidBy(userId){ costReviewData.paidBy=userId; renderCostBody(); }
 function costRecalcMileage(){
   const miles=parseFloat(document.getElementById('cost-miles').value)||0;
   const rate=parseFloat(document.getElementById('cost-rate').value)||0;
@@ -2220,7 +2229,7 @@ function costRecalcMileage(){
 }
 function cancelCostReview(){ costReviewData=null; renderCostBody(); }
 
-function saveCostEntry(){
+async function saveCostEntry(){
   const merchant=document.getElementById('cost-merchant').value.trim();
   const date=document.getElementById('cost-date').value;
   const amount=parseFloat(document.getElementById('cost-amount').value);
@@ -2228,9 +2237,18 @@ function saveCostEntry(){
     alert('Please fill in merchant, date, and amount.');
     return;
   }
-  COST_ENTRIES.push({id:nextCostId++,merchant:merchant,date:date,amount:amount,category:costReviewData.category,paidBy:costReviewData.paidBy});
+  const {error}=await sb.from('cost_entries').insert({
+    family_id:CURRENT_FAMILY_ID,
+    merchant,
+    entry_date:date,
+    amount,
+    category:costReviewData.category,
+    paid_by:costReviewData.paidBy||null,
+    created_by:CURRENT_USER.id
+  });
+  if(error){alert('Could not save expense: '+error.message);return;}
   costReviewData=null;
-  renderCostBody();
+  await loadCostEntries();
 }
 
 function showScreen(name){
@@ -2244,6 +2262,7 @@ function showScreen(name){
   if(name==='appts') renderAppointmentsList();
   if(name==='vault'){renderVaultGrid();renderOtherDocsList();}
   if(name==='roster') renderHuddleMembers();
+  if(name==='costs') renderCostBody();
 }
 
 function updateHomeProgress(){
