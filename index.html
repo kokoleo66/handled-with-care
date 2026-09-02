@@ -1707,7 +1707,9 @@ function renderMedsScreen(){
     const rightInfo=isTaken
       ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>`
       : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Not logged</div>`;
-    const actionBtn=isTaken?'':`<div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="markMedTaken('${m.id}')">Mark taken</div>`;
+    const actionBtn=isTaken
+      ?`<div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone);background:var(--white);color:var(--graphite);" onclick="unmarkMedTaken('${m.id}')">Undo</div>`
+      :`<div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="markMedTaken('${m.id}')">Mark taken</div>`;
     return `<div class="full-med-card">
       <div class="full-med-row">
         <div class="med-stripe ${isTaken?'done':'pending'}"></div>
@@ -1739,6 +1741,19 @@ async function markMedTaken(medId){
   }catch(err){
     console.error('markMedTaken failed:',err);
     alert('Something went wrong marking this as taken: '+err.message);
+  }
+}
+
+async function unmarkMedTaken(medId){
+  try{
+    const log=latestLogFor(medId);
+    if(!log){await loadMedications();return;}
+    const {error}=await sb.from('medication_logs').delete().eq('id',log.id);
+    if(error){alert('Could not undo: '+error.message);return;}
+    await loadMedications();
+  }catch(err){
+    console.error('unmarkMedTaken failed:',err);
+    alert('Something went wrong undoing this: '+err.message);
   }
 }
 
