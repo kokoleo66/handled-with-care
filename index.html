@@ -921,6 +921,20 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <input class="auth-input" id="doc-sheet-title-input" placeholder="e.g. Dr. Linda Chen">
       <div class="auth-field-label">Details</div>
       <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
+      <div class="auth-field-label">Photo</div>
+      <div id="vault-photo-area">
+        <div id="vault-photo-empty" style="display:flex;gap:8px;">
+          <div style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1.5px dashed var(--stone);background:var(--stone-light);color:var(--graphite);" onclick="document.getElementById('vault-photo-input').click()">📷 Take or choose a photo</div>
+        </div>
+        <div id="vault-photo-preview-wrap" style="display:none;">
+          <img id="vault-photo-preview-img" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--stone-light);display:block;margin-bottom:8px;max-height:260px;object-fit:contain;background:var(--ivory);">
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="retakeVaultPhoto()">Retake / Choose different</div>
+            <div id="vault-photo-remove-btn" style="display:none;padding:9px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--crimson);color:var(--crimson);background:var(--white);" onclick="removeVaultPhoto()">Remove</div>
+          </div>
+        </div>
+        <input type="file" accept="image/*" capture="environment" id="vault-photo-input" style="display:none" onchange="handleVaultPhotoSelect(event)">
+      </div>
       <div class="doc-sheet-actions">
         <div class="doc-action-btn primary" onclick="saveVaultDoc()">💾 Save</div>
         <div class="doc-action-btn" id="doc-delete-btn" style="display:none;color:var(--crimson);" onclick="deleteVaultDoc()">🗑 Delete</div>
@@ -1859,7 +1873,21 @@ function renderOtherDocsList(){
   }).join('');
 }
 
-function openVaultEditor(category,docId){
+let pendingVaultPhotoFile=null;
+let existingVaultPhotoPath=null;
+let removeExistingVaultPhoto=false;
+
+function resetVaultPhotoUI(){
+  pendingVaultPhotoFile=null;
+  existingVaultPhotoPath=null;
+  removeExistingVaultPhoto=false;
+  document.getElementById('vault-photo-input').value='';
+  document.getElementById('vault-photo-empty').style.display='flex';
+  document.getElementById('vault-photo-preview-wrap').style.display='none';
+  document.getElementById('vault-photo-preview-img').src='';
+}
+
+async function openVaultEditor(category,docId){
   const doc=docId?VAULT_DOCS_DATA.find(d=>d.id===docId):null;
   editingVaultDoc={id:doc?doc.id:null,category};
   const meta=VAULT_CATEGORY_META[category];
@@ -1873,28 +1901,85 @@ function openVaultEditor(category,docId){
   document.getElementById('doc-sheet-content-input').placeholder=meta?meta.placeholder:'Notes about this document';
   document.getElementById('doc-delete-btn').style.display=doc?'flex':'none';
   document.getElementById('doc-sheet-status').textContent='';
+  resetVaultPhotoUI();
   document.getElementById('doc-sheet-overlay').style.display='flex';
+
+  if(doc&&doc.file_url){
+    existingVaultPhotoPath=doc.file_url;
+    const {data}=await sb.storage.from('vault-documents').createSignedUrl(doc.file_url,3600);
+    if(data?.signedUrl){
+      document.getElementById('vault-photo-preview-img').src=data.signedUrl;
+      document.getElementById('vault-photo-empty').style.display='none';
+      document.getElementById('vault-photo-preview-wrap').style.display='block';
+      document.getElementById('vault-photo-remove-btn').style.display='block';
+    }
+  }
+}
+
+function handleVaultPhotoSelect(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  pendingVaultPhotoFile=file;
+  removeExistingVaultPhoto=false;
+  const previewUrl=URL.createObjectURL(file);
+  document.getElementById('vault-photo-preview-img').src=previewUrl;
+  document.getElementById('vault-photo-empty').style.display='none';
+  document.getElementById('vault-photo-preview-wrap').style.display='block';
+  document.getElementById('vault-photo-remove-btn').style.display='block';
+}
+
+function retakeVaultPhoto(){
+  document.getElementById('vault-photo-input').click();
+}
+
+function removeVaultPhoto(){
+  pendingVaultPhotoFile=null;
+  if(existingVaultPhotoPath) removeExistingVaultPhoto=true;
+  document.getElementById('vault-photo-input').value='';
+  document.getElementById('vault-photo-empty').style.display='flex';
+  document.getElementById('vault-photo-preview-wrap').style.display='none';
+  document.getElementById('vault-photo-preview-img').src='';
 }
 
 function closeDoc(){
   document.getElementById('doc-sheet-overlay').style.display='none';
   editingVaultDoc=null;
+  resetVaultPhotoUI();
 }
 
 async function saveVaultDoc(){
   const title=document.getElementById('doc-sheet-title-input').value.trim();
   const content=document.getElementById('doc-sheet-content-input').value.trim();
   const statusEl=document.getElementById('doc-sheet-status');
-  if(!title){statusEl.textContent='A title is required.';statusEl.style.color='var(--crimson)';return;}
+  statusEl.style.color='var(--sage)';
+  if(!title){statusEl.style.color='var(--crimson)';statusEl.textContent='A title is required.';return;}
   if(!editingVaultDoc){return;}
+
+  let fileUrl=existingVaultPhotoPath;
+
+  if(pendingVaultPhotoFile){
+    statusEl.textContent='Uploading photo...';
+    const ext=(pendingVaultPhotoFile.name.split('.').pop()||'jpg').toLowerCase();
+    const path=`${CURRENT_FAMILY_ID}/${editingVaultDoc.category}-${Date.now()}.${ext}`;
+    const {error:uploadErr}=await sb.storage.from('vault-documents').upload(path,pendingVaultPhotoFile);
+    if(uploadErr){statusEl.style.color='var(--crimson)';statusEl.textContent='Photo upload failed: '+uploadErr.message;return;}
+    if(existingVaultPhotoPath){
+      await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
+    }
+    fileUrl=path;
+  } else if(removeExistingVaultPhoto&&existingVaultPhotoPath){
+    await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
+    fileUrl=null;
+  }
+
   let error;
   if(editingVaultDoc.id){
     ({error}=await sb.from('vault_documents').update({
-      title,content,updated_by:CURRENT_USER.id,updated_at:new Date().toISOString()
+      title,content,file_url:fileUrl,updated_by:CURRENT_USER.id,updated_at:new Date().toISOString()
     }).eq('id',editingVaultDoc.id));
   } else {
     ({error}=await sb.from('vault_documents').insert({
-      family_id:CURRENT_FAMILY_ID,category:editingVaultDoc.category,title,content,updated_by:CURRENT_USER.id
+      family_id:CURRENT_FAMILY_ID,category:editingVaultDoc.category,title,content,file_url:fileUrl,updated_by:CURRENT_USER.id
     }));
   }
   if(error){statusEl.style.color='var(--crimson)';statusEl.textContent=error.message;return;}
@@ -1904,6 +1989,9 @@ async function saveVaultDoc(){
 
 async function deleteVaultDoc(){
   if(!editingVaultDoc||!editingVaultDoc.id)return;
+  if(existingVaultPhotoPath){
+    await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
+  }
   const {error}=await sb.from('vault_documents').delete().eq('id',editingVaultDoc.id);
   if(error){alert('Could not delete: '+error.message);return;}
   closeDoc();
