@@ -917,11 +917,14 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         </div>
         <div class="doc-sheet-close" onclick="closeDoc()">✕</div>
       </div>
-      <div class="auth-field-label" style="margin-top:4px;">Name</div>
-      <input class="auth-input" id="doc-sheet-title-input" placeholder="Enter a title">
+      <div id="doc-sheet-name-wrap">
+        <div class="auth-field-label" style="margin-top:4px;">Name</div>
+        <input class="auth-input" id="doc-sheet-title-input" placeholder="Enter a title">
+      </div>
       <div id="conditions-checklist-wrap" style="display:none;">
         <div class="auth-field-label">Common conditions (tap all that apply)</div>
         <div class="cost-chip-row" id="conditions-chip-row" style="margin-top:4px;"></div>
+        <div id="conditions-selected-row" style="margin-top:10px;"></div>
       </div>
       <div class="auth-field-label">Details</div>
       <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
@@ -1914,8 +1917,10 @@ async function openVaultEditor(category,docId){
   selectedConditions=new Set();
   let remainingContent=doc?(doc.content||''):'';
   const checklistWrap=document.getElementById('conditions-checklist-wrap');
+  const nameWrap=document.getElementById('doc-sheet-name-wrap');
   if(category==='conditions'){
     checklistWrap.style.display='block';
+    nameWrap.style.display='none';
     const match=remainingContent.match(/^Conditions:\s*(.+?)(?:\n\n|$)/s);
     if(match){
       match[1].split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>selectedConditions.add(c));
@@ -1924,6 +1929,7 @@ async function openVaultEditor(category,docId){
     renderConditionChips();
   } else {
     checklistWrap.style.display='none';
+    nameWrap.style.display='block';
   }
 
   document.getElementById('doc-sheet-content-input').value=remainingContent;
@@ -1950,6 +1956,25 @@ function renderConditionChips(){
   row.innerHTML=COMMON_CONDITIONS.map(c=>
     `<div class="cost-chip ${selectedConditions.has(c)?'selected':''}" onclick="toggleConditionChip('${c.replace(/'/g,"\\'")}')">${c}</div>`
   ).join('');
+  renderSelectedConditionsRow();
+}
+
+function renderSelectedConditionsRow(){
+  const el=document.getElementById('conditions-selected-row');
+  if(!el)return;
+  if(selectedConditions.size===0){
+    el.innerHTML='<div style="font-size:11px;color:var(--graphite);">Nothing selected yet.</div>';
+    return;
+  }
+  el.innerHTML=`<div class="auth-field-label" style="margin-top:0;">Selected (${selectedConditions.size})</div>
+    <div class="cost-chip-row">${[...selectedConditions].map(c=>
+      `<div class="cost-chip selected" style="padding-right:8px;">${c} <span onclick="event.stopPropagation();removeSelectedCondition('${c.replace(/'/g,"\\'")}')" style="margin-left:5px;font-weight:800;cursor:pointer;">✕</span></div>`
+    ).join('')}</div>`;
+}
+
+function removeSelectedCondition(name){
+  selectedConditions.delete(name);
+  renderConditionChips();
 }
 
 function toggleConditionChip(name){
@@ -1992,10 +2017,14 @@ function closeDoc(){
 async function saveVaultDoc(){
   const statusEl=document.getElementById('doc-sheet-status');
   try{
-    const title=document.getElementById('doc-sheet-title-input').value.trim();
+    const isConditions=editingVaultDoc&&editingVaultDoc.category==='conditions';
+    let title=document.getElementById('doc-sheet-title-input').value.trim();
     let content=document.getElementById('doc-sheet-content-input').value.trim();
-    if(editingVaultDoc&&editingVaultDoc.category==='conditions'&&selectedConditions.size>0){
-      content=`Conditions: ${[...selectedConditions].join(', ')}${content?'\n\n'+content:''}`;
+    if(isConditions){
+      title=selectedConditions.size>0?[...selectedConditions].join(', '):'Conditions';
+      if(selectedConditions.size>0){
+        content=`Conditions: ${[...selectedConditions].join(', ')}${content?'\n\n'+content:''}`;
+      }
     }
     statusEl.style.color='var(--sage)';
     if(!title){
