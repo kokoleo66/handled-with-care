@@ -823,6 +823,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="stab" onclick="showScreen('home')">The Huddle</div>
     <div class="stab active">Care Team</div>
     <div class="stab" onclick="showScreen('vault')">Vault</div>
+    <div class="stab" onclick="showScreen('chat')">Chat</div>
   </div>
   <div class="app-body">
     <div class="emergency-banner">
@@ -890,6 +891,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="stab" onclick="showScreen('home')">The Huddle</div>
     <div class="stab" onclick="showScreen('roster')">Care Team</div>
     <div class="stab active">Vault</div>
+    <div class="stab" onclick="showScreen('chat')">Chat</div>
   </div>
   <div class="app-body">
     <div class="emergency-banner">
@@ -962,6 +964,41 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
     <div class="nav-item" onclick="showScreen(\'roster\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
     <div class="nav-item active" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1272D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label" style="color:var(--crimson)">Emergency</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN: HUDDLE CHAT
+════════════════════════════ -->
+<div class="screen" id="screen-chat">
+<div class="phone" style="display:flex;flex-direction:column;">
+  <div class="notch"></div>
+  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
+  <div class="top-nav">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
+      <div class="logo-text">Handled <span>with Care</span></div>
+    </div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
+  </div>
+  <div class="screen-tabs">
+    <div class="stab" onclick="showScreen('home')">The Huddle</div>
+    <div class="stab" onclick="showScreen('roster')">Care Team</div>
+    <div class="stab" onclick="showScreen('vault')">Vault</div>
+    <div class="stab active">Chat</div>
+  </div>
+  <div class="app-body" id="chat-feed" style="flex:1;min-height:400px;"></div>
+  <div style="display:flex;gap:8px;padding:8px 12px;background:var(--white);border-top:1px solid var(--stone-light);flex-shrink:0;">
+    <input class="auth-input" id="chat-message-input" placeholder="Type a message..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendChatMessage();}">
+    <div onclick="sendChatMessage()" style="width:42px;height:42px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;">➤</div>
+  </div>
+  <div class="bottom-nav" style="position:relative;flex-shrink:0;">
+    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
+    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
+    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
+    <div class="nav-item active" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
+    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
   </div>
 </div>
 </div>
@@ -1308,6 +1345,7 @@ async function enterApp(user,displayName){
   await loadVaultDocs();
   await loadCostEntries();
   await loadJournalEntries();
+  await loadChatMessages();
   setupRealtimeSync();
 }
 
@@ -1339,6 +1377,7 @@ function setupRealtimeSync(){
   subscribeRealtime('appointment_debriefs',loadPendingDebrief);
   subscribeRealtime('tasks',loadTasks);
   subscribeRealtime('journal_entries',loadJournalEntries);
+  subscribeRealtime('messages',loadChatMessages);
   subscribeRealtime('cost_entries',loadCostEntries);
   subscribeRealtime('vault_documents',loadVaultDocs);
   subscribeRealtime('family_members',loadFamilyMembers);
@@ -2137,6 +2176,65 @@ function timeAgo(dateStr){
   return new Date(dateStr).toLocaleDateString([],{month:'short',day:'numeric'});
 }
 
+/* ══════════ HUDDLE CHAT (real data, real-time) ══════════ */
+let CHAT_MESSAGES=[];
+
+async function loadChatMessages(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('messages')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at',{ascending:true});
+  if(error){console.error('Failed to load messages:',error.message);return;}
+  CHAT_MESSAGES=data||[];
+  renderChatFeed();
+}
+
+function renderChatFeed(){
+  const feed=document.getElementById('chat-feed');
+  if(!feed)return;
+  if(CHAT_MESSAGES.length===0){
+    feed.innerHTML='<div style="text-align:center;padding:24px 14px;color:var(--graphite);font-size:13px;">No messages yet. Say hello to your Huddle.</div>';
+    return;
+  }
+  feed.innerHTML=CHAT_MESSAGES.map(m=>{
+    const isMine=m.sender_id===CURRENT_USER.id;
+    const name=memberNameFor(m.sender_id)||'Someone';
+    const idx=FAMILY_MEMBERS.findIndex(fm=>fm.user_id===m.sender_id);
+    const color=MEMBER_COLORS[idx>=0?idx%MEMBER_COLORS.length:0];
+    const time=new Date(m.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    if(isMine){
+      return `<div style="display:flex;justify-content:flex-end;margin:0 14px 8px;">
+        <div style="max-width:75%;">
+          <div style="background:var(--slate);color:white;border-radius:14px 14px 3px 14px;padding:9px 12px;font-size:13px;line-height:1.4;">${m.content}</div>
+          <div style="font-size:9px;color:var(--graphite);text-align:right;margin-top:2px;">${time}</div>
+        </div>
+      </div>`;
+    }
+    return `<div style="display:flex;gap:7px;margin:0 14px 8px;">
+      <div style="width:24px;height:24px;border-radius:50%;background:${color};color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;margin-top:2px;">${name.charAt(0).toUpperCase()}</div>
+      <div style="max-width:75%;">
+        <div style="font-size:10px;color:var(--graphite);margin-bottom:2px;">${name}</div>
+        <div style="background:var(--stone-light);color:var(--charcoal);border-radius:14px 14px 14px 3px;padding:9px 12px;font-size:13px;line-height:1.4;">${m.content}</div>
+        <div style="font-size:9px;color:var(--graphite);margin-top:2px;">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+  feed.scrollTop=feed.scrollHeight;
+}
+
+async function sendChatMessage(){
+  const input=document.getElementById('chat-message-input');
+  const content=input.value.trim();
+  if(!content||!CURRENT_USER||!CURRENT_FAMILY_ID)return;
+  input.value='';
+  const {error}=await sb.from('messages').insert({
+    family_id:CURRENT_FAMILY_ID,
+    sender_id:CURRENT_USER.id,
+    content
+  });
+  if(error){alert('Could not send message: '+error.message);input.value=content;return;}
+  await loadChatMessages();
+}
+
 async function loadJournalEntries(){
   if(!CURRENT_FAMILY_ID)return;
   const {data,error}=await sb.from('journal_entries')
@@ -2803,6 +2901,7 @@ function showScreen(name){
   if(name==='roster') renderHuddleMembers();
   if(name==='costs') renderCostBody();
   if(name==='journal') renderJournal();
+  if(name==='chat') renderChatFeed();
 }
 
 function updateHomeProgress(){
