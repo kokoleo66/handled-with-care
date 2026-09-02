@@ -582,7 +582,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
       <div class="logo-text">Handled <span>with Care</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="screen-tabs">
     <div class="stab active">Today</div>
@@ -677,7 +677,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
       <div class="logo-text">Handled <span>with Care</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="screen-tabs">
     <div class="stab" onclick="showScreen('home')">Today</div>
@@ -728,7 +728,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
       <div class="logo-text">Handled <span>with Care</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="screen-tabs">
     <div class="stab active">Appointments</div>
@@ -817,7 +817,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
       <div class="logo-text">Handled <span>with Care</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="screen-tabs">
     <div class="stab" onclick="showScreen('home')">The Huddle</div>
@@ -884,7 +884,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
       <div class="logo-text">Handled <span>with Care</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="screen-tabs">
     <div class="stab" onclick="showScreen('home')">The Huddle</div>
@@ -978,7 +978,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="back-chevron" onclick="showScreen('home')">‹</div>
       <div class="logo-text" style="margin-left:8px;">Wellness <span>Journal</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="screen-tabs">
     <div class="stab active"><span id="huddle-recipient-name-2">Mom's</span> Care Circle</div>
@@ -1036,7 +1036,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="back-chevron" onclick="showScreen('home')">‹</div>
       <div class="logo-text" style="margin-left:8px;">Cost <span>Tracker</span></div>
     </div>
-    <div class="nav-avatar">L</div>
+    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
   </div>
   <div class="app-body" id="cost-body"></div>
   <input type="file" accept="image/*" capture="environment" id="cost-photo-input" style="display:none" onchange="handleReceiptPhoto(event)">
@@ -1810,6 +1810,10 @@ async function saveNewMedication(){
   if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
   hideAddMedForm();
   await loadMedications();
+}
+
+function confirmSignOut(){
+  if(confirm('Sign out of Handled with Care?')) signOutUser();
 }
 
 async function signOutUser(){
