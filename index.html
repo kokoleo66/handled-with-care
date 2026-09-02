@@ -173,29 +173,6 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .checkin-exercise-markdone{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:var(--sage);cursor:pointer;white-space:nowrap;}
 .checkin-exercise-refresh{text-align:center;font-size:11px;font-weight:600;color:var(--slate);cursor:pointer;margin-top:2px;padding:4px;}
 
-/* ══════════ REAL MOBILE DEVICES ══════════
-   On an actual phone, don't render a fake "phone" graphic inside the
-   real browser viewport (a viewport inside a viewport). Instead, let
-   the app fill the real screen the way any normal mobile web app would. */
-@media (max-width: 480px){
-  .screen-nav{display:none;}
-  .beta-banner{font-size:11px;padding:8px 10px;}
-  .screens-wrap{padding:0;gap:0;}
-  .phone{
-    width:100%;
-    height:100vh;
-    height:100dvh;
-    min-height:0;
-    border:none;
-    border-radius:0;
-    box-shadow:none;
-    display:flex;
-    flex-direction:column;
-  }
-  .notch,.status-bar{display:none;}
-  .app-body{flex:1;height:auto;min-height:0;}
-  .bottom-nav{position:relative;}
-}
 .checkin-followup{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
 .checkin-followup-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
 .checkin-followup-actions{display:flex;gap:7px;flex-wrap:wrap;}
@@ -447,6 +424,32 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .auth-forgot-sub{font-size:12px;color:var(--graphite);text-align:center;margin-bottom:18px;line-height:1.5;}
 .auth-remember-row{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--graphite);cursor:pointer;}
 .auth-remember-row input{width:15px;height:15px;cursor:pointer;accent-color:var(--slate);}
+
+/* ══════════ REAL MOBILE DEVICES ══════════
+   On an actual phone, don't render a fake "phone" graphic inside the
+   real browser viewport (a viewport inside a viewport). Instead, let
+   the app fill the real screen the way any normal mobile web app would.
+   Placed last on purpose so it correctly overrides every rule above it,
+   including .bottom-nav's absolute positioning. */
+@media (max-width: 480px){
+  .screen-nav{display:none;}
+  .beta-banner{font-size:11px;padding:8px 10px;}
+  .screens-wrap{padding:0;gap:0;}
+  .phone{
+    width:100%;
+    height:100vh;
+    height:100dvh;
+    min-height:0;
+    border:none;
+    border-radius:0;
+    box-shadow:none;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch,.status-bar{display:none;}
+  .app-body{flex:1;height:auto;min-height:0;}
+  .bottom-nav{position:relative;bottom:auto;left:auto;right:auto;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
