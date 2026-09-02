@@ -1294,6 +1294,45 @@ async function enterApp(user,displayName){
   await loadVaultDocs();
   await loadCostEntries();
   await loadJournalEntries();
+  setupRealtimeSync();
+}
+
+/* ══════════ REAL-TIME SYNC ACROSS DEVICES ══════════
+   Whenever anyone in the Huddle changes something, everyone else's
+   already-open app updates live, no refresh needed. Each subscription
+   just re-runs the same loader function already used everywhere else
+   in this app, so the update logic only has to exist in one place. */
+let REALTIME_CHANNELS=[];
+
+function subscribeRealtime(table,onChange){
+  const channel=sb.channel('rt-'+table+'-'+CURRENT_FAMILY_ID)
+    .on('postgres_changes',{
+      event:'*',
+      schema:'public',
+      table:table,
+      filter:`family_id=eq.${CURRENT_FAMILY_ID}`
+    },onChange)
+    .subscribe();
+  REALTIME_CHANNELS.push(channel);
+}
+
+function setupRealtimeSync(){
+  if(!CURRENT_FAMILY_ID)return;
+  teardownRealtimeSync();
+  subscribeRealtime('medications',loadMedications);
+  subscribeRealtime('medication_logs',loadMedications);
+  subscribeRealtime('appointments',()=>{loadAppointments();loadPendingDebrief();});
+  subscribeRealtime('appointment_debriefs',loadPendingDebrief);
+  subscribeRealtime('tasks',loadTasks);
+  subscribeRealtime('journal_entries',loadJournalEntries);
+  subscribeRealtime('cost_entries',loadCostEntries);
+  subscribeRealtime('vault_documents',loadVaultDocs);
+  subscribeRealtime('family_members',loadFamilyMembers);
+}
+
+function teardownRealtimeSync(){
+  REALTIME_CHANNELS.forEach(ch=>sb.removeChannel(ch));
+  REALTIME_CHANNELS=[];
 }
 
 /* ══════════ CARE RECIPIENT NAME (real, not hardcoded "Mom") ══════════ */
@@ -1711,6 +1750,7 @@ async function saveNewMedication(){
 }
 
 async function signOutUser(){
+  teardownRealtimeSync();
   await sb.auth.signOut();
   CURRENT_USER=null;CURRENT_FAMILY_ID=null;CURRENT_DISPLAY_NAME=null;
   document.getElementById('app-root').style.display='none';
