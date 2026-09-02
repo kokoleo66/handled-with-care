@@ -1290,6 +1290,7 @@ async function enterApp(user,displayName){
   await loadTasks();
   await loadVaultDocs();
   await loadCostEntries();
+  await loadJournalEntries();
 }
 
 /* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
@@ -1750,44 +1751,57 @@ async function deleteVaultDoc(){
 }
 
 /* ── WELLNESS JOURNAL ── */
-let JOURNAL_ENTRIES=[
-  {id:1,initial:'D',color:'var(--terracotta)',who:'Dave',when:'Last night · 9:42 PM',text:"Mom seemed a little more tired than usual after dinner. Ate well though. Finished most of her plate. Forgot to log the BP med, I'll call her in the morning.",tag:null,photo:false,likes:2,liked:false,comments:1},
-  {id:2,initial:'S',color:'var(--slate)',who:'Sarah',when:'Tuesday · 3:15 PM',text:"Stopped by with groceries. Mom was in good spirits. We sat outside for a bit. She mentioned her knee's been bothering her more on stairs.",tag:null,photo:true,likes:3,liked:false,comments:0},
-  {id:3,initial:'L',color:'var(--sage)',who:'Lisa',when:'Monday · 11:02 AM',text:"Quick update before I fly back. Left detailed notes with Mary on the new dosing schedule. Call me anytime this week if anything's unclear.",tag:null,photo:false,likes:4,liked:true,comments:2}
-];
-let nextJournalId=4;
+/* ══════════ WELLNESS JOURNAL (real data) ══════════ */
+let JOURNAL_ENTRIES=[];
+
+function timeAgo(dateStr){
+  const diffMs=Date.now()-new Date(dateStr).getTime();
+  const mins=Math.floor(diffMs/60000);
+  if(mins<1)return'Just now';
+  if(mins<60)return mins+' min ago';
+  const hrs=Math.floor(mins/60);
+  if(hrs<24)return hrs+' hr'+(hrs>1?'s':'')+' ago';
+  const days=Math.floor(hrs/24);
+  if(days===1)return'Yesterday';
+  if(days<7)return days+' days ago';
+  return new Date(dateStr).toLocaleDateString([],{month:'short',day:'numeric'});
+}
+
+async function loadJournalEntries(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('journal_entries')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at',{ascending:false});
+  if(error){console.error('Failed to load journal entries:',error.message);return;}
+  JOURNAL_ENTRIES=data||[];
+  renderJournal();
+  renderHomePreview();
+}
 
 function journalEntryHTML(e){
-  const tagHtml=e.tag?`<div class="journal-tag">${e.tag}</div>`:'';
-  const photoHtml=e.photo?`<div class="journal-photo">📷</div>`:'';
+  const authorName=memberNameFor(e.author_id)||'Someone';
+  const initial=authorName.charAt(0).toUpperCase();
+  const idx=FAMILY_MEMBERS.findIndex(m=>m.user_id===e.author_id);
+  const color=MEMBER_COLORS[idx>=0?idx%MEMBER_COLORS.length:0];
   return `<div class="note-card" style="margin:0 14px 8px;">
-    ${tagHtml}
-    <div class="note-header"><div class="note-avatar" style="background:${e.color}">${e.initial}</div><div><div class="note-who">${e.who}</div><div class="note-when">${e.when}</div></div></div>
-    <div class="note-text">${e.text}</div>
-    ${photoHtml}
-    <div class="journal-footer">
-      <div class="journal-action ${e.liked?'liked':''}" onclick="toggleLike(${e.id})">${e.liked?'♥':'♡'} <span>${e.likes}</span></div>
-      <div class="journal-action">💬 <span>${e.comments} comment${e.comments===1?'':'s'}</span></div>
-    </div>
+    <div class="note-header"><div class="note-avatar" style="background:${color}">${initial}</div><div><div class="note-who">${authorName}</div><div class="note-when">${timeAgo(e.created_at)}</div></div></div>
+    <div class="note-text">${e.content}</div>
   </div>`;
 }
 
 function renderJournal(){
   const feed=document.getElementById('journal-feed');
-  if(feed) feed.innerHTML=JOURNAL_ENTRIES.map(journalEntryHTML).join('');
+  if(!feed)return;
+  if(JOURNAL_ENTRIES.length===0){
+    feed.innerHTML='<div style="text-align:center;padding:24px 14px;color:var(--graphite);font-size:13px;">No care notes yet. Tap the + button to add the first one.</div>';
+    return;
+  }
+  feed.innerHTML=JOURNAL_ENTRIES.map(journalEntryHTML).join('');
 }
 
 function renderHomePreview(){
   const el=document.getElementById('home-journal-preview');
-  if(el && JOURNAL_ENTRIES.length) el.innerHTML=journalEntryHTML(JOURNAL_ENTRIES[0]);
-}
-
-function toggleLike(id){
-  const e=JOURNAL_ENTRIES.find(x=>x.id===id);
-  if(!e)return;
-  e.liked=!e.liked;
-  e.likes+=e.liked?1:-1;
-  renderJournal();renderHomePreview();
+  if(!el)return;
+  el.innerHTML=JOURNAL_ENTRIES.length?journalEntryHTML(JOURNAL_ENTRIES[0]):'<div style="text-align:center;padding:14px;color:var(--graphite);font-size:12px;">No care notes yet.</div>';
 }
 
 function openCompose(ctx){
@@ -1805,18 +1819,24 @@ function toggleChip(el){
   el.classList.add('selected');
 }
 
-function submitNote(ctx){
+async function submitNote(ctx){
   const textarea=document.getElementById('compose-text-'+ctx);
   const status=document.getElementById('compose-status-'+ctx);
   const text=textarea.value.trim();
   if(!text){ if(status) status.textContent='Add a few words before posting'; return; }
-  let tag=null;
+  let content=text;
   if(ctx==='appt'){
     const chip=document.querySelector('#compose-chips-appt .compose-chip.selected');
-    tag=chip?chip.textContent+' · PT visit':'Post-appointment note';
+    const tag=chip?chip.textContent+' · PT visit':'Post-appointment note';
+    content=`[${tag}] ${text}`;
   }
-  JOURNAL_ENTRIES.unshift({id:nextJournalId++,initial:'L',color:'var(--slate)',who:'Lisa',when:'Just now',text:text,tag:tag,photo:false,likes:0,liked:false,comments:0});
-  renderJournal();renderHomePreview();
+  const {error}=await sb.from('journal_entries').insert({
+    family_id:CURRENT_FAMILY_ID,
+    author_id:CURRENT_USER.id,
+    content
+  });
+  if(error){ if(status) status.textContent=error.message; return; }
+  await loadJournalEntries();
   textarea.value='';
   if(status) status.textContent='Posted to the Journal ✓';
   setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
@@ -2290,6 +2310,7 @@ function showScreen(name){
   if(name==='vault'){renderVaultGrid();renderOtherDocsList();}
   if(name==='roster') renderHuddleMembers();
   if(name==='costs') renderCostBody();
+  if(name==='journal') renderJournal();
 }
 
 function updateHomeProgress(){
