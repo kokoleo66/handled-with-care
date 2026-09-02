@@ -930,8 +930,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="auth-field-label" style="margin-top:0;">Common conditions (tap all that apply)</div>
         <div class="cost-chip-row" id="conditions-chip-row" style="margin-top:4px;"></div>
       </div>
-      <div class="auth-field-label" id="doc-sheet-details-label">Details</div>
-      <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
+      <div id="doc-sheet-details-wrap">
+        <div class="auth-field-label" id="doc-sheet-details-label">Details</div>
+        <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
+      </div>
       <div class="auth-field-label">Photo</div>
       <div id="vault-photo-area">
         <div id="vault-photo-empty" style="display:flex;gap:8px;">
@@ -1924,18 +1926,25 @@ async function openVaultEditor(category,docId){
   let remainingContent=doc?(doc.content||''):'';
   const checklistWrap=document.getElementById('conditions-checklist-wrap');
   const nameWrap=document.getElementById('doc-sheet-name-wrap');
+  const detailsWrap=document.getElementById('doc-sheet-details-wrap');
   if(category==='conditions'){
     checklistWrap.style.display='block';
     nameWrap.style.display='none';
+    detailsWrap.style.display='none';
     const match=remainingContent.match(/^Conditions:\s*(.+?)(?:\n\n|$)/s);
     if(match){
       match[1].split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>selectedConditions.add(c));
       remainingContent=remainingContent.slice(match[0].length).replace(/^\n+/,'');
     }
+    if(remainingContent.trim()){
+      remainingContent.split('\n').map(s=>s.trim()).filter(Boolean).forEach(c=>selectedConditions.add(c));
+      remainingContent='';
+    }
     renderConditionChips();
   } else {
     checklistWrap.style.display='none';
     nameWrap.style.display='block';
+    detailsWrap.style.display='block';
   }
 
   document.getElementById('doc-sheet-content-input').value=remainingContent;
@@ -2034,12 +2043,10 @@ async function saveVaultDoc(){
   try{
     const isConditions=editingVaultDoc&&editingVaultDoc.category==='conditions';
     let title=document.getElementById('doc-sheet-title-input').value.trim();
-    let content=document.getElementById('doc-sheet-content-input').value.trim();
+    let content=isConditions?'':document.getElementById('doc-sheet-content-input').value.trim();
     if(isConditions){
       title=selectedConditions.size>0?[...selectedConditions].join(', '):'Conditions';
-      if(selectedConditions.size>0){
-        content=`Conditions: ${[...selectedConditions].join(', ')}${content?'\n\n'+content:''}`;
-      }
+      content=selectedConditions.size>0?`Conditions: ${[...selectedConditions].join(', ')}`:'';
     }
     statusEl.style.color='var(--sage)';
     if(!title){
