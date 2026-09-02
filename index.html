@@ -621,23 +621,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="med-card">
       <div class="med-card-header">
         <span class="med-card-title">Today's schedule</span>
-        <span class="med-badge ok">2 of 3 logged</span>
+        <span class="med-badge ok" id="home-med-badge"></span>
       </div>
-      <div class="med-row" onclick="cycleHomeMed(this,'done')">
-        <div class="med-check done">✓</div>
-        <div class="med-info"><div class="med-name">Lisinopril 10mg</div><div class="med-sub">Blood pressure · with breakfast</div></div>
-        <div class="med-right"><div class="med-time">8:00 AM</div><div class="med-logged ok">Lisa · 8:14 AM</div></div>
-      </div>
-      <div class="med-row" onclick="cycleHomeMed(this,'done')">
-        <div class="med-check done">✓</div>
-        <div class="med-info"><div class="med-name">Metformin 500mg</div><div class="med-sub">Diabetes · with breakfast</div></div>
-        <div class="med-right"><div class="med-time">8:00 AM</div><div class="med-logged ok">Lisa · 8:14 AM</div></div>
-      </div>
-      <div class="med-row" onclick="cycleHomeMed(this,'missed')">
-        <div class="med-check missed">!</div>
-        <div class="med-info"><div class="med-name">Atorvastatin 20mg</div><div class="med-sub">Cholesterol · evening</div></div>
-        <div class="med-right"><div class="med-time">8:00 PM</div><div class="med-logged missed">Not logged</div></div>
-      </div>
+      <div id="home-med-list"></div>
     </div>
     <div class="slabel">Tasks</div>
     <div class="task-card" id="home-task-list"></div>
@@ -1648,7 +1634,41 @@ async function loadMedications(){
   if(logErr){console.error('Failed to load medication logs:',logErr.message);return;}
   MED_LOGS_TODAY=logs||[];
   renderMedsScreen();
+  renderHomeMedPreview();
   updateHomeAlertBanner();
+}
+
+function renderHomeMedPreview(){
+  const badgeEl=document.getElementById('home-med-badge');
+  const listEl=document.getElementById('home-med-list');
+  if(!badgeEl||!listEl)return;
+
+  if(MEDICATIONS.length===0){
+    badgeEl.textContent='No meds yet';
+    listEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--graphite);font-size:12px;">No medications added yet.</div>';
+    return;
+  }
+
+  let taken=0;
+  MEDICATIONS.forEach(m=>{
+    const log=latestLogFor(m.id);
+    if(log&&log.status==='taken')taken++;
+  });
+  badgeEl.textContent=`${taken} of ${MEDICATIONS.length} logged`;
+  badgeEl.className='med-badge '+(taken===MEDICATIONS.length?'ok':'missed');
+
+  listEl.innerHTML=MEDICATIONS.map(m=>{
+    const log=latestLogFor(m.id);
+    const isTaken=log&&log.status==='taken';
+    const rightInfo=isTaken
+      ? `Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`
+      : 'Not logged';
+    return `<div class="med-row" onclick="showScreen('meds')">
+      <div class="med-check ${isTaken?'done':'missed'}">${isTaken?'✓':'!'}</div>
+      <div class="med-info"><div class="med-name">${m.name}</div><div class="med-sub">${[m.dosage,m.instructions].filter(Boolean).join(' · ')}</div></div>
+      <div class="med-right"><div class="med-time">${m.schedule_time||''}</div><div class="med-logged ${isTaken?'ok':'missed'}">${rightInfo}</div></div>
+    </div>`;
+  }).join('');
 }
 
 function latestLogFor(medId){
@@ -2525,18 +2545,6 @@ function updateHomeProgress(){
   document.getElementById('home-pbar').style.width=pct+'%';
   document.getElementById('home-pct').textContent=pct+'%';
   document.getElementById('home-progress-label').textContent="Today's Huddle · "+done.length+" of "+tasks.length+" handled";
-}
-
-function cycleHomeMed(row,state){
-  const check=row.querySelector('.med-check');
-  const logged=row.querySelector('.med-logged');
-  if(check.classList.contains('done')){
-    check.className='med-check pending';check.textContent='';
-    if(logged){logged.className='med-logged';logged.textContent='Tap to confirm';}
-  } else {
-    check.className='med-check done';check.textContent='✓';
-    if(logged){logged.className='med-logged ok';logged.textContent='You · just now';}
-  }
 }
 
 function toggleMedDetail(id){
