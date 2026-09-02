@@ -918,7 +918,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="doc-sheet-close" onclick="closeDoc()">✕</div>
       </div>
       <div class="auth-field-label" style="margin-top:4px;">Title</div>
-      <input class="auth-input" id="doc-sheet-title-input" placeholder="e.g. Dr. Linda Chen">
+      <input class="auth-input" id="doc-sheet-title-input" placeholder="Enter a title">
       <div class="auth-field-label">Details</div>
       <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
       <div class="auth-field-label">Photo</div>
@@ -1821,12 +1821,12 @@ let VAULT_DOCS_DATA=[];
 let editingVaultDoc=null;
 
 const VAULT_CATEGORY_META={
-  insurance:{icon:'🪪',color:'var(--slate)',label:'Insurance Card',placeholder:'Provider, policy number, plan details'},
-  legal:{icon:'📋',color:'var(--crimson)',label:'Advance Directive',placeholder:'DNR status, POA, where the original is kept'},
-  doctor:{icon:'👨‍⚕️',color:'var(--slate-light)',label:'Primary Doctor',placeholder:'Name, practice, phone number'},
-  pharmacy:{icon:'💊',color:'var(--terracotta)',label:'Pharmacy',placeholder:'Pharmacy name, location, phone'},
-  allergies:{icon:'⚠️',color:'var(--crimson)',label:'Allergies & Conditions',placeholder:'Known allergies and major conditions'},
-  emergency_contact:{icon:'📞',color:'var(--slate)',label:'Emergency Contact',placeholder:'Name, relationship, phone number'}
+  insurance:{icon:'🪪',color:'var(--slate)',label:'Insurance Card',titlePlaceholder:'e.g. Kaiser, Blue Cross',placeholder:'Provider, policy number, plan details'},
+  legal:{icon:'📋',color:'var(--crimson)',label:'Advance Directive',titlePlaceholder:'e.g. Advance Directive, DNR',placeholder:'DNR status, POA, where the original is kept'},
+  doctor:{icon:'👨‍⚕️',color:'var(--slate-light)',label:'Primary Doctor',titlePlaceholder:'e.g. Dr. Linda Chen',placeholder:'Name, practice, phone number'},
+  pharmacy:{icon:'💊',color:'var(--terracotta)',label:'Pharmacy',titlePlaceholder:'e.g. CVS, Walgreens',placeholder:'Pharmacy name, location, phone'},
+  allergies:{icon:'⚠️',color:'var(--crimson)',label:'Allergies & Conditions',titlePlaceholder:'e.g. Penicillin, Diabetes',placeholder:'Known allergies and major conditions'},
+  emergency_contact:{icon:'📞',color:'var(--slate)',label:'Emergency Contact',titlePlaceholder:'e.g. Lisa M., Daughter',placeholder:'Name, relationship, phone number'}
 };
 const VAULT_TILE_ORDER=['insurance','legal','doctor','pharmacy','allergies','emergency_contact'];
 
@@ -1897,6 +1897,7 @@ async function openVaultEditor(category,docId){
   document.getElementById('doc-sheet-title-label').textContent=meta?meta.label:'Document note';
   document.getElementById('doc-sheet-meta').textContent=doc?('Updated '+new Date(doc.updated_at).toLocaleDateString()):'Not added yet';
   document.getElementById('doc-sheet-title-input').value=doc?doc.title:'';
+  document.getElementById('doc-sheet-title-input').placeholder=meta?meta.titlePlaceholder:'Enter a title';
   document.getElementById('doc-sheet-title-input').style.borderColor='';
   document.getElementById('doc-sheet-title-input').style.borderWidth='';
   document.getElementById('doc-sheet-content-input').value=doc?(doc.content||''):'';
