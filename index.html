@@ -884,70 +884,13 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="em-title">Mom's Red Folder</div>
       <div class="em-sub">The 6 things you'd need at 2am. One tap, no searching</div>
     </div>
-    <div class="redfolder-grid">
-      <div class="redfolder-tile" onclick="openDoc('insurance')"><div class="redfolder-icon">🪪</div><div class="redfolder-label">Insurance Card</div><div class="redfolder-sub">Front & back</div></div>
-      <div class="redfolder-tile" onclick="openDoc('dnr')"><div class="redfolder-icon">📋</div><div class="redfolder-label">Advance Directive</div><div class="redfolder-sub">DNR on file</div></div>
-      <div class="redfolder-tile" onclick="openDoc('primaryDoctor')"><div class="redfolder-icon">👨‍⚕️</div><div class="redfolder-label">Primary Doctor</div><div class="redfolder-sub">Dr. Linda Chen</div></div>
-      <div class="redfolder-tile" onclick="openDoc('pharmacy')"><div class="redfolder-icon">💊</div><div class="redfolder-label">Pharmacy</div><div class="redfolder-sub">CVS · Rancho Bernardo</div></div>
-      <div class="redfolder-tile" onclick="openDoc('allergies')"><div class="redfolder-icon">⚠️</div><div class="redfolder-label">Allergies & Conditions</div><div class="redfolder-sub">Penicillin · A-fib</div></div>
-      <div class="redfolder-tile" onclick="openDoc('emergencyContact')"><div class="redfolder-icon">📞</div><div class="redfolder-label">Emergency Contact</div><div class="redfolder-sub">Lisa M. · Coordinator</div></div>
-    </div>
-    <div class="vault-note">Tap any tile to open, share, or send to a new doctor's office in one tap. Everyone in the Huddle can view the Red Folder. Even during a crisis when Lisa isn't reachable.</div>
+    <div class="redfolder-grid" id="redfolder-grid"></div>
+    <div class="vault-note">Tap any tile to view or update it. Everyone in the Huddle can see the Red Folder, even during a crisis when you aren't reachable.</div>
 
-    <div class="slabel">Insurance & benefits</div>
-    <div class="doc-card">
-      <div class="doc-row" onclick="openDoc('medicareCard')">
-        <div class="doc-icon" style="background:var(--slate)">🪪</div>
-        <div class="doc-info"><div class="doc-name">Medicare Part B card</div><div class="doc-meta">Added Mar 2 · PDF</div></div>
-        <div class="doc-badge all">Whole Huddle</div>
-      </div>
-      <div class="doc-row" onclick="openDoc('supplemental')">
-        <div class="doc-icon" style="background:var(--slate-light)">🪪</div>
-        <div class="doc-info"><div class="doc-name">Supplemental plan: Aetna</div><div class="doc-meta">Added Mar 2 · PDF</div></div>
-        <div class="doc-badge all">Whole Huddle</div>
-      </div>
-    </div>
-
-    <div class="slabel">Legal documents</div>
-    <div class="doc-card">
-      <div class="doc-row" onclick="openDoc('dnr')">
-        <div class="doc-icon" style="background:var(--crimson)">📋</div>
-        <div class="doc-info"><div class="doc-name">Advance directive / DNR</div><div class="doc-meta">Added Jan 14 · PDF</div></div>
-        <div class="doc-badge all">Whole Huddle</div>
-      </div>
-      <div class="doc-row" onclick="openDoc('poa')">
-        <div class="doc-icon" style="background:var(--stone);color:var(--charcoal)">⚖️</div>
-        <div class="doc-info"><div class="doc-name">Power of attorney</div><div class="doc-meta">Added Jan 14 · PDF</div></div>
-        <div class="doc-badge limited">Lisa only</div>
-      </div>
-      <div class="doc-row" onclick="openDoc('livingWill')">
-        <div class="doc-icon" style="background:var(--stone);color:var(--charcoal)">📜</div>
-        <div class="doc-info"><div class="doc-name">Living will</div><div class="doc-meta">Added Jan 14 · PDF</div></div>
-        <div class="doc-badge limited">Lisa only</div>
-      </div>
-    </div>
-
-    <div class="slabel">Medical records</div>
-    <div class="doc-card">
-      <div class="doc-row" onclick="openDoc('dischargeSummary')">
-        <div class="doc-icon" style="background:var(--sage)">📄</div>
-        <div class="doc-info"><div class="doc-name">Cardiology discharge summary</div><div class="doc-meta">Added Apr 8 · PDF</div></div>
-        <div class="doc-badge all">Whole Huddle</div>
-      </div>
-      <div class="doc-row" onclick="openDoc('bloodwork')">
-        <div class="doc-icon" style="background:var(--sage)">🧪</div>
-        <div class="doc-info"><div class="doc-name">Bloodwork results: March</div><div class="doc-meta">Added Mar 20 · PDF</div></div>
-        <div class="doc-badge all">Whole Huddle</div>
-      </div>
-      <div class="doc-row" onclick="openDoc('medList')">
-        <div class="doc-icon" style="background:var(--terracotta)">💊</div>
-        <div class="doc-info"><div class="doc-name">Current medication list</div><div class="doc-meta">Updated automatically</div></div>
-        <div class="doc-badge all">Whole Huddle</div>
-      </div>
-    </div>
-
-    <div class="add-btn" style="margin:4px 14px 14px;">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Upload a document
+    <div class="slabel">Other documents</div>
+    <div class="doc-card" id="other-docs-list"></div>
+    <div class="add-btn" style="margin:4px 14px 14px;" onclick="openVaultEditor('other',null)">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Add a document note
     </div>
   </div>
   <div class="doc-sheet-overlay" id="doc-sheet-overlay" onclick="if(event.target===this)closeDoc()">
@@ -956,23 +899,21 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="doc-sheet-header">
         <div class="doc-sheet-icon" id="doc-sheet-icon">📄</div>
         <div style="flex:1;">
-          <div class="doc-sheet-title" id="doc-sheet-title">Document</div>
-          <div class="doc-sheet-meta" id="doc-sheet-meta">Added · PDF</div>
+          <div class="doc-sheet-title" id="doc-sheet-title-label">Document</div>
+          <div class="doc-sheet-meta" id="doc-sheet-meta"></div>
         </div>
         <div class="doc-sheet-close" onclick="closeDoc()">✕</div>
       </div>
-      <div class="doc-preview-box">
-        <div class="doc-preview-icon" id="doc-sheet-preview-icon">📄</div>
-        <div class="doc-preview-text" id="doc-sheet-preview-text">Preview not available in this demo</div>
-      </div>
+      <div class="auth-field-label" style="margin-top:4px;">Title</div>
+      <input class="auth-input" id="doc-sheet-title-input" placeholder="e.g. Dr. Linda Chen">
+      <div class="auth-field-label">Details</div>
+      <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
       <div class="doc-sheet-actions">
-        <div class="doc-action-btn primary" onclick="docAction('view')">👁 View full size</div>
-        <div class="doc-action-btn" onclick="docAction('share')">↗ Share with Huddle</div>
-        <div class="doc-action-btn" onclick="docAction('send')">✉ Send to a doctor</div>
-        <div class="doc-action-btn" onclick="docAction('download')">⬇ Download</div>
+        <div class="doc-action-btn primary" onclick="saveVaultDoc()">💾 Save</div>
+        <div class="doc-action-btn" id="doc-delete-btn" style="display:none;color:var(--crimson);" onclick="deleteVaultDoc()">🗑 Delete</div>
       </div>
       <div class="doc-sheet-status" id="doc-sheet-status"></div>
-      <div class="doc-sheet-perm" id="doc-sheet-perm">Visible to: whole Huddle</div>
+      <div class="doc-sheet-perm">Visible to: whole Huddle</div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -1320,6 +1261,7 @@ async function enterApp(user,displayName){
   await loadAppointments();
   await loadFamilyMembers();
   await loadTasks();
+  await loadVaultDocs();
 }
 
 /* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
@@ -1671,48 +1613,112 @@ async function checkExistingSession(){
 }
 checkExistingSession();
 
-const VAULT_DOCS={
-  insurance:{icon:'🪪',color:'var(--slate)',title:"Insurance Card: Medicare + Aetna Supplemental",meta:'Added Mar 2 · PDF, 2 pages',preview:'🪪',previewText:'Front & back of both cards',perm:'Visible to: whole Huddle'},
-  dnr:{icon:'📋',color:'var(--crimson)',title:'Advance Directive / DNR',meta:'Added Jan 14 · PDF, 4 pages',preview:'📋',previewText:'Signed & witnessed Jan 2026',perm:'Visible to: whole Huddle'},
-  primaryDoctor:{icon:'👨‍⚕️',color:'var(--slate-light)',title:'Dr. Linda Chen: Primary Care',meta:'Kaiser Permanente · Rancho Bernardo',preview:'👨‍⚕️',previewText:'(858) 555-0142 · Patient portal linked',perm:'Visible to: whole Huddle'},
-  pharmacy:{icon:'💊',color:'var(--terracotta)',title:'CVS Pharmacy: Rancho Bernardo',meta:'Refill line · Delivery available',preview:'💊',previewText:'(858) 555-0198',perm:'Visible to: whole Huddle'},
-  allergies:{icon:'⚠️',color:'var(--crimson)',title:'Allergies & Conditions',meta:'Last updated Apr 8',preview:'⚠️',previewText:'Penicillin (rash) · Atrial fibrillation · Type 2 diabetes',perm:'Visible to: whole Huddle'},
-  emergencyContact:{icon:'📞',color:'var(--slate)',title:'Lisa M., Primary Coordinator',meta:'Chicago, IL · Available 24/7',preview:'📞',previewText:'(312) 555-0117',perm:'Visible to: whole Huddle'},
-  medicareCard:{icon:'🪪',color:'var(--slate)',title:'Medicare Part B Card',meta:'Added Mar 2 · PDF',preview:'🪪',previewText:'Front & back scan',perm:'Visible to: whole Huddle'},
-  supplemental:{icon:'🪪',color:'var(--slate-light)',title:'Supplemental Plan: Aetna',meta:'Added Mar 2 · PDF',preview:'🪪',previewText:'Policy #AE-2291-004',perm:'Visible to: whole Huddle'},
-  poa:{icon:'⚖️',color:'var(--stone)',title:'Power of Attorney',meta:'Added Jan 14 · PDF, 6 pages',preview:'⚖️',previewText:'Notarized · Lisa M. named agent',perm:'Visible to: Lisa only'},
-  livingWill:{icon:'📜',color:'var(--stone)',title:'Living Will',meta:'Added Jan 14 · PDF, 3 pages',preview:'📜',previewText:'Notarized Jan 2026',perm:'Visible to: Lisa only'},
-  dischargeSummary:{icon:'📄',color:'var(--sage)',title:'Cardiology Discharge Summary',meta:'Added Apr 8 · PDF, 2 pages',preview:'📄',previewText:'Dr. Patel · follow-up in 2 weeks',perm:'Visible to: whole Huddle'},
-  bloodwork:{icon:'🧪',color:'var(--sage)',title:'Bloodwork Results: March',meta:'Added Mar 20 · PDF',preview:'🧪',previewText:'A1C, CBC, lipid panel',perm:'Visible to: whole Huddle'},
-  medList:{icon:'💊',color:'var(--terracotta)',title:'Current Medication List',meta:'Updates automatically from Meds',preview:'💊',previewText:'6 active medications',perm:'Visible to: whole Huddle'}
-};
+/* ══════════ VAULT (real data) ══════════ */
+let VAULT_DOCS_DATA=[];
+let editingVaultDoc=null;
 
-function openDoc(key){
-  const d=VAULT_DOCS[key];
-  if(!d)return;
+const VAULT_CATEGORY_META={
+  insurance:{icon:'🪪',color:'var(--slate)',label:'Insurance Card',placeholder:'Provider, policy number, plan details'},
+  legal:{icon:'📋',color:'var(--crimson)',label:'Advance Directive',placeholder:'DNR status, POA, where the original is kept'},
+  doctor:{icon:'👨‍⚕️',color:'var(--slate-light)',label:'Primary Doctor',placeholder:'Name, practice, phone number'},
+  pharmacy:{icon:'💊',color:'var(--terracotta)',label:'Pharmacy',placeholder:'Pharmacy name, location, phone'},
+  allergies:{icon:'⚠️',color:'var(--crimson)',label:'Allergies & Conditions',placeholder:'Known allergies and major conditions'},
+  emergency_contact:{icon:'📞',color:'var(--slate)',label:'Emergency Contact',placeholder:'Name, relationship, phone number'}
+};
+const VAULT_TILE_ORDER=['insurance','legal','doctor','pharmacy','allergies','emergency_contact'];
+
+async function loadVaultDocs(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('vault_documents')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('updated_at',{ascending:false});
+  if(error){console.error('Failed to load vault documents:',error.message);return;}
+  VAULT_DOCS_DATA=data||[];
+  renderVaultGrid();
+  renderOtherDocsList();
+}
+
+function findVaultDoc(category){
+  return VAULT_DOCS_DATA.find(d=>d.category===category)||null;
+}
+
+function renderVaultGrid(){
+  const grid=document.getElementById('redfolder-grid');
+  if(!grid)return;
+  grid.innerHTML=VAULT_TILE_ORDER.map(cat=>{
+    const meta=VAULT_CATEGORY_META[cat];
+    const doc=findVaultDoc(cat);
+    const sub=doc?(doc.title||'Added'):'Tap to add';
+    return `<div class="redfolder-tile" onclick="openVaultEditor('${cat}',${doc?`'${doc.id}'`:'null'})"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
+  }).join('');
+}
+
+function renderOtherDocsList(){
+  const listEl=document.getElementById('other-docs-list');
+  if(!listEl)return;
+  const others=VAULT_DOCS_DATA.filter(d=>d.category==='other');
+  if(others.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:18px 10px;color:var(--graphite);font-size:13px;">No other documents added yet.</div>';
+    return;
+  }
+  listEl.innerHTML=others.map(d=>{
+    const dateStr=new Date(d.updated_at).toLocaleDateString([],{month:'short',day:'numeric'});
+    return `<div class="doc-row" onclick="openVaultEditor('other','${d.id}')">
+      <div class="doc-icon" style="background:var(--stone);color:var(--charcoal)">📄</div>
+      <div class="doc-info"><div class="doc-name">${d.title}</div><div class="doc-meta">Updated ${dateStr}</div></div>
+      <div class="doc-badge all">Whole Huddle</div>
+    </div>`;
+  }).join('');
+}
+
+function openVaultEditor(category,docId){
+  const doc=docId?VAULT_DOCS_DATA.find(d=>d.id===docId):null;
+  editingVaultDoc={id:doc?doc.id:null,category};
+  const meta=VAULT_CATEGORY_META[category];
   const icon=document.getElementById('doc-sheet-icon');
-  icon.textContent=d.icon;icon.style.background=d.color;
-  document.getElementById('doc-sheet-title').textContent=d.title;
-  document.getElementById('doc-sheet-meta').textContent=d.meta;
-  document.getElementById('doc-sheet-preview-icon').textContent=d.preview;
-  document.getElementById('doc-sheet-preview-text').textContent=d.previewText;
-  document.getElementById('doc-sheet-perm').textContent=d.perm;
+  if(meta){icon.textContent=meta.icon;icon.style.background=meta.color;}
+  else{icon.textContent='📄';icon.style.background='var(--stone)';}
+  document.getElementById('doc-sheet-title-label').textContent=meta?meta.label:'Document note';
+  document.getElementById('doc-sheet-meta').textContent=doc?('Updated '+new Date(doc.updated_at).toLocaleDateString()):'Not added yet';
+  document.getElementById('doc-sheet-title-input').value=doc?doc.title:'';
+  document.getElementById('doc-sheet-content-input').value=doc?(doc.content||''):'';
+  document.getElementById('doc-sheet-content-input').placeholder=meta?meta.placeholder:'Notes about this document';
+  document.getElementById('doc-delete-btn').style.display=doc?'flex':'none';
   document.getElementById('doc-sheet-status').textContent='';
   document.getElementById('doc-sheet-overlay').style.display='flex';
 }
 
 function closeDoc(){
   document.getElementById('doc-sheet-overlay').style.display='none';
+  editingVaultDoc=null;
 }
 
-function docAction(action){
-  const messages={
-    view:'Opening full-size document…',
-    share:'Shared with the whole Huddle ✓',
-    send:"Ready to attach to an email or message ✓",
-    download:'Saved to your device ✓'
-  };
-  document.getElementById('doc-sheet-status').textContent=messages[action]||'';
+async function saveVaultDoc(){
+  const title=document.getElementById('doc-sheet-title-input').value.trim();
+  const content=document.getElementById('doc-sheet-content-input').value.trim();
+  const statusEl=document.getElementById('doc-sheet-status');
+  if(!title){statusEl.textContent='A title is required.';statusEl.style.color='var(--crimson)';return;}
+  if(!editingVaultDoc){return;}
+  let error;
+  if(editingVaultDoc.id){
+    ({error}=await sb.from('vault_documents').update({
+      title,content,updated_by:CURRENT_USER.id,updated_at:new Date().toISOString()
+    }).eq('id',editingVaultDoc.id));
+  } else {
+    ({error}=await sb.from('vault_documents').insert({
+      family_id:CURRENT_FAMILY_ID,category:editingVaultDoc.category,title,content,updated_by:CURRENT_USER.id
+    }));
+  }
+  if(error){statusEl.style.color='var(--crimson)';statusEl.textContent=error.message;return;}
+  closeDoc();
+  await loadVaultDocs();
+}
+
+async function deleteVaultDoc(){
+  if(!editingVaultDoc||!editingVaultDoc.id)return;
+  const {error}=await sb.from('vault_documents').delete().eq('id',editingVaultDoc.id);
+  if(error){alert('Could not delete: '+error.message);return;}
+  closeDoc();
+  await loadVaultDocs();
 }
 
 /* ── WELLNESS JOURNAL ── */
@@ -2236,6 +2242,8 @@ function showScreen(name){
   if(btn) btn.classList.add('active');
   if(name==='meds') renderMedsScreen();
   if(name==='appts') renderAppointmentsList();
+  if(name==='vault'){renderVaultGrid();renderOtherDocsList();}
+  if(name==='roster') renderHuddleMembers();
 }
 
 function updateHomeProgress(){
