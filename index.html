@@ -808,7 +808,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       </div>
       <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
     </div>
-    <div class="post-appt" id="pending-debrief-banner" style="display:none;" onclick="openDebriefForm()"><div><div class="post-appt-text" id="pending-debrief-text"></div><div class="post-appt-sub" id="pending-debrief-sub"></div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
+    <div class="post-appt" id="pending-debrief-banner" style="display:none;" onclick="openDebrief()"><div><div class="post-appt-text" id="pending-debrief-text"></div><div class="post-appt-sub" id="pending-debrief-sub"></div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
     <div class="slabel" id="appt-list-label">Upcoming appointments</div>
     <div class="appt-card" id="appt-list"></div>
     <div class="add-btn" onclick="showAddApptForm()">
@@ -838,19 +838,30 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="doc-sheet-header">
         <div class="doc-sheet-icon" style="background:var(--terracotta)">🩺</div>
         <div style="flex:1;">
-          <div class="doc-sheet-title" id="debrief-title">Appointment debrief</div>
-          <div class="doc-sheet-meta" id="debrief-meta"></div>
+          <div class="doc-sheet-title" id="debrief-header-title">Appointment debrief</div>
+          <div class="doc-sheet-meta" id="debrief-header-meta"></div>
         </div>
         <div class="doc-sheet-close" onclick="closeDebriefForm()">✕</div>
       </div>
-      <div class="auth-field-label" style="margin-top:4px;">What did the doctor say?</div>
-      <textarea class="auth-input" id="debrief-doctor-said" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Summary of what was discussed"></textarea>
-      <div class="auth-field-label">New prescriptions?</div>
-      <textarea class="auth-input" id="debrief-new-rx" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Any new medications or changes"></textarea>
-      <div class="auth-field-label">Next steps / follow-up?</div>
-      <textarea class="auth-input" id="debrief-next-steps" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="What needs to happen next"></textarea>
-      <div class="compose-submit" onclick="submitDebrief()">Save debrief and share with Huddle</div>
-      <div class="doc-sheet-status" id="debrief-status"></div>
+
+      <div id="debrief-queue-panel">
+        <div style="font-size:12px;color:var(--charcoal);margin-bottom:10px;">Pick one to catch up on. The rest will still be here after.</div>
+        <div id="debrief-queue-list"></div>
+      </div>
+
+      <div id="debrief-form-panel" style="display:none;">
+        <div id="debrief-back-link" style="display:none;font-size:12px;font-weight:600;color:var(--slate);cursor:pointer;margin-bottom:10px;" onclick="backToDebriefQueue()">‹ Back to list</div>
+        <div class="doc-sheet-title" id="debrief-title" style="font-size:14px;margin-bottom:2px;"></div>
+        <div class="doc-sheet-meta" id="debrief-meta" style="margin-bottom:10px;"></div>
+        <div class="auth-field-label" style="margin-top:4px;">What did the doctor say?</div>
+        <textarea class="auth-input" id="debrief-doctor-said" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Summary of what was discussed"></textarea>
+        <div class="auth-field-label">New prescriptions?</div>
+        <textarea class="auth-input" id="debrief-new-rx" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Any new medications or changes"></textarea>
+        <div class="auth-field-label">Next steps / follow-up?</div>
+        <textarea class="auth-input" id="debrief-next-steps" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="What needs to happen next"></textarea>
+        <div class="compose-submit" onclick="submitDebrief()">Save debrief and share with Huddle</div>
+        <div class="doc-sheet-status" id="debrief-status"></div>
+      </div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -2808,7 +2819,8 @@ async function submitNote(ctx){
   setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
 }
 
-/* ══════════ POST-APPOINTMENT DEBRIEF (real table) ══════════ */
+/* ══════════ POST-APPOINTMENT DEBRIEF (real queue) ══════════ */
+let PENDING_DEBRIEF_QUEUE=[];
 let PENDING_DEBRIEF_APPT=null;
 
 async function loadPendingDebrief(){
@@ -2817,8 +2829,9 @@ async function loadPendingDebrief(){
     .select('*').eq('family_id',CURRENT_FAMILY_ID)
     .lt('appointment_at',new Date().toISOString())
     .order('appointment_at',{ascending:false})
-    .limit(10);
+    .limit(20);
   if(error||!pastAppts||pastAppts.length===0){
+    PENDING_DEBRIEF_QUEUE=[];
     hideDebriefBanner();
     return;
   }
@@ -2826,30 +2839,76 @@ async function loadPendingDebrief(){
   const {data:existingDebriefs}=await sb.from('appointment_debriefs')
     .select('appointment_id').in('appointment_id',ids);
   const debriefedIds=new Set((existingDebriefs||[]).map(d=>d.appointment_id));
-  const needsDebrief=pastAppts.find(a=>!debriefedIds.has(a.id));
-  if(!needsDebrief){
+  PENDING_DEBRIEF_QUEUE=pastAppts.filter(a=>!debriefedIds.has(a.id));
+  if(PENDING_DEBRIEF_QUEUE.length===0){
     hideDebriefBanner();
     return;
   }
-  PENDING_DEBRIEF_APPT=needsDebrief;
+  renderDebriefBanner();
+}
+
+function renderDebriefBanner(){
   const banner=document.getElementById('pending-debrief-banner');
-  const dt=new Date(needsDebrief.appointment_at);
-  document.getElementById('pending-debrief-text').textContent=`How did "${needsDebrief.title}" go?`;
-  document.getElementById('pending-debrief-sub').textContent=`${dt.toLocaleDateString([],{month:'short',day:'numeric'})} → helps the whole Huddle`;
-  if(banner) banner.style.display='flex';
+  if(!banner)return;
+  const n=PENDING_DEBRIEF_QUEUE.length;
+  if(n===1){
+    const a=PENDING_DEBRIEF_QUEUE[0];
+    const dt=new Date(a.appointment_at);
+    document.getElementById('pending-debrief-text').textContent=`How did "${a.title}" go?`;
+    document.getElementById('pending-debrief-sub').textContent=`${dt.toLocaleDateString([],{month:'short',day:'numeric'})} → helps the whole Huddle`;
+  } else {
+    document.getElementById('pending-debrief-text').textContent=`${n} appointments need a debrief`;
+    document.getElementById('pending-debrief-sub').textContent='Tap to catch up';
+  }
+  banner.style.display='flex';
 }
 
 function hideDebriefBanner(){
+  PENDING_DEBRIEF_QUEUE=[];
   PENDING_DEBRIEF_APPT=null;
   const banner=document.getElementById('pending-debrief-banner');
   if(banner) banner.style.display='none';
 }
 
-function openDebriefForm(){
-  if(!PENDING_DEBRIEF_APPT)return;
-  document.getElementById('debrief-title').textContent=PENDING_DEBRIEF_APPT.title;
-  const dt=new Date(PENDING_DEBRIEF_APPT.appointment_at);
-  const metaBits=[dt.toLocaleDateString(),PENDING_DEBRIEF_APPT.provider,PENDING_DEBRIEF_APPT.location].filter(Boolean).join(' · ');
+function openDebrief(){
+  if(PENDING_DEBRIEF_QUEUE.length===0)return;
+  if(PENDING_DEBRIEF_QUEUE.length===1){
+    openDebriefForm(PENDING_DEBRIEF_QUEUE[0].id);
+  } else {
+    openDebriefQueueList();
+  }
+}
+
+function openDebriefQueueList(){
+  document.getElementById('debrief-header-title').textContent='Appointment debriefs';
+  document.getElementById('debrief-header-meta').textContent=`${PENDING_DEBRIEF_QUEUE.length} waiting`;
+  document.getElementById('debrief-queue-panel').style.display='block';
+  document.getElementById('debrief-form-panel').style.display='none';
+  const listEl=document.getElementById('debrief-queue-list');
+  listEl.innerHTML=PENDING_DEBRIEF_QUEUE.map(a=>{
+    const dt=new Date(a.appointment_at);
+    const metaBits=[a.provider,a.location].filter(Boolean).join(' · ');
+    return `<div class="appt-row" style="cursor:pointer;" onclick="openDebriefForm('${a.id}')">
+      <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">${MONTH_ABBR[dt.getMonth()]}</div><div class="appt-day" style="color:var(--slate)">${dt.getDate()}</div></div>
+      <div class="appt-body"><div class="appt-name">${a.title}</div>${metaBits?`<div class="appt-meta"><span class="appt-time">${metaBits}</span></div>`:''}</div>
+      <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
+    </div>`;
+  }).join('');
+  document.getElementById('debrief-overlay').style.display='flex';
+}
+
+function openDebriefForm(apptId){
+  const appt=PENDING_DEBRIEF_QUEUE.find(a=>a.id===apptId);
+  if(!appt)return;
+  PENDING_DEBRIEF_APPT=appt;
+  document.getElementById('debrief-header-title').textContent='Appointment debrief';
+  document.getElementById('debrief-header-meta').textContent='';
+  document.getElementById('debrief-queue-panel').style.display='none';
+  document.getElementById('debrief-form-panel').style.display='block';
+  document.getElementById('debrief-back-link').style.display=PENDING_DEBRIEF_QUEUE.length>1?'block':'none';
+  document.getElementById('debrief-title').textContent=appt.title;
+  const dt=new Date(appt.appointment_at);
+  const metaBits=[dt.toLocaleDateString(),appt.provider,appt.location].filter(Boolean).join(' · ');
   document.getElementById('debrief-meta').textContent=metaBits;
   document.getElementById('debrief-doctor-said').value='';
   document.getElementById('debrief-new-rx').value='';
@@ -2857,6 +2916,11 @@ function openDebriefForm(){
   document.getElementById('debrief-status').textContent='';
   document.getElementById('debrief-overlay').style.display='flex';
 }
+
+function backToDebriefQueue(){
+  openDebriefQueueList();
+}
+
 function closeDebriefForm(){
   document.getElementById('debrief-overlay').style.display='none';
 }
@@ -2892,7 +2956,14 @@ async function submitDebrief(){
   await loadJournalEntries();
 
   status.textContent='Saved and shared with the Huddle ✓';
-  setTimeout(()=>{closeDebriefForm();loadPendingDebrief();},900);
+  setTimeout(async()=>{
+    await loadPendingDebrief();
+    if(PENDING_DEBRIEF_QUEUE.length>0){
+      openDebriefQueueList();
+    } else {
+      closeDebriefForm();
+    }
+  },900);
 }
 
 /* ── CAREGIVER CHECK-IN ── */
