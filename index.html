@@ -908,15 +908,17 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="contact-section-label">The Huddle · Family</div>
       <div class="contact-card" id="huddle-family-list"></div>
     </div>
-    <div class="add-btn" style="margin:4px 14px 14px;" onclick="showInviteForm()">
+    <div class="add-btn" id="invite-member-btn" style="margin:4px 14px 14px;" onclick="showInviteForm()">
       <span style="font-size:18px;color:var(--graphite)">+</span>Invite a family member
     </div>
+    <div id="coordinator-only-note" style="display:none;margin:4px 14px 14px;font-size:11.5px;color:var(--graphite);text-align:center;">Only your Huddle's coordinator can invite new family members.</div>
     <div id="invite-form" style="display:none;margin:0 14px 14px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
       <div style="font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:10px;">Share this link with the person you want to add. When they sign up through it, they'll join this same Huddle instead of starting a new one.</div>
       <div style="display:flex;gap:6px;">
         <input class="auth-input" id="invite-link-box" readonly style="font-size:11px;">
         <div style="padding:11px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;white-space:nowrap;" onclick="copyInviteLink()">Copy</div>
       </div>
+      <div id="invite-expiry-note" style="font-size:10.5px;color:var(--graphite);margin-top:6px;"></div>
       <div class="auth-status" id="invite-copy-status" style="margin-top:8px;"></div>
       <div class="auth-forgot-link" onclick="hideInviteForm()" style="margin-top:12px;">Close</div>
     </div>
@@ -1013,6 +1015,22 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="doc-action-btn" id="doc-delete-btn" style="display:none;color:var(--crimson);" onclick="deleteVaultDoc()">🗑 Delete</div>
       </div>
       <div class="doc-sheet-status" id="doc-sheet-status"></div>
+      <div class="doc-sheet-perm">Visible to: whole Huddle</div>
+    </div>
+  </div>
+  <div class="doc-sheet-overlay" id="structured-list-overlay" onclick="if(event.target===this)closeStructuredList()">
+    <div class="doc-sheet">
+      <div class="doc-sheet-handle"></div>
+      <div class="doc-sheet-header">
+        <div class="doc-sheet-icon" id="sl-icon">🩺</div>
+        <div style="flex:1;">
+          <div class="doc-sheet-title" id="sl-title">Conditions</div>
+          <div class="doc-sheet-meta" id="sl-meta">Visible to the whole Huddle</div>
+        </div>
+        <div class="doc-sheet-close" onclick="closeStructuredList()">✕</div>
+      </div>
+      <div id="sl-list"></div>
+      <div id="sl-add-form"></div>
       <div class="doc-sheet-perm">Visible to: whole Huddle</div>
     </div>
   </div>
@@ -1290,7 +1308,46 @@ let CURRENT_USER=null;
 let CURRENT_FAMILY_ID=null;
 let CURRENT_DISPLAY_NAME=null;
 let authMode='signin';
-const PENDING_INVITE_FAMILY_ID=new URLSearchParams(window.location.search).get('invite');
+const PENDING_INVITE_ID=new URLSearchParams(window.location.search).get('invite');
+let PENDING_INVITE_VALID=null; // null = not checked yet, true/false once resolved
+let PENDING_INVITE_ERROR='';
+
+async function validatePendingInvite(){
+  if(!PENDING_INVITE_ID) return;
+  const {data,error}=await sb.from('invites').select('*').eq('id',PENDING_INVITE_ID).maybeSingle();
+  if(error||!data){
+    PENDING_INVITE_VALID=false;
+    PENDING_INVITE_ERROR='This invite link is not valid. Please ask for a new one.';
+  } else if(data.used){
+    PENDING_INVITE_VALID=false;
+    PENDING_INVITE_ERROR='This invite link has already been used. Please ask for a new one.';
+  } else if(new Date(data.expires_at)<new Date()){
+    PENDING_INVITE_VALID=false;
+    PENDING_INVITE_ERROR='This invite link has expired. Please ask for a new one.';
+  } else {
+    PENDING_INVITE_VALID=true;
+  }
+  refreshInviteUI();
+}
+
+function refreshInviteUI(){
+  const note=document.getElementById('invite-join-note');
+  if(!note)return;
+  if(!PENDING_INVITE_ID)return;
+  if(PENDING_INVITE_VALID===false){
+    note.style.display='block';
+    note.style.background='var(--crimson-light)';
+    note.style.color='#8A1418';
+    note.textContent=PENDING_INVITE_ERROR+' You can still create your own new Huddle below.';
+    document.getElementById('signup-care-recipient-group').style.display='block';
+  } else if(PENDING_INVITE_VALID===true){
+    note.style.display='block';
+    note.style.background='var(--sage-light)';
+    note.style.color='#245A2A';
+    note.textContent="You've been invited to join an existing care team. You'll join their Huddle instead of starting a new one.";
+    document.getElementById('signup-care-recipient-group').style.display='none';
+  }
+}
 
 function togglePasswordVisibility(){
   const input=document.getElementById('auth-password');
@@ -1371,17 +1428,17 @@ function setAuthMode(mode){
   document.getElementById('auth-submit-btn').textContent=mode==='signup'?'Create Account':'Sign In';
   document.getElementById('auth-error').style.display='none';
   document.getElementById('auth-status').style.display='none';
-  if(mode==='signup'&&PENDING_INVITE_FAMILY_ID){
-    document.getElementById('invite-join-note').style.display='block';
-    document.getElementById('signup-care-recipient-group').style.display='none';
+  if(mode==='signup'&&PENDING_INVITE_ID){
+    refreshInviteUI();
   } else if(mode==='signup'){
     document.getElementById('invite-join-note').style.display='none';
     document.getElementById('signup-care-recipient-group').style.display='block';
   }
 }
 
-if(PENDING_INVITE_FAMILY_ID){
+if(PENDING_INVITE_ID){
   setAuthMode('signup');
+  validatePendingInvite();
 }
 
 function showAuthError(msg){
@@ -1407,13 +1464,14 @@ async function submitAuth(){
   localStorage.setItem('hwc-remember-me',rememberMe?'true':'false');
   btn.disabled=true;
   if(authMode==='signup'){
+    const usingInvite=!!PENDING_INVITE_ID&&PENDING_INVITE_VALID===true;
     const displayName=document.getElementById('auth-display-name').value.trim();
-    const careRecipient=PENDING_INVITE_FAMILY_ID?'':document.getElementById('auth-care-recipient').value.trim();
-    if(!displayName||(!PENDING_INVITE_FAMILY_ID&&!careRecipient)){
-      showAuthError(PENDING_INVITE_FAMILY_ID?'Enter your name to continue.':'Fill in your name and who you\'re caring for.');
+    const careRecipient=usingInvite?'':document.getElementById('auth-care-recipient').value.trim();
+    if(!displayName||(!usingInvite&&!careRecipient)){
+      showAuthError(usingInvite?'Enter your name to continue.':'Fill in your name and who you\'re caring for.');
       btn.disabled=false;return;
     }
-    const redirectUrl=PENDING_INVITE_FAMILY_ID?window.location.origin+window.location.pathname+'?invite='+PENDING_INVITE_FAMILY_ID:window.location.origin+window.location.pathname;
+    const redirectUrl=usingInvite?window.location.origin+window.location.pathname+'?invite='+PENDING_INVITE_ID:window.location.origin+window.location.pathname;
     const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl}});
     if(error){showAuthError(error.message);btn.disabled=false;return;}
     if(!data.session){
@@ -1432,22 +1490,28 @@ async function submitAuth(){
 }
 
 async function completeAccountSetup(userId,displayName,careRecipient){
-  if(PENDING_INVITE_FAMILY_ID){
-    await joinFamilyViaInvite(userId,displayName,PENDING_INVITE_FAMILY_ID);
+  const usingInvite=!!PENDING_INVITE_ID&&PENDING_INVITE_VALID===true;
+  if(usingInvite){
+    await joinFamilyViaInvite(userId,displayName,PENDING_INVITE_ID);
   } else {
     await createFamilyForNewUser(userId,displayName,careRecipient);
   }
 }
 
-async function joinFamilyViaInvite(userId,displayName,familyId){
+async function joinFamilyViaInvite(userId,displayName,inviteId){
+  const {data:invite,error:inviteErr}=await sb.from('invites').select('*').eq('id',inviteId).maybeSingle();
+  if(inviteErr||!invite){showAuthError('This invite link is no longer valid.');return;}
+  if(invite.used){showAuthError('This invite link has already been used.');return;}
+  if(new Date(invite.expires_at)<new Date()){showAuthError('This invite link has expired.');return;}
   const {error}=await sb.from('family_members').insert({
-    family_id:familyId,
+    family_id:invite.family_id,
     user_id:userId,
     display_name:displayName,
     role:'member'
   });
   if(error){showAuthError('Could not join that Huddle: '+error.message);return;}
-  CURRENT_FAMILY_ID=familyId;
+  await sb.from('invites').update({used:true,used_by:userId,used_at:new Date().toISOString()}).eq('id',inviteId);
+  CURRENT_FAMILY_ID=invite.family_id;
 }
 
 async function createFamilyForNewUser(userId,displayName,careRecipient){
@@ -1473,9 +1537,11 @@ async function loadFamilyAndEnter(user){
   const member=members&&members.length>0?members[0]:null;
   if(error||!member){
     PENDING_SETUP_USER=user;
+    if(PENDING_INVITE_ID&&PENDING_INVITE_VALID===null) await validatePendingInvite();
+    const usingInvite=!!PENDING_INVITE_ID&&PENDING_INVITE_VALID===true;
     document.getElementById('main-auth-card').style.display='none';
     document.getElementById('finish-setup-card').style.display='block';
-    document.getElementById('finish-care-recipient-group').style.display=PENDING_INVITE_FAMILY_ID?'none':'block';
+    document.getElementById('finish-care-recipient-group').style.display=usingInvite?'none':'block';
     return;
   }
   CURRENT_FAMILY_ID=member.family_id;
@@ -1483,11 +1549,12 @@ async function loadFamilyAndEnter(user){
 }
 
 async function submitFinishSetup(){
+  const usingInvite=!!PENDING_INVITE_ID&&PENDING_INVITE_VALID===true;
   const displayName=document.getElementById('finish-display-name').value.trim();
-  const careRecipient=PENDING_INVITE_FAMILY_ID?'':document.getElementById('finish-care-recipient').value.trim();
+  const careRecipient=usingInvite?'':document.getElementById('finish-care-recipient').value.trim();
   const errEl=document.getElementById('finish-setup-error');
   errEl.style.display='none';
-  if(!displayName||(!PENDING_INVITE_FAMILY_ID&&!careRecipient)){
+  if(!displayName||(!usingInvite&&!careRecipient)){
     errEl.textContent='Fill in the required fields to continue.';
     errEl.style.display='block';
     return;
@@ -1521,6 +1588,7 @@ async function enterApp(user,displayName){
   await loadJournalEntries();
   await loadChatMessages();
   setupRealtimeSync();
+  startMedAlertTicker();
 }
 
 /* ══════════ REAL-TIME SYNC ACROSS DEVICES ══════════
@@ -1627,6 +1695,19 @@ function getOverdueMedications(){
   });
 }
 
+function minutesOverdue(schedHour){
+  const now=new Date();
+  const scheduled=new Date(now.getFullYear(),now.getMonth(),now.getDate(),schedHour,0,0);
+  return Math.max(0,Math.floor((now-scheduled)/60000));
+}
+
+function formatOverdueDuration(mins){
+  if(mins<1)return'just now';
+  if(mins<60)return`${mins} min overdue`;
+  const h=Math.floor(mins/60),m=mins%60;
+  return`${h}h ${m}m overdue`;
+}
+
 function updateHomeAlertBanner(){
   const strip=document.getElementById('home-alert-strip');
   const textEl=document.getElementById('home-alert-text');
@@ -1636,15 +1717,41 @@ function updateHomeAlertBanner(){
     strip.style.display='none';
     return;
   }
-  const label=overdue.length===1
-    ? `${overdue[0].name} not logged.`
-    : `${overdue.length} medications not logged.`;
-  textEl.innerHTML=`${label} <span>Tap to check Meds</span>`;
+  if(overdue.length===1){
+    const schedHour=parseScheduleHour(overdue[0].schedule_time);
+    const duration=schedHour!==null?formatOverdueDuration(minutesOverdue(schedHour)):'';
+    textEl.innerHTML=`${overdue[0].name} not logged${duration?' · '+duration:''}. <span>Tap to check Meds</span>`;
+  } else {
+    const durations=overdue.map(m=>{
+      const h=parseScheduleHour(m.schedule_time);
+      return h!==null?minutesOverdue(h):0;
+    });
+    const longest=formatOverdueDuration(Math.max(...durations));
+    textEl.innerHTML=`${overdue.length} medications not logged · longest ${longest}. <span>Tap to check Meds</span>`;
+  }
   strip.style.display='flex';
+}
+
+/* Keeps the overdue banner accurate live, without needing a reload —
+   ticks every 30 seconds so elapsed time and newly-overdue meds show
+   up while the app is just sitting open. */
+let MED_ALERT_TICK_INTERVAL=null;
+function startMedAlertTicker(){
+  if(MED_ALERT_TICK_INTERVAL) clearInterval(MED_ALERT_TICK_INTERVAL);
+  MED_ALERT_TICK_INTERVAL=setInterval(updateHomeAlertBanner,30000);
+}
+function stopMedAlertTicker(){
+  if(MED_ALERT_TICK_INTERVAL){clearInterval(MED_ALERT_TICK_INTERVAL);MED_ALERT_TICK_INTERVAL=null;}
 }
 
 /* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
 let FAMILY_MEMBERS=[];
+
+function isCoordinator(){
+  if(!CURRENT_USER)return false;
+  const me=FAMILY_MEMBERS.find(m=>m.user_id===CURRENT_USER.id);
+  return me&&me.role==='coordinator';
+}
 
 async function loadFamilyMembers(){
   if(!CURRENT_FAMILY_ID)return;
@@ -1684,12 +1791,40 @@ function renderHuddleMembers(){
       return `<div class="member-pill"><div class="member-avatar" style="background:${color}">${initial}</div><div><div class="member-name">${m.display_name}</div><div class="member-role">${roleLabel}</div></div></div>`;
     }).join('');
   }
+  const inviteBtn=document.getElementById('invite-member-btn');
+  const coordinatorNote=document.getElementById('coordinator-only-note');
+  if(inviteBtn&&coordinatorNote){
+    const canInvite=isCoordinator();
+    inviteBtn.style.display=canInvite?'flex':'none';
+    coordinatorNote.style.display=canInvite?'none':'block';
+  }
 }
 
-function showInviteForm(){
-  const link=window.location.origin+window.location.pathname+'?invite='+CURRENT_FAMILY_ID;
-  document.getElementById('invite-link-box').value=link;
+const INVITE_EXPIRY_DAYS=7;
+
+async function showInviteForm(){
+  if(!isCoordinator()){
+    alert("Only your Huddle's coordinator can invite new family members.");
+    return;
+  }
+  const box=document.getElementById('invite-link-box');
+  box.value='Generating link…';
   document.getElementById('invite-form').style.display='block';
+  const expiresAt=new Date(Date.now()+INVITE_EXPIRY_DAYS*86400000).toISOString();
+  const {data,error}=await sb.from('invites').insert({
+    family_id:CURRENT_FAMILY_ID,
+    created_by:CURRENT_USER.id,
+    expires_at:expiresAt
+  }).select().single();
+  if(error){
+    box.value='';
+    document.getElementById('invite-copy-status').textContent='Could not create invite link: '+error.message;
+    document.getElementById('invite-copy-status').style.display='block';
+    return;
+  }
+  const link=window.location.origin+window.location.pathname+'?invite='+data.id;
+  box.value=link;
+  document.getElementById('invite-expiry-note').textContent=`This link works once and expires in ${INVITE_EXPIRY_DAYS} days.`;
 }
 function hideInviteForm(){
   document.getElementById('invite-form').style.display='none';
@@ -2031,6 +2166,7 @@ function confirmSignOut(){
 
 async function signOutUser(){
   teardownRealtimeSync();
+  stopMedAlertTicker();
   await sb.auth.signOut();
   CURRENT_USER=null;CURRENT_FAMILY_ID=null;CURRENT_DISPLAY_NAME=null;
   document.getElementById('app-root').style.display='none';
@@ -2046,6 +2182,45 @@ async function checkExistingSession(){
   }
 }
 checkExistingSession();
+
+/* ══════════ FAIR-USE MONTHLY ACTION CAP ══════════
+   Keeps costs and abuse in check on a per-family basis. Every
+   meaningful write (adding/logging something) is counted; the count
+   resets naturally each calendar month since it's based on created_at. */
+const FAIR_USE_MONTHLY_CAP=60;
+
+function monthStartISO(){
+  const d=new Date();
+  return new Date(d.getFullYear(),d.getMonth(),1).toISOString();
+}
+
+async function getMonthlyActionCount(){
+  if(!CURRENT_FAMILY_ID)return 0;
+  const {count,error}=await sb.from('activity_log')
+    .select('id',{count:'exact',head:true})
+    .eq('family_id',CURRENT_FAMILY_ID)
+    .gte('created_at',monthStartISO());
+  if(error){console.error('Could not check fair-use count:',error.message);return 0;}
+  return count||0;
+}
+
+async function checkFairUseCap(){
+  const count=await getMonthlyActionCount();
+  if(count>=FAIR_USE_MONTHLY_CAP){
+    alert(`Your Huddle has reached this month's fair-use limit of ${FAIR_USE_MONTHLY_CAP} actions. This resets on the 1st of next month.`);
+    return false;
+  }
+  return true;
+}
+
+async function logAction(actionType){
+  if(!CURRENT_FAMILY_ID||!CURRENT_USER)return;
+  await sb.from('activity_log').insert({
+    family_id:CURRENT_FAMILY_ID,
+    user_id:CURRENT_USER.id,
+    action_type:actionType
+  });
+}
 
 /* ══════════ VAULT (real data) ══════════ */
 let VAULT_DOCS_DATA=[];
@@ -2067,14 +2242,33 @@ const COMMON_CONDITIONS=['Anemia','Anxiety disorders','Arthritis','Asthma','Atri
 
 let selectedConditions=new Set();
 
+let CONDITIONS_DATA=[];
+let ALLERGIES_DATA=[];
+
 async function loadVaultDocs(){
   if(!CURRENT_FAMILY_ID)return;
   const {data,error}=await sb.from('vault_documents')
     .select('*').eq('family_id',CURRENT_FAMILY_ID).order('updated_at',{ascending:false});
   if(error){console.error('Failed to load vault documents:',error.message);return;}
   VAULT_DOCS_DATA=data||[];
+  await loadConditions();
+  await loadAllergies();
   renderVaultGrid();
   renderOtherDocsList();
+}
+
+async function loadConditions(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('conditions').select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at');
+  if(error){console.error('Failed to load conditions:',error.message);return;}
+  CONDITIONS_DATA=data||[];
+}
+
+async function loadAllergies(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('allergies').select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at');
+  if(error){console.error('Failed to load allergies:',error.message);return;}
+  ALLERGIES_DATA=data||[];
 }
 
 function findVaultDoc(category){
@@ -2086,12 +2280,145 @@ function renderVaultGrid(){
   if(!grid)return;
   grid.innerHTML=VAULT_TILE_ORDER.map(cat=>{
     const meta=VAULT_CATEGORY_META[cat];
+    if(cat==='conditions'||cat==='allergies'){
+      const count=cat==='conditions'?CONDITIONS_DATA.length:ALLERGIES_DATA.length;
+      const sub=count>0?`${count} listed`:'Tap to add';
+      return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openStructuredList('${cat}')"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
+    }
     const doc=findVaultDoc(cat);
-    const sub=cat==='conditions'
-      ?(doc?'Listed':'Tap to add')
-      :(doc?(doc.title||'Added'):'Tap to add');
+    const sub=doc?(doc.title||'Added'):'Tap to add';
     return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openVaultEditor('${cat}',${doc?`'${doc.id}'`:'null'})"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
   }).join('');
+}
+
+/* ══════════ STRUCTURED CONDITIONS & ALLERGIES ══════════
+   Real repeatable rows in their own tables, not a single flattened
+   text blob — each entry can be added, edited independently, and
+   deleted on its own. */
+let SL_KIND=null;
+let SL_SELECTED_SEVERITY=null;
+
+function openStructuredList(kind){
+  SL_KIND=kind;
+  SL_SELECTED_SEVERITY=null;
+  const meta=kind==='conditions'
+    ?{icon:'🩺',color:'var(--crimson)',title:'Conditions'}
+    :{icon:'⚠️',color:'#B8860B',title:'Allergies'};
+  document.getElementById('sl-icon').textContent=meta.icon;
+  document.getElementById('sl-icon').style.background=meta.color;
+  document.getElementById('sl-title').textContent=meta.title;
+  renderStructuredList();
+  document.getElementById('structured-list-overlay').style.display='flex';
+}
+
+function closeStructuredList(){
+  document.getElementById('structured-list-overlay').style.display='none';
+  SL_KIND=null;
+}
+
+function renderStructuredList(){
+  const listEl=document.getElementById('sl-list');
+  const formEl=document.getElementById('sl-add-form');
+  if(SL_KIND==='conditions'){
+    listEl.innerHTML=CONDITIONS_DATA.length===0
+      ?'<div style="text-align:center;padding:14px 0;color:var(--graphite);font-size:12px;">No conditions listed yet.</div>'
+      :CONDITIONS_DATA.map(c=>`
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--stone-light);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--charcoal);">${c.name}</div>
+            ${c.notes?`<div style="font-size:11px;color:var(--graphite);margin-top:2px;">${c.notes}</div>`:''}
+          </div>
+          <div style="cursor:pointer;color:var(--crimson);font-size:13px;padding:2px 4px;" onclick="deleteCondition('${c.id}')">🗑</div>
+        </div>`).join('');
+    formEl.innerHTML=`
+      <div class="auth-field-label" style="margin-top:12px;">Add a condition</div>
+      <input class="auth-input" id="sl-condition-name" placeholder="Condition name" style="margin-bottom:8px;">
+      <input class="auth-input" id="sl-condition-notes" placeholder="Notes (optional)" style="margin-bottom:8px;">
+      <div class="compose-submit" onclick="addConditionRow()">Add Condition</div>
+      <div class="auth-field-label">Or tap a common condition</div>
+      <div class="cost-chip-row" id="sl-common-chips"></div>`;
+    document.getElementById('sl-common-chips').innerHTML=COMMON_CONDITIONS.map(c=>
+      `<div class="cost-chip" onclick="quickAddCondition('${c.replace(/'/g,"\\'")}')">${c}</div>`
+    ).join('');
+  } else {
+    listEl.innerHTML=ALLERGIES_DATA.length===0
+      ?'<div style="text-align:center;padding:14px 0;color:var(--graphite);font-size:12px;">No allergies listed yet.</div>'
+      :ALLERGIES_DATA.map(a=>`
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--stone-light);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--charcoal);">${a.name}${a.severity?` <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--crimson-light);color:var(--crimson);margin-left:2px;">${a.severity}</span>`:''}</div>
+            ${a.reaction?`<div style="font-size:11px;color:var(--graphite);margin-top:2px;">Reaction: ${a.reaction}</div>`:''}
+          </div>
+          <div style="cursor:pointer;color:var(--crimson);font-size:13px;padding:2px 4px;" onclick="deleteAllergy('${a.id}')">🗑</div>
+        </div>`).join('');
+    formEl.innerHTML=`
+      <div class="auth-field-label" style="margin-top:12px;">Add an allergy</div>
+      <input class="auth-input" id="sl-allergy-name" placeholder="Allergy (e.g. Penicillin)" style="margin-bottom:8px;">
+      <input class="auth-input" id="sl-allergy-reaction" placeholder="Reaction (optional)" style="margin-bottom:8px;">
+      <div class="auth-field-label" style="margin-top:0;">Severity</div>
+      <div class="cost-chip-row" style="margin-bottom:8px;" id="sl-severity-chips">
+        ${['Mild','Moderate','Severe'].map(s=>`<div class="cost-chip" id="sl-sev-${s}" onclick="setSeverity('${s}')">${s}</div>`).join('')}
+      </div>
+      <div class="compose-submit" onclick="addAllergyRow()">Add Allergy</div>`;
+  }
+}
+
+function setSeverity(s){
+  SL_SELECTED_SEVERITY=SL_SELECTED_SEVERITY===s?null:s;
+  ['Mild','Moderate','Severe'].forEach(x=>{
+    const el=document.getElementById('sl-sev-'+x);
+    if(el) el.classList.toggle('selected',x===SL_SELECTED_SEVERITY);
+  });
+}
+
+async function addConditionRow(){
+  const name=document.getElementById('sl-condition-name').value.trim();
+  const notes=document.getElementById('sl-condition-notes').value.trim();
+  if(!name)return;
+  const {error}=await sb.from('conditions').insert({family_id:CURRENT_FAMILY_ID,name,notes:notes||null,added_by:CURRENT_USER.id});
+  if(error){alert('Could not add condition: '+error.message);return;}
+  await loadConditions();
+  renderVaultGrid();
+  renderStructuredList();
+}
+
+async function quickAddCondition(name){
+  if(CONDITIONS_DATA.some(c=>c.name.toLowerCase()===name.toLowerCase()))return;
+  const {error}=await sb.from('conditions').insert({family_id:CURRENT_FAMILY_ID,name,added_by:CURRENT_USER.id});
+  if(error){alert('Could not add condition: '+error.message);return;}
+  await loadConditions();
+  renderVaultGrid();
+  renderStructuredList();
+}
+
+async function deleteCondition(id){
+  const {error}=await sb.from('conditions').delete().eq('id',id);
+  if(error){alert('Could not delete: '+error.message);return;}
+  await loadConditions();
+  renderVaultGrid();
+  renderStructuredList();
+}
+
+async function addAllergyRow(){
+  const name=document.getElementById('sl-allergy-name').value.trim();
+  const reaction=document.getElementById('sl-allergy-reaction').value.trim();
+  if(!name)return;
+  const {error}=await sb.from('allergies').insert({
+    family_id:CURRENT_FAMILY_ID,name,reaction:reaction||null,severity:SL_SELECTED_SEVERITY,added_by:CURRENT_USER.id
+  });
+  if(error){alert('Could not add allergy: '+error.message);return;}
+  SL_SELECTED_SEVERITY=null;
+  await loadAllergies();
+  renderVaultGrid();
+  renderStructuredList();
+}
+
+async function deleteAllergy(id){
+  const {error}=await sb.from('allergies').delete().eq('id',id);
+  if(error){alert('Could not delete: '+error.message);return;}
+  await loadAllergies();
+  renderVaultGrid();
+  renderStructuredList();
 }
 
 function renderOtherDocsList(){
@@ -2167,7 +2494,7 @@ async function openVaultEditor(category,docId){
 
   document.getElementById('doc-sheet-content-input').value=remainingContent;
   document.getElementById('doc-sheet-content-input').placeholder=meta?meta.placeholder:'Notes about this document';
-  document.getElementById('doc-delete-btn').style.display=doc?'flex':'none';
+  document.getElementById('doc-delete-btn').style.display=(doc&&isCoordinator())?'flex':'none';
   document.getElementById('doc-sheet-status').textContent='';
   resetVaultPhotoUI();
   document.getElementById('doc-sheet-overlay').style.display='flex';
@@ -2324,6 +2651,10 @@ async function saveVaultDoc(){
 
 async function deleteVaultDoc(){
   if(!editingVaultDoc||!editingVaultDoc.id)return;
+  if(!isCoordinator()){
+    alert("Only your Huddle's coordinator can delete documents from the Vault.");
+    return;
+  }
   if(existingVaultPhotoPath){
     await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
   }
@@ -2943,9 +3274,10 @@ function triggerReceiptPhoto(){
   document.getElementById('cost-photo-input').click();
 }
 
-function handleReceiptPhoto(evt){
+async function handleReceiptPhoto(evt){
   const file=evt.target.files[0];
   if(!file)return;
+  if(!(await checkFairUseCap())){evt.target.value='';return;}
   const reader=new FileReader();
   reader.onload=async function(e){
     const dataUrl=e.target.result;
@@ -2966,6 +3298,7 @@ function handleReceiptPhoto(evt){
       result=demoReceiptResult();
       await new Promise(r=>setTimeout(r,900));
     }
+    await logAction('receipt_scan');
     openCostReview(result,isDemo);
   };
   reader.readAsDataURL(file);
