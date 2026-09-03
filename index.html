@@ -1,206 +1,201 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Higher Level of Care Guide</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- ============================================================
+     CARE TRANSITION GUIDE + QUIZ — INTEGRATION SNIPPET
+     Drop the CSS into your main <style> block, the HTML into your
+     .screens-wrap alongside your other .screen divs, and the JS
+     into your main script (or a new <script> tag before </body>).
+
+     Assumes your app already defines these globals elsewhere:
+       - sb              (your Supabase client)
+       - CURRENT_FAMILY_ID
+     If those globals are named differently in your codebase,
+     update the two references inside saveAssessmentResult().
+
+     Requires a new Supabase table before the save will work:
+
+       create table care_assessments (
+         id uuid primary key default gen_random_uuid(),
+         family_id uuid references families(id),
+         score int not null,
+         level text not null,
+         completed_at timestamptz default now()
+       );
+
+     Plus an RLS policy scoping it to the same family, matching
+     your existing tables (e.g. mirror whatever policy you use on
+     journal_entries or checkin_entries, just swap the table name).
+     ============================================================ -->
+
+<!-- ===== CSS: add to your existing <style> block ===== -->
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --slate:#1273C4;--slate-light:#3E9EE8;--slate-dark:#0A4A7D;
-  --sage:#3F8C4B;--sage-light:#DCFDC0;
-  --stone:#AE9A81;--stone-light:#EDE4D6;
-  --terracotta:#E8460F;--terracotta-light:#FBD3BF;
-  --crimson:#C1272D;--crimson-light:#FBDCDC;
-  --ivory:#FAF2F2;--charcoal:#212121;--white:#FFFFFF;
-  --radius-sm:8px;--radius-lg:20px;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--ivory);color:var(--charcoal);min-height:100vh;line-height:1.5;}
-.wrap{max-width:640px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
+/* Uses your existing --slate/--terracotta/--stone/--ivory vars, no new root vars needed */
 
-/* header */
-.page-header{text-align:center;padding:1rem 0 1.5rem;}
-.page-title{font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--slate-dark);}
-.page-title span{font-style:italic;color:var(--terracotta);}
-.page-sub{font-size:14px;color:var(--stone);margin-top:6px;}
+.ctg-signs-list{list-style:none;counter-reset:sign;}
+.ctg-signs-list li{counter-increment:sign;display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--stone-light);}
+.ctg-signs-list li:last-child{border-bottom:none;}
+.ctg-signs-list li::before{content:counter(sign);flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--slate-light);color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.ctg-sign-text{font-size:14px;color:var(--charcoal);}
+.ctg-sign-text b{color:var(--slate-dark);}
 
-/* card base */
-.card{background:var(--white);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 2px 10px rgba(33,33,33,0.06);}
+.ctg-memory-note{background:var(--terracotta-light);border-radius:var(--radius-sm);padding:14px;margin-top:14px;font-size:13.5px;}
+.ctg-memory-note b{color:var(--crimson);}
 
-/* top signs */
-.signs-list{list-style:none;counter-reset:sign;}
-.signs-list li{counter-increment:sign;display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--stone-light);}
-.signs-list li:last-child{border-bottom:none;}
-.signs-list li::before{content:counter(sign);flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--slate-light);color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.sign-text b{color:var(--slate-dark);}
-.sign-text{font-size:14px;color:var(--charcoal);}
+.ctg-card{background:var(--white);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 2px 10px rgba(33,33,33,0.06);}
 
-.memory-note{background:var(--terracotta-light);border-radius:var(--radius-sm);padding:14px;margin-top:14px;font-size:13.5px;}
-.memory-note b{color:var(--crimson);}
+.ctg-teaser{background:var(--slate-dark);color:white;text-align:center;padding:2rem 1.5rem;border-radius:var(--radius-lg);margin-bottom:1.5rem;}
+.ctg-teaser h2{font-family:'Lora',serif;font-size:20px;margin-bottom:8px;}
+.ctg-teaser p{font-size:14px;opacity:0.9;margin-bottom:1.25rem;}
+.ctg-btn{background:var(--terracotta);color:white;border:none;padding:14px 28px;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ctg-btn:hover{background:#c93a0d;}
 
-/* quiz teaser */
-.teaser{background:var(--slate-dark);color:white;text-align:center;padding:2rem 1.5rem;border-radius:var(--radius-lg);margin-bottom:1.5rem;}
-.teaser h2{font-family:'Lora',serif;font-size:20px;margin-bottom:8px;}
-.teaser p{font-size:14px;opacity:0.9;margin-bottom:1.25rem;}
-.btn{background:var(--terracotta);color:white;border:none;padding:14px 28px;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn:hover{background:#c93a0d;}
-.btn-outline{background:transparent;border:1.5px solid white;color:white;}
-.btn-outline:hover{background:rgba(255,255,255,0.1);}
-.btn-secondary{background:var(--stone-light);color:var(--charcoal);}
+#ctg-quiz-section{display:none;}
+.ctg-progress-bar{height:6px;background:var(--stone-light);border-radius:4px;overflow:hidden;margin-bottom:1.5rem;}
+.ctg-progress-fill{height:100%;background:var(--slate);transition:width 0.3s ease;}
+.ctg-q-count{font-size:12px;color:var(--stone);text-align:right;margin-bottom:6px;}
+.ctg-q-prompt{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--slate-dark);margin-bottom:1.25rem;}
+.ctg-q-option{display:block;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;cursor:pointer;font-size:14px;transition:all 0.15s ease;}
+.ctg-q-option:hover{border-color:var(--slate-light);}
+.ctg-q-option.selected{border-color:var(--slate);background:#eaf3fb;}
+.ctg-q-option input{display:none;}
+.ctg-quiz-nav{display:flex;justify-content:space-between;margin-top:1.5rem;gap:10px;}
+.ctg-quiz-nav button{flex:1;}
+.ctg-btn-nav{background:var(--stone-light);color:var(--charcoal);border:none;padding:12px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ctg-btn-nav.primary{background:var(--slate);color:white;}
+.ctg-btn-nav:disabled{opacity:0.4;cursor:not-allowed;}
 
-/* quiz */
-#quiz-section{display:none;}
-.progress-bar{height:6px;background:var(--stone-light);border-radius:4px;overflow:hidden;margin-bottom:1.5rem;}
-.progress-fill{height:100%;background:var(--slate);transition:width 0.3s ease;}
-.q-count{font-size:12px;color:var(--stone);text-align:right;margin-bottom:6px;}
-.q-prompt{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--slate-dark);margin-bottom:1.25rem;}
-.q-option{display:block;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;cursor:pointer;font-size:14px;transition:all 0.15s ease;}
-.q-option:hover{border-color:var(--slate-light);}
-.q-option.selected{border-color:var(--slate);background:#eaf3fb;}
-.q-option input{display:none;}
-.quiz-nav{display:flex;justify-content:space-between;margin-top:1.5rem;gap:10px;}
-.quiz-nav button{flex:1;}
-.btn-nav{background:var(--stone-light);color:var(--charcoal);border:none;padding:12px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-nav.primary{background:var(--slate);color:white;}
-.btn-nav:disabled{opacity:0.4;cursor:not-allowed;}
+#ctg-results-section{display:none;}
+.ctg-result-badge{text-align:center;padding:1.75rem 1.25rem;border-radius:var(--radius-lg);margin-bottom:1.5rem;color:white;}
+.ctg-result-badge .score{font-family:'Lora',serif;font-size:38px;font-weight:700;}
+.ctg-result-badge .level{font-size:18px;font-weight:700;margin-top:4px;}
+.ctg-result-badge .desc{font-size:13.5px;opacity:0.92;margin-top:8px;}
+.ctg-lvl-0{background:linear-gradient(135deg,var(--sage),#2f6b38);}
+.ctg-lvl-1{background:linear-gradient(135deg,var(--slate),var(--slate-dark));}
+.ctg-lvl-2{background:linear-gradient(135deg,var(--terracotta),#c93a0d);}
+.ctg-lvl-3{background:linear-gradient(135deg,var(--crimson),#8f1d22);}
 
-/* results */
-#results-section{display:none;}
-.result-badge{text-align:center;padding:1.75rem 1.25rem;border-radius:var(--radius-lg);margin-bottom:1.5rem;color:white;}
-.result-badge .score{font-family:'Lora',serif;font-size:38px;font-weight:700;}
-.result-badge .level{font-size:18px;font-weight:700;margin-top:4px;}
-.result-badge .desc{font-size:13.5px;opacity:0.92;margin-top:8px;}
-.lvl-0{background:linear-gradient(135deg,var(--sage),#2f6b38);}
-.lvl-1{background:linear-gradient(135deg,var(--slate),var(--slate-dark));}
-.lvl-2{background:linear-gradient(135deg,var(--terracotta),#c93a0d);}
-.lvl-3{background:linear-gradient(135deg,var(--crimson),#8f1d22);}
+.ctg-goal-line{font-size:15px;font-weight:600;color:var(--slate-dark);margin-bottom:12px;}
+.ctg-next-steps-list{list-style:none;}
+.ctg-next-steps-list li{display:flex;gap:10px;padding:8px 0;font-size:14px;}
+.ctg-next-steps-list li::before{content:'\2713';color:var(--sage);font-weight:700;flex-shrink:0;}
 
-.goal-line{font-size:15px;font-weight:600;color:var(--slate-dark);margin-bottom:12px;}
-.next-steps-list{list-style:none;}
-.next-steps-list li{display:flex;gap:10px;padding:8px 0;font-size:14px;}
-.next-steps-list li::before{content:'\2713';color:var(--sage);font-weight:700;flex-shrink:0;}
+.ctg-redflag-toggle{text-align:center;margin:1.5rem 0;}
+.ctg-redflag-toggle a{color:var(--slate);font-size:14px;font-weight:600;cursor:pointer;text-decoration:underline;}
+#ctg-redflag-section{display:none;}
+.ctg-accordion-item{border-bottom:1px solid var(--stone-light);}
+.ctg-accordion-head{padding:14px 0;font-weight:600;font-size:14.5px;color:var(--slate-dark);cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.ctg-accordion-body{display:none;padding:0 0 14px;font-size:13.5px;}
+.ctg-accordion-body ul{padding-left:18px;}
+.ctg-accordion-body li{margin-bottom:6px;}
+.ctg-accordion-item.open .ctg-accordion-body{display:block;}
+.ctg-accordion-item.open .ctg-chev{transform:rotate(180deg);}
+.ctg-chev{transition:transform 0.2s;color:var(--stone);}
 
-.redflag-toggle{text-align:center;margin:1.5rem 0;}
-.redflag-toggle a{color:var(--slate);font-size:14px;font-weight:600;cursor:pointer;text-decoration:underline;}
-#redflag-section{display:none;}
-.accordion-item{border-bottom:1px solid var(--stone-light);}
-.accordion-head{padding:14px 0;font-weight:600;font-size:14.5px;color:var(--slate-dark);cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
-.accordion-body{display:none;padding:0 0 14px;font-size:13.5px;}
-.accordion-body ul{padding-left:18px;}
-.accordion-body li{margin-bottom:6px;}
-.accordion-item.open .accordion-body{display:block;}
-.accordion-item.open .chev{transform:rotate(180deg);}
-.chev{transition:transform 0.2s;color:var(--stone);}
-
-.retake{text-align:center;margin-top:1.5rem;}
-.retake a{color:var(--stone);font-size:13px;cursor:pointer;text-decoration:underline;}
+.ctg-retake{text-align:center;margin-top:1.5rem;}
+.ctg-retake a{color:var(--stone);font-size:13px;cursor:pointer;text-decoration:underline;}
 </style>
-</head>
-<body>
-<div class="wrap">
 
-  <div class="page-header">
-    <div class="page-title">Do They Need <span>More Help?</span></div>
-    <div class="page-sub">A guide for deciding on assisted living or memory care</div>
-  </div>
+<!-- ===== HTML: add inside your .screens-wrap, alongside your other .screen divs ===== -->
+<div class="screen" id="screen-care-guide">
+  <div style="max-width:640px;margin:0 auto;padding:1.5rem 1.25rem 3rem;">
 
-  <!-- TOP SIGNS -->
-  <div class="card" id="signs-section">
-    <h2 style="font-family:'Lora',serif;font-size:18px;color:var(--slate-dark);margin-bottom:14px;">Top Signs It May Be Time for More Support</h2>
-    <ul class="signs-list">
-      <li><div class="sign-text"><b>Medication mix-ups:</b> pills are missed, doubled, or taken at the wrong times despite reminders and pill organizers.</div></li>
-      <li><div class="sign-text"><b>Frequent falls or near-falls:</b> repeated loss of balance, unexplained bruises, or a new fear of walking without support.</div></li>
-      <li><div class="sign-text"><b>Weight loss or skipped meals:</b> empty fridge, expired food, clothes getting loose, or reliance on simple, unhealthy snacks instead of cooked meals.</div></li>
-      <li><div class="sign-text"><b>Decline in hygiene and self-care:</b> difficulty bathing, dressing properly, body odor, or wearing dirty clothes; home becomes noticeably unclean.</div></li>
-      <li><div class="sign-text"><b>Memory lapses that affect safety:</b> getting lost in familiar places, leaving the stove on, wandering, or repeated questions and confusion about time or place.</div></li>
-      <li><div class="sign-text"><b>Missed appointments and neglected health:</b> forgetting doctor visits, ignoring new symptoms, or avoiding needed medical care.</div></li>
-      <li><div class="sign-text"><b>Household neglect and safety hazards:</b> piles of mail, clutter, unpaid bills, spoiled food, or hazards like burnt pots and tripping risks.</div></li>
-      <li><div class="sign-text"><b>Social withdrawal and mood changes:</b> pulling away from friends, losing interest in hobbies, signs of depression, anxiety, or agitation.</div></li>
-      <li><div class="sign-text"><b>Caregiver burnout or inconsistent care:</b> family caregivers are exhausted, missing their own appointments, losing sleep, or feeling resentful; care routines become unreliable.</div></li>
-      <li><div class="sign-text"><b>Repeated hospital or ER visits:</b> back and forth trips for falls, infections, medication errors, or other issues that could be prevented with closer supervision.</div></li>
-    </ul>
-    <div class="memory-note"><b>When memory care specifically may be needed:</b> persistent wandering, aggressive or highly agitated episodes, moderate to severe cognitive impairment on testing, or repeated safety incidents that standard assisted living cannot safely manage.</div>
-  </div>
-
-  <!-- QUIZ TEASER -->
-  <div class="teaser" id="teaser-section">
-    <h2>Not sure how serious it is?</h2>
-    <p>Take the 2 minute quiz below. It walks through the same ten areas above and gives you a clear next step based on your answers.</p>
-    <button class="btn" onclick="startQuiz()">Take the Quiz</button>
-  </div>
-
-  <!-- QUIZ -->
-  <div class="card" id="quiz-section">
-    <div class="q-count" id="q-count">Question 1 of 10</div>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:10%"></div></div>
-    <div class="q-prompt" id="q-prompt"></div>
-    <div id="q-options"></div>
-    <div class="quiz-nav">
-      <button class="btn-nav" id="btn-back" onclick="prevQ()">Back</button>
-      <button class="btn-nav primary" id="btn-next" onclick="nextQ()" disabled>Next</button>
-    </div>
-  </div>
-
-  <!-- RESULTS -->
-  <div id="results-section">
-    <div class="result-badge" id="result-badge">
-      <div class="score" id="result-score">0 / 30</div>
-      <div class="level" id="result-level"></div>
-      <div class="desc" id="result-desc"></div>
-    </div>
-    <div class="card">
-      <div class="goal-line" id="result-goal"></div>
-      <ul class="next-steps-list" id="result-steps"></ul>
+    <div style="text-align:center;padding:1rem 0 1.5rem;">
+      <div style="font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--slate-dark);">Do They Need <span style="font-style:italic;color:var(--terracotta);">More Help?</span></div>
+      <div style="font-size:14px;color:var(--stone);margin-top:6px;">A guide for deciding on assisted living or memory care</div>
     </div>
 
-    <div class="redflag-toggle"><a onclick="toggleRedflags()">Or jump straight to your biggest concern</a></div>
+    <div class="ctg-card" id="ctg-signs-section">
+      <h2 style="font-family:'Lora',serif;font-size:18px;color:var(--slate-dark);margin-bottom:14px;">Top Signs It May Be Time for More Support</h2>
+      <ul class="ctg-signs-list">
+        <li><div class="ctg-sign-text"><b>Medication mix-ups:</b> pills are missed, doubled, or taken at the wrong times despite reminders and pill organizers.</div></li>
+        <li><div class="ctg-sign-text"><b>Frequent falls or near-falls:</b> repeated loss of balance, unexplained bruises, or a new fear of walking without support.</div></li>
+        <li><div class="ctg-sign-text"><b>Weight loss or skipped meals:</b> empty fridge, expired food, clothes getting loose, or reliance on simple, unhealthy snacks instead of cooked meals.</div></li>
+        <li><div class="ctg-sign-text"><b>Decline in hygiene and self-care:</b> difficulty bathing, dressing properly, body odor, or wearing dirty clothes; home becomes noticeably unclean.</div></li>
+        <li><div class="ctg-sign-text"><b>Memory lapses that affect safety:</b> getting lost in familiar places, leaving the stove on, wandering, or repeated questions and confusion about time or place.</div></li>
+        <li><div class="ctg-sign-text"><b>Missed appointments and neglected health:</b> forgetting doctor visits, ignoring new symptoms, or avoiding needed medical care.</div></li>
+        <li><div class="ctg-sign-text"><b>Household neglect and safety hazards:</b> piles of mail, clutter, unpaid bills, spoiled food, or hazards like burnt pots and tripping risks.</div></li>
+        <li><div class="ctg-sign-text"><b>Social withdrawal and mood changes:</b> pulling away from friends, losing interest in hobbies, signs of depression, anxiety, or agitation.</div></li>
+        <li><div class="ctg-sign-text"><b>Caregiver burnout or inconsistent care:</b> family caregivers are exhausted, missing their own appointments, losing sleep, or feeling resentful; care routines become unreliable.</div></li>
+        <li><div class="ctg-sign-text"><b>Repeated hospital or ER visits:</b> back and forth trips for falls, infections, medication errors, or other issues that could be prevented with closer supervision.</div></li>
+      </ul>
+      <div class="ctg-memory-note"><b>When memory care specifically may be needed:</b> persistent wandering, aggressive or highly agitated episodes, moderate to severe cognitive impairment on testing, or repeated safety incidents that standard assisted living cannot safely manage.</div>
+    </div>
 
-    <div class="card" id="redflag-section">
-      <div class="accordion-item">
-        <div class="accordion-head" onclick="toggleAccordion(this)">If medications are the main problem <span class="chev">&#9660;</span></div>
-        <div class="accordion-body"><ul>
-          <li>Ask the pharmacy about blister packs, med sync, or delivery.</li>
-          <li>Consider a locked med dispenser with alarms or a service that pre-sorts weekly doses.</li>
-        </ul></div>
-      </div>
-      <div class="accordion-item">
-        <div class="accordion-head" onclick="toggleAccordion(this)">If falls or mobility are the main problem <span class="chev">&#9660;</span></div>
-        <div class="accordion-body"><ul>
-          <li>Request a physical therapy evaluation for strength, balance, and proper assistive devices.</li>
-          <li>Add grab bars, better lighting, and remove loose rugs; consider a medical alert button or fall detection device.</li>
-        </ul></div>
-      </div>
-      <div class="accordion-item">
-        <div class="accordion-head" onclick="toggleAccordion(this)">If memory or safety are the main problem <span class="chev">&#9660;</span></div>
-        <div class="accordion-body"><ul>
-          <li>Ask for a cognitive evaluation (Mini-Cog, MoCA, or similar) through their doctor or a memory clinic.</li>
-          <li>If there is wandering, stove issues, or getting lost, start memory care conversations immediately. Standard assisted living may not be enough.</li>
-        </ul></div>
-      </div>
-      <div class="accordion-item">
-        <div class="accordion-head" onclick="toggleAccordion(this)">If caregiver burnout is the main problem <span class="chev">&#9660;</span></div>
-        <div class="accordion-body"><ul>
-          <li>Be honest with the doctor: "I can't keep this up safely." That alone can unlock resources, referrals, and urgency.</li>
-          <li>Look into respite care (short-term stays) or adult day programs for regular breaks.</li>
-        </ul></div>
-      </div>
-      <div class="accordion-item" style="border-bottom:none;">
-        <div class="accordion-head" onclick="toggleAccordion(this)">If money is the sticking point <span class="chev">&#9660;</span></div>
-        <div class="accordion-body"><ul>
-          <li>Contact your local Area Agency on Aging or Aging and Disability Resource Center for free or low-cost counseling on benefits, Medicaid waivers, and veteran's aid.</li>
-          <li>Ask facilities directly what they accept (private pay, long-term care insurance, Medicaid, VA benefits) before you tour.</li>
-        </ul></div>
+    <div class="ctg-teaser" id="ctg-teaser-section">
+      <h2>Not sure how serious it is?</h2>
+      <p>Take the 2 minute quiz below. It walks through the same ten areas above and gives you a clear next step based on your answers.</p>
+      <button class="ctg-btn" onclick="ctgStartQuiz()">Take the Quiz</button>
+    </div>
+
+    <div class="ctg-card" id="ctg-quiz-section">
+      <div class="ctg-q-count" id="ctg-q-count">Question 1 of 10</div>
+      <div class="ctg-progress-bar"><div class="ctg-progress-fill" id="ctg-progress-fill" style="width:10%"></div></div>
+      <div class="ctg-q-prompt" id="ctg-q-prompt"></div>
+      <div id="ctg-q-options"></div>
+      <div class="ctg-quiz-nav">
+        <button class="ctg-btn-nav" id="ctg-btn-back" onclick="ctgPrevQ()">Back</button>
+        <button class="ctg-btn-nav primary" id="ctg-btn-next" onclick="ctgNextQ()" disabled>Next</button>
       </div>
     </div>
 
-    <div class="retake"><a onclick="restartAll()">Retake the quiz</a></div>
-  </div>
+    <div id="ctg-results-section">
+      <div class="ctg-result-badge" id="ctg-result-badge">
+        <div class="score" id="ctg-result-score">0 / 30</div>
+        <div class="level" id="ctg-result-level"></div>
+        <div class="desc" id="ctg-result-desc"></div>
+      </div>
+      <div class="ctg-card">
+        <div class="ctg-goal-line" id="ctg-result-goal"></div>
+        <ul class="ctg-next-steps-list" id="ctg-result-steps"></ul>
+      </div>
 
+      <div class="ctg-redflag-toggle"><a onclick="ctgToggleRedflags()">Or jump straight to your biggest concern</a></div>
+
+      <div class="ctg-card" id="ctg-redflag-section">
+        <div class="ctg-accordion-item">
+          <div class="ctg-accordion-head" onclick="ctgToggleAccordion(this)">If medications are the main problem <span class="ctg-chev">&#9660;</span></div>
+          <div class="ctg-accordion-body"><ul>
+            <li>Ask the pharmacy about blister packs, med sync, or delivery.</li>
+            <li>Consider a locked med dispenser with alarms or a service that pre-sorts weekly doses.</li>
+          </ul></div>
+        </div>
+        <div class="ctg-accordion-item">
+          <div class="ctg-accordion-head" onclick="ctgToggleAccordion(this)">If falls or mobility are the main problem <span class="ctg-chev">&#9660;</span></div>
+          <div class="ctg-accordion-body"><ul>
+            <li>Request a physical therapy evaluation for strength, balance, and proper assistive devices.</li>
+            <li>Add grab bars, better lighting, and remove loose rugs; consider a medical alert button or fall detection device.</li>
+          </ul></div>
+        </div>
+        <div class="ctg-accordion-item">
+          <div class="ctg-accordion-head" onclick="ctgToggleAccordion(this)">If memory or safety are the main problem <span class="ctg-chev">&#9660;</span></div>
+          <div class="ctg-accordion-body"><ul>
+            <li>Ask for a cognitive evaluation (Mini-Cog, MoCA, or similar) through their doctor or a memory clinic.</li>
+            <li>If there is wandering, stove issues, or getting lost, start memory care conversations immediately. Standard assisted living may not be enough.</li>
+          </ul></div>
+        </div>
+        <div class="ctg-accordion-item">
+          <div class="ctg-accordion-head" onclick="ctgToggleAccordion(this)">If caregiver burnout is the main problem <span class="ctg-chev">&#9660;</span></div>
+          <div class="ctg-accordion-body"><ul>
+            <li>Be honest with the doctor: "I can't keep this up safely." That alone can unlock resources, referrals, and urgency.</li>
+            <li>Look into respite care (short-term stays) or adult day programs for regular breaks.</li>
+          </ul></div>
+        </div>
+        <div class="ctg-accordion-item" style="border-bottom:none;">
+          <div class="ctg-accordion-head" onclick="ctgToggleAccordion(this)">If money is the sticking point <span class="ctg-chev">&#9660;</span></div>
+          <div class="ctg-accordion-body"><ul>
+            <li>Contact your local Area Agency on Aging or Aging and Disability Resource Center for free or low-cost counseling on benefits, Medicaid waivers, and veteran's aid.</li>
+            <li>Ask facilities directly what they accept (private pay, long-term care insurance, Medicaid, VA benefits) before you tour.</li>
+          </ul></div>
+        </div>
+      </div>
+
+      <div class="ctg-retake"><a onclick="ctgRestartAll()">Retake the quiz</a></div>
+    </div>
+
+  </div>
 </div>
 
+<!-- ===== JS: add to your main script, or a new <script> tag before </body> ===== -->
 <script>
-const questions = [
+const ctgQuestions = [
   {q:"How is your parent managing their medications (pills, injections, patches)?",
    opts:[["Takes them correctly almost all the time; maybe 1 to 2 missed or late doses in months.",0],
          ["Often forgets or is confused; you or others must remind several times a week.",2],
@@ -243,8 +238,8 @@ const questions = [
          ["Three or more visits, or repeated admissions for similar issues.",3]]}
 ];
 
-const resultTiers = [
-  {min:0,max:7,level:"Low immediate need",cls:"lvl-0",
+const ctgResultTiers = [
+  {min:0,max:7,level:"Low immediate need",cls:"ctg-lvl-0",
    desc:"Your parent is mostly independent.",
    goal:"Goal: prevent problems before they start.",
    steps:[
@@ -252,7 +247,7 @@ const resultTiers = [
      "Create a med system that doesn't rely on memory: use a weekly pill organizer plus phone alarm, or ask their pharmacy about blister packs or auto-refills.",
      "Schedule a baseline visit: ask their primary care doctor for a wellness visit focused on memory, balance, and mood so you have something to compare against later.",
      "Start the money talk lightly: make sure you know where key documents are (will, POA, insurance) and who their main contacts are (doctor, pharmacist, neighbor)."]},
-  {min:8,max:15,level:"Moderate need, time to plan",cls:"lvl-1",
+  {min:8,max:15,level:"Moderate need, time to plan",cls:"ctg-lvl-1",
    desc:"There are clear warning signs that independent living is getting risky.",
    goal:"Goal: get options on the table before a crisis forces your hand.",
    steps:[
@@ -261,7 +256,7 @@ const resultTiers = [
      "Tour 2 to 3 communities now, just to learn what's out there and what costs look like.",
      "Run the money numbers: list income vs. likely costs of in-home care, assisted living, and memory care.",
      "Have the \u201cwhat if\u201d conversation: \u201cIf you had a fall or got sick, what would you want me to do?\u201d"]},
-  {min:16,max:23,level:"High need, act soon",cls:"lvl-2",
+  {min:16,max:23,level:"High need, act soon",cls:"ctg-lvl-2",
    desc:"Safety and health are increasingly at risk; the current setup may not be sustainable.",
    goal:"Goal: reduce risk and put a new care plan in place within weeks.",
    steps:[
@@ -270,7 +265,7 @@ const resultTiers = [
      "Narrow to 2 to 3 serious options: assisted living with high support, memory care, or skilled nursing.",
      "Do a crisis drill: put emergency numbers, keys, and documents somewhere you can grab in 30 seconds.",
      "Bring in backup: identify at least one other person who can share calls, visits, or decisions."]},
-  {min:24,max:30,level:"Urgent need, higher level of care now",cls:"lvl-3",
+  {min:24,max:30,level:"Urgent need, higher level of care now",cls:"ctg-lvl-3",
    desc:"Your parent likely needs 24/7 supervision or skilled support.",
    goal:"Goal: move quickly to a safer setting; treat this like a medical urgency.",
    steps:[
@@ -281,72 +276,71 @@ const resultTiers = [
      "Protect your own health. If you're sleeping poorly or feeling constantly on edge, tell your own doctor too."]}
 ];
 
-let current = 0;
-let answers = new Array(questions.length).fill(null);
+let ctgCurrent = 0;
+let ctgAnswers = new Array(ctgQuestions.length).fill(null);
 
-function startQuiz(){
-  document.getElementById('teaser-section').style.display = 'none';
-  document.getElementById('quiz-section').style.display = 'block';
-  renderQuestion();
-  document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'});
+function ctgStartQuiz(){
+  document.getElementById('ctg-teaser-section').style.display = 'none';
+  document.getElementById('ctg-quiz-section').style.display = 'block';
+  ctgRenderQuestion();
 }
 
-function renderQuestion(){
-  const item = questions[current];
-  document.getElementById('q-count').textContent = `Question ${current+1} of ${questions.length}`;
-  document.getElementById('progress-fill').style.width = `${((current+1)/questions.length)*100}%`;
-  document.getElementById('q-prompt').textContent = item.q;
-  const optsDiv = document.getElementById('q-options');
+function ctgRenderQuestion(){
+  const item = ctgQuestions[ctgCurrent];
+  document.getElementById('ctg-q-count').textContent = `Question ${ctgCurrent+1} of ${ctgQuestions.length}`;
+  document.getElementById('ctg-progress-fill').style.width = `${((ctgCurrent+1)/ctgQuestions.length)*100}%`;
+  document.getElementById('ctg-q-prompt').textContent = item.q;
+  const optsDiv = document.getElementById('ctg-q-options');
   optsDiv.innerHTML = '';
   item.opts.forEach((opt, i) => {
     const label = document.createElement('label');
-    label.className = 'q-option' + (answers[current]===i ? ' selected' : '');
-    label.innerHTML = `<input type="radio" name="q${current}"> ${opt[0]}`;
-    label.onclick = () => selectOption(i);
+    label.className = 'ctg-q-option' + (ctgAnswers[ctgCurrent]===i ? ' selected' : '');
+    label.innerHTML = `<input type="radio" name="ctgq${ctgCurrent}"> ${opt[0]}`;
+    label.onclick = () => ctgSelectOption(i);
     optsDiv.appendChild(label);
   });
-  document.getElementById('btn-back').disabled = current === 0;
-  document.getElementById('btn-next').disabled = answers[current] === null;
-  document.getElementById('btn-next').textContent = current === questions.length-1 ? 'See My Results' : 'Next';
+  document.getElementById('ctg-btn-back').disabled = ctgCurrent === 0;
+  document.getElementById('ctg-btn-next').disabled = ctgAnswers[ctgCurrent] === null;
+  document.getElementById('ctg-btn-next').textContent = ctgCurrent === ctgQuestions.length-1 ? 'See My Results' : 'Next';
 }
 
-function selectOption(i){
-  answers[current] = i;
-  renderQuestion();
+function ctgSelectOption(i){
+  ctgAnswers[ctgCurrent] = i;
+  ctgRenderQuestion();
 }
 
-function nextQ(){
-  if(current < questions.length-1){
-    current++;
-    renderQuestion();
+function ctgNextQ(){
+  if(ctgCurrent < ctgQuestions.length-1){
+    ctgCurrent++;
+    ctgRenderQuestion();
   } else {
-    showResults();
+    ctgShowResults();
   }
 }
 
-function prevQ(){
-  if(current > 0){
-    current--;
-    renderQuestion();
+function ctgPrevQ(){
+  if(ctgCurrent > 0){
+    ctgCurrent--;
+    ctgRenderQuestion();
   }
 }
 
-function showResults(){
+async function ctgShowResults(){
   let score = 0;
-  answers.forEach((ansIdx, qIdx) => { score += questions[qIdx].opts[ansIdx][1]; });
-  const tier = resultTiers.find(t => score >= t.min && score <= t.max);
+  ctgAnswers.forEach((ansIdx, qIdx) => { score += ctgQuestions[qIdx].opts[ansIdx][1]; });
+  const tier = ctgResultTiers.find(t => score >= t.min && score <= t.max);
 
-  document.getElementById('quiz-section').style.display = 'none';
-  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('ctg-quiz-section').style.display = 'none';
+  document.getElementById('ctg-results-section').style.display = 'block';
 
-  const badge = document.getElementById('result-badge');
-  badge.className = 'result-badge ' + tier.cls;
-  document.getElementById('result-score').textContent = `${score} / 30`;
-  document.getElementById('result-level').textContent = tier.level;
-  document.getElementById('result-desc').textContent = tier.desc;
-  document.getElementById('result-goal').textContent = tier.goal;
+  const badge = document.getElementById('ctg-result-badge');
+  badge.className = 'ctg-result-badge ' + tier.cls;
+  document.getElementById('ctg-result-score').textContent = `${score} / 30`;
+  document.getElementById('ctg-result-level').textContent = tier.level;
+  document.getElementById('ctg-result-desc').textContent = tier.desc;
+  document.getElementById('ctg-result-goal').textContent = tier.goal;
 
-  const stepsList = document.getElementById('result-steps');
+  const stepsList = document.getElementById('ctg-result-steps');
   stepsList.innerHTML = '';
   tier.steps.forEach(s => {
     const li = document.createElement('li');
@@ -354,25 +348,40 @@ function showResults(){
     stepsList.appendChild(li);
   });
 
-  document.getElementById('results-section').scrollIntoView({behavior:'smooth'});
+  await ctgSaveAssessmentResult(score, tier.level);
 }
 
-function toggleRedflags(){
-  const el = document.getElementById('redflag-section');
+// Saves the completed assessment to Supabase so it can be referenced later
+// (e.g. from a debrief screen or a family timeline). Requires the
+// care_assessments table described in the header comment above.
+async function ctgSaveAssessmentResult(score, level){
+  try{
+    if(typeof sb === 'undefined' || typeof CURRENT_FAMILY_ID === 'undefined') return;
+    await sb.from('care_assessments').insert({
+      family_id: CURRENT_FAMILY_ID,
+      score: score,
+      level: level
+    });
+  }catch(e){
+    console.error('Could not save care assessment result:', e);
+    // Fails silently from the user's perspective; the result still
+    // displays on screen even if the save doesn't go through.
+  }
+}
+
+function ctgToggleRedflags(){
+  const el = document.getElementById('ctg-redflag-section');
   el.style.display = el.style.display === 'block' ? 'none' : 'block';
 }
 
-function toggleAccordion(headEl){
+function ctgToggleAccordion(headEl){
   headEl.parentElement.classList.toggle('open');
 }
 
-function restartAll(){
-  current = 0;
-  answers = new Array(questions.length).fill(null);
-  document.getElementById('results-section').style.display = 'none';
-  document.getElementById('teaser-section').style.display = 'block';
-  document.getElementById('teaser-section').scrollIntoView({behavior:'smooth'});
+function ctgRestartAll(){
+  ctgCurrent = 0;
+  ctgAnswers = new Array(ctgQuestions.length).fill(null);
+  document.getElementById('ctg-results-section').style.display = 'none';
+  document.getElementById('ctg-teaser-section').style.display = 'block';
 }
 </script>
-</body>
-</html>
