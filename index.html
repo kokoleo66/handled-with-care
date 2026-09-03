@@ -3,2977 +3,376 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Handled with Care · Demo</title>
+<title>Higher Level of Care Guide</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --slate:#1273C4;--slate-light:#3E9EE8;--slate-dark:#0A4A7D;
-  --sage:#3F8C4B;--sage-light:#DCF0DC;
+  --sage:#3F8C4B;--sage-light:#DCFDC0;
   --stone:#AE9A81;--stone-light:#EDE4D6;
   --terracotta:#E8460F;--terracotta-light:#FBD3BF;
   --crimson:#C1272D;--crimson-light:#FBDCDC;
-  --ivory:#FAF7F2;--charcoal:#212121;--graphite:#57565A;
-  --white:#FFFFFF;
-  --radius:12px;--radius-sm:8px;--radius-lg:20px;
+  --ivory:#FAF2F2;--charcoal:#212121;--white:#FFFFFF;
+  --radius-sm:8px;--radius-lg:20px;
 }
-body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-webkit-font-smoothing:antialiased;min-height:100vh;}
+body{font-family:'DM Sans',sans-serif;background:var(--ivory);color:var(--charcoal);min-height:100vh;line-height:1.5;}
+.wrap{max-width:640px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
 
-/* ── PAGE HEADER ── */
-.page-header{text-align:center;padding:2rem 1rem 1.5rem;}
-.page-title{font-family:'Lora',serif;font-size:26px;font-weight:700;color:var(--slate-dark);letter-spacing:-0.5px;-webkit-text-stroke:0.5px var(--slate-dark);}
-.page-title span{font-style:italic;font-weight:700;color:var(--terracotta);-webkit-text-stroke:0.3px var(--terracotta);}
-.page-sub{font-size:13px;color:var(--graphite);margin-top:6px;}
-.screen-nav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:0 1rem 1.5rem;}
-.snav-btn{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--stone);background:var(--white);color:var(--graphite);transition:all 0.2s;}
-.snav-btn.active{background:var(--slate);color:white;border-color:var(--slate);}
-.snav-btn:hover:not(.active){background:var(--stone-light);}
+/* header */
+.page-header{text-align:center;padding:1rem 0 1.5rem;}
+.page-title{font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--slate-dark);}
+.page-title span{font-style:italic;color:var(--terracotta);}
+.page-sub{font-size:14px;color:var(--stone);margin-top:6px;}
 
-/* ── SCREENS CONTAINER ── */
-.screens-wrap{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;padding:0 1rem 3rem;}
-.screen{display:none;}
-.screen.active{display:block;}
+/* card base */
+.card{background:var(--white);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 2px 10px rgba(33,33,33,0.06);}
 
-/* ── PHONE SHELL ── */
-.phone{width:370px;min-height:780px;background:var(--ivory);border-radius:44px;border:10px solid var(--charcoal);overflow:hidden;position:relative;box-shadow:0 32px 64px rgba(44,44,44,0.22);flex-shrink:0;}
-.notch{width:110px;height:26px;background:var(--charcoal);border-radius:0 0 16px 16px;margin:0 auto;position:relative;z-index:10;}
-.status-bar{display:flex;justify-content:space-between;align-items:center;padding:5px 22px 0;font-size:11px;font-weight:500;color:var(--charcoal);}
+/* top signs */
+.signs-list{list-style:none;counter-reset:sign;}
+.signs-list li{counter-increment:sign;display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--stone-light);}
+.signs-list li:last-child{border-bottom:none;}
+.signs-list li::before{content:counter(sign);flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--slate-light);color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.sign-text b{color:var(--slate-dark);}
+.sign-text{font-size:14px;color:var(--charcoal);}
 
-/* ── TOP NAV ── */
-.top-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 8px;background:var(--white);border-bottom:1px solid var(--stone-light);}
-.logo-mark{display:flex;align-items:center;gap:8px;}
-.logo-icon{width:30px;height:30px;background:var(--slate);border-radius:7px;display:flex;align-items:center;justify-content:center;}
-.logo-icon svg{width:16px;height:16px;fill:white;}
-.logo-text{font-family:'Lora',serif;font-size:14px;font-weight:700;color:var(--slate-dark);-webkit-text-stroke:0.4px var(--slate-dark);}
-.logo-text span{font-style:italic;font-weight:700;color:var(--terracotta);-webkit-text-stroke:0.3px var(--terracotta);}
-.nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--slate);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;cursor:pointer;}
+.memory-note{background:var(--terracotta-light);border-radius:var(--radius-sm);padding:14px;margin-top:14px;font-size:13.5px;}
+.memory-note b{color:var(--crimson);}
 
-/* ── SCREEN TABS ── */
-.screen-tabs{display:flex;background:var(--white);border-bottom:1px solid var(--stone-light);padding:0 14px;}
-.stab{flex:1;text-align:center;padding:9px 0 7px;font-size:12px;font-weight:500;color:var(--graphite);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
-.stab.active{color:var(--slate);border-bottom-color:var(--slate);font-weight:700;}
+/* quiz teaser */
+.teaser{background:var(--slate-dark);color:white;text-align:center;padding:2rem 1.5rem;border-radius:var(--radius-lg);margin-bottom:1.5rem;}
+.teaser h2{font-family:'Lora',serif;font-size:20px;margin-bottom:8px;}
+.teaser p{font-size:14px;opacity:0.9;margin-bottom:1.25rem;}
+.btn{background:var(--terracotta);color:white;border:none;padding:14px 28px;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn:hover{background:#c93a0d;}
+.btn-outline{background:transparent;border:1.5px solid white;color:white;}
+.btn-outline:hover{background:rgba(255,255,255,0.1);}
+.btn-secondary{background:var(--stone-light);color:var(--charcoal);}
 
-/* ── APP BODY ── */
-.app-body{height:580px;overflow-y:auto;padding:0 0 12px;scrollbar-width:thin;scrollbar-color:var(--stone) transparent;}
-.app-body::-webkit-scrollbar{width:10px;}
-.app-body::-webkit-scrollbar-track{background:transparent;}
-.app-body::-webkit-scrollbar-thumb{background:var(--stone);border-radius:6px;border:2px solid var(--ivory);}
-.app-body::-webkit-scrollbar-thumb:hover{background:var(--graphite);}
+/* quiz */
+#quiz-section{display:none;}
+.progress-bar{height:6px;background:var(--stone-light);border-radius:4px;overflow:hidden;margin-bottom:1.5rem;}
+.progress-fill{height:100%;background:var(--slate);transition:width 0.3s ease;}
+.q-count{font-size:12px;color:var(--stone);text-align:right;margin-bottom:6px;}
+.q-prompt{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--slate-dark);margin-bottom:1.25rem;}
+.q-option{display:block;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;cursor:pointer;font-size:14px;transition:all 0.15s ease;}
+.q-option:hover{border-color:var(--slate-light);}
+.q-option.selected{border-color:var(--slate);background:#eaf3fb;}
+.q-option input{display:none;}
+.quiz-nav{display:flex;justify-content:space-between;margin-top:1.5rem;gap:10px;}
+.quiz-nav button{flex:1;}
+.btn-nav{background:var(--stone-light);color:var(--charcoal);border:none;padding:12px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-nav.primary{background:var(--slate);color:white;}
+.btn-nav:disabled{opacity:0.4;cursor:not-allowed;}
 
-/* ── SECTION LABEL ── */
-.slabel{font-size:10px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.9px;padding:12px 18px 7px;}
+/* results */
+#results-section{display:none;}
+.result-badge{text-align:center;padding:1.75rem 1.25rem;border-radius:var(--radius-lg);margin-bottom:1.5rem;color:white;}
+.result-badge .score{font-family:'Lora',serif;font-size:38px;font-weight:700;}
+.result-badge .level{font-size:18px;font-weight:700;margin-top:4px;}
+.result-badge .desc{font-size:13.5px;opacity:0.92;margin-top:8px;}
+.lvl-0{background:linear-gradient(135deg,var(--sage),#2f6b38);}
+.lvl-1{background:linear-gradient(135deg,var(--slate),var(--slate-dark));}
+.lvl-2{background:linear-gradient(135deg,var(--terracotta),#c93a0d);}
+.lvl-3{background:linear-gradient(135deg,var(--crimson),#8f1d22);}
 
-/* ── GREETING ── */
-.greeting-bar{padding:14px 18px 10px;background:var(--white);border-bottom:1px solid var(--stone-light);}
-.greeting-time{font-size:10px;font-weight:500;color:var(--graphite);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;}
-.greeting-name{font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--slate-dark);line-height:1.2;-webkit-text-stroke:0.4px var(--slate-dark);}
-.greeting-name em{font-style:italic;font-weight:700;color:var(--terracotta);-webkit-text-stroke:0.3px var(--terracotta);}
+.goal-line{font-size:15px;font-weight:600;color:var(--slate-dark);margin-bottom:12px;}
+.next-steps-list{list-style:none;}
+.next-steps-list li{display:flex;gap:10px;padding:8px 0;font-size:14px;}
+.next-steps-list li::before{content:'\2713';color:var(--sage);font-weight:700;flex-shrink:0;}
 
-/* ── ALERT STRIP ── */
-.alert-strip{margin:12px 14px 0;background:var(--crimson-light);border:1px solid var(--crimson);border-left:4px solid var(--crimson);border-radius:var(--radius-sm);padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;}
-.alert-dot{width:7px;height:7px;border-radius:50%;background:var(--crimson);flex-shrink:0;}
-.alert-text{font-size:12px;font-weight:600;color:var(--crimson);}
-.alert-text span{font-weight:400;color:#8A2E10;}
+.redflag-toggle{text-align:center;margin:1.5rem 0;}
+.redflag-toggle a{color:var(--slate);font-size:14px;font-weight:600;cursor:pointer;text-decoration:underline;}
+#redflag-section{display:none;}
+.accordion-item{border-bottom:1px solid var(--stone-light);}
+.accordion-head{padding:14px 0;font-weight:600;font-size:14.5px;color:var(--slate-dark);cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.accordion-body{display:none;padding:0 0 14px;font-size:13.5px;}
+.accordion-body ul{padding-left:18px;}
+.accordion-body li{margin-bottom:6px;}
+.accordion-item.open .accordion-body{display:block;}
+.accordion-item.open .chev{transform:rotate(180deg);}
+.chev{transition:transform 0.2s;color:var(--stone);}
 
-/* ── PROGRESS ── */
-.progress-wrap{margin:10px 14px 2px;background:var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;}
-.progress-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:7px;}
-.progress-track{height:5px;background:#ddd7ce;border-radius:3px;overflow:hidden;}
-.progress-fill{height:100%;border-radius:3px;background:var(--terracotta);width:60%;transition:width 0.8s ease;}
-
-/* ── MED CARD ── */
-.med-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
-.med-card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;border-bottom:1px solid var(--stone-light);}
-.med-card-title{font-size:11px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.6px;}
-.med-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;}
-.med-badge.ok{background:var(--sage-light);color:#245A2A;}
-.med-badge.missed{background:var(--crimson-light);color:var(--crimson);}
-.med-row{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid #f0ece6;gap:9px;cursor:pointer;}
-.med-row:last-child{border-bottom:none;}
-.med-row:hover{background:#fafaf7;}
-.med-check{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:600;transition:all 0.2s;}
-.med-check.done{background:var(--sage);color:white;}
-.med-check.missed{background:var(--crimson);color:white;}
-.med-check.pending{background:transparent;border:1.5px solid var(--stone);}
-.med-info{flex:1;}
-.med-name{font-size:13px;font-weight:500;color:var(--charcoal);}
-.med-sub{font-size:11px;color:var(--graphite);}
-.med-right{text-align:right;}
-.med-time{font-size:11px;font-weight:500;color:var(--graphite);}
-.med-logged{font-size:10px;}
-.med-logged.ok{color:var(--sage);}
-.med-logged.missed{color:var(--crimson);}
-
-/* ── TASK CARD ── */
-.task-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
-.task-row{display:flex;align-items:flex-start;padding:10px 12px;border-bottom:1px solid #f0ece6;gap:9px;cursor:pointer;transition:background 0.15s;}
-.task-row:last-child{border-bottom:none;}
-.task-row:hover{background:#fafaf7;}
-.task-row.done .task-name{text-decoration:line-through;color:var(--graphite);}
-.task-check{width:18px;height:18px;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.2s;}
-.task-check.done{background:var(--terracotta);color:white;}
-.task-check.open{border:1.5px solid var(--stone);background:transparent;}
-.task-body{flex:1;}
-.task-name{font-size:13px;color:var(--charcoal);line-height:1.3;}
-.task-meta{display:flex;align-items:center;gap:5px;margin-top:3px;}
-.task-assignee{font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;background:var(--slate);color:white;}
-.task-assignee.b{background:var(--sage);}
-.task-assignee.c{background:var(--stone);color:var(--charcoal);}
-.task-due{font-size:10px;color:var(--graphite);}
-
-/* ── NOTE CARD ── */
-.note-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;}
-.note-header{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.note-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;background:var(--terracotta);flex-shrink:0;}
-.note-who{font-size:12px;font-weight:500;color:var(--charcoal);}
-.note-when{font-size:10px;color:var(--graphite);}
-.note-text{font-size:12px;color:var(--charcoal);line-height:1.5;}
-.note-add{margin:0 14px 14px;display:flex;align-items:center;gap:9px;padding:11px 12px;background:var(--stone-light);border-radius:var(--radius);border:1.5px dashed var(--stone);cursor:pointer;}
-.note-add-text{font-size:12px;color:var(--graphite);}
-
-/* ── WELLNESS JOURNAL ── */
-.journal-link{margin:0 14px 8px;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;font-size:12px;font-weight:600;color:var(--slate);cursor:pointer;}
-.journal-tag{display:inline-block;font-size:9px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--terracotta-light);color:#8A2E10;margin-bottom:7px;}
-.journal-photo{background:var(--ivory);border:1px solid var(--stone-light);border-radius:var(--radius-sm);height:110px;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:0.5;margin-top:8px;}
-.journal-footer{display:flex;align-items:center;gap:16px;margin-top:9px;padding-top:8px;border-top:1px solid #f0ece6;}
-.journal-action{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--graphite);cursor:pointer;font-weight:500;}
-.journal-action.liked{color:var(--terracotta);}
-.journal-fab{position:absolute;right:16px;bottom:78px;width:48px;height:48px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.25);z-index:20;}
-.back-chevron{width:32px;height:32px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--graphite);cursor:pointer;}
-
-/* ── COMPOSE SHEET (shared) ── */
-.compose-textarea{width:100%;min-height:90px;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--charcoal);resize:none;margin-bottom:10px;}
-.compose-textarea:focus{outline:none;border-color:var(--slate);}
-.compose-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-.compose-chip{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--stone);color:var(--graphite);cursor:pointer;background:var(--white);}
-.compose-chip.selected{background:var(--terracotta);border-color:var(--terracotta);color:white;}
-.compose-submit{background:var(--slate);color:white;text-align:center;padding:12px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;}
-.compose-submit:hover{background:var(--slate-dark);}
-
-/* ── CAREGIVER CHECK-IN ── */
-.checkin-card{margin:10px 14px 0;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px 14px;}
-.checkin-title{font-family:'Lora',serif;font-size:14px;font-weight:700;color:var(--slate-dark);}
-.checkin-sub{font-size:11px;color:var(--graphite);margin-top:2px;margin-bottom:11px;}
-.checkin-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-.checkin-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:var(--radius-sm);border:1.5px solid var(--stone-light);cursor:pointer;transition:all 0.15s;}
-.checkin-opt:hover{background:var(--stone-light);}
-.checkin-opt.selected{border-color:var(--slate);background:var(--sage-light);}
-.checkin-opt-emoji{font-size:19px;}
-.checkin-opt-label{font-size:9px;font-weight:600;color:var(--graphite);text-align:center;line-height:1.2;}
-.checkin-done{text-align:center;font-size:12px;color:var(--sage);font-weight:600;padding:6px 0 2px;}
-.checkin-history{display:flex;gap:5px;margin-top:11px;justify-content:center;}
-.checkin-dot{width:9px;height:9px;border-radius:50%;}
-.checkin-exercise-intro{font-size:12px;color:var(--charcoal);margin:11px 0 8px;line-height:1.4;}
-.checkin-exercise-wrap{margin-bottom:7px;}
-.checkin-exercise-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--sage-light);border:1px solid var(--sage);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:#245A2A;cursor:pointer;transition:background 0.15s;}
-.checkin-exercise-btn.open{border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:none;}
-.checkin-exercise-btn:hover{background:#c8e8c8;}
-.checkin-exercise-btn.done{opacity:0.55;text-decoration:line-through;cursor:default;}
-.checkin-exercise-how{font-size:12px;color:var(--charcoal);background:var(--white);border:1px solid var(--sage);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:9px 12px 10px;line-height:1.5;}
-.checkin-exercise-markdone{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:var(--sage);cursor:pointer;white-space:nowrap;}
-.checkin-exercise-refresh{text-align:center;font-size:11px;font-weight:600;color:var(--slate);cursor:pointer;margin-top:2px;padding:4px;}
-
-.checkin-followup{margin-top:11px;padding-top:11px;border-top:1px solid var(--stone-light);}
-.checkin-followup-text{font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:9px;}
-.checkin-followup-actions{display:flex;gap:7px;flex-wrap:wrap;}
-.checkin-followup-btn{font-size:11px;font-weight:600;padding:7px 12px;border-radius:20px;border:1.5px solid var(--slate);color:var(--slate);cursor:pointer;background:var(--white);}
-.checkin-followup-btn:hover{background:var(--sage-light);}
-.checkin-followup-status{font-size:11px;color:var(--sage);font-weight:600;margin-top:8px;}
-
-/* ── ONBOARDING ── */
-.ob-dots{display:flex;gap:6px;justify-content:center;padding:14px 0 4px;}
-.ob-dot{width:7px;height:7px;border-radius:50%;background:var(--stone-light);transition:all 0.2s;}
-.ob-dot.active{background:var(--slate);width:18px;border-radius:4px;}
-.ob-body{flex:1;overflow-y:auto;padding:6px 20px 10px;}
-.ob-icon-big{font-size:44px;text-align:center;margin:20px 0 8px;}
-.ob-headline{font-family:'Lora',serif;font-size:21px;font-weight:700;color:var(--slate-dark);text-align:center;line-height:1.3;-webkit-text-stroke:0.4px var(--slate-dark);}
-.ob-sub{font-size:12.5px;color:var(--graphite);text-align:center;line-height:1.6;margin:10px 0 6px;padding:0 6px;}
-.ob-label{font-size:11px;font-weight:700;color:var(--graphite);margin:16px 0 7px;text-transform:uppercase;letter-spacing:0.4px;}
-.ob-input{width:100%;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:11px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--charcoal);margin-bottom:4px;box-sizing:border-box;}
-.ob-input:focus{outline:none;border-color:var(--slate);}
-.ob-chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;}
-.ob-chip{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--stone);color:var(--graphite);cursor:pointer;background:var(--white);}
-.ob-chip.selected{background:var(--slate);border-color:var(--slate);color:white;}
-.ob-member-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);margin-bottom:7px;}
-.ob-member-avatar{width:32px;height:32px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
-.ob-member-info{flex:1;}
-.ob-member-name{font-size:13px;font-weight:500;color:var(--charcoal);}
-.ob-member-role{font-size:10px;color:var(--graphite);}
-.ob-add-member-form{background:var(--stone-light);border-radius:var(--radius);padding:12px;margin-bottom:10px;}
-.ob-inline-add{display:flex;align-items:center;gap:9px;padding:11px 12px;background:var(--stone-light);border-radius:var(--radius);border:1.5px dashed var(--stone);cursor:pointer;font-size:12px;color:var(--graphite);font-weight:500;}
-.ob-checklist-row{display:flex;align-items:center;gap:11px;padding:12px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;}
-.ob-checklist-circle{width:22px;height:22px;border-radius:50%;border:2px solid var(--stone);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;}
-.ob-checklist-circle.done{background:var(--sage);border-color:var(--sage);}
-.ob-checklist-text{flex:1;font-size:12.5px;color:var(--charcoal);}
-.ob-nav{display:flex;gap:10px;padding:12px 20px 18px;}
-.ob-btn{flex:1;text-align:center;padding:13px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;cursor:pointer;}
-.ob-btn.primary{background:var(--slate);color:white;}
-.ob-btn.primary:hover{background:var(--slate-dark);}
-.ob-btn.ghost{background:var(--white);border:1.5px solid var(--stone);color:var(--graphite);}
-.ob-skip{text-align:center;font-size:11.5px;color:var(--graphite);cursor:pointer;text-decoration:underline;margin-top:6px;}
-
-/* ── COST TRACKER ── */
-.cost-summary-card{margin:12px 14px 0;background:var(--slate-dark);border-radius:var(--radius);padding:16px;color:white;}
-.cost-summary-row{display:flex;justify-content:space-between;align-items:flex-end;}
-.cost-summary-label{font-size:10.5px;opacity:0.75;text-transform:uppercase;letter-spacing:0.4px;}
-.cost-summary-figure{font-family:'Lora',serif;font-size:24px;font-weight:700;margin-top:2px;}
-.cost-summary-divider{width:1px;background:rgba(255,255,255,0.2);margin:0 14px;}
-.cost-person-breakdown{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.18);}
-.cost-person-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;}
-.cost-person-name{width:44px;flex-shrink:0;opacity:0.9;}
-.cost-person-track{flex:1;height:6px;background:rgba(255,255,255,0.18);border-radius:3px;overflow:hidden;}
-.cost-person-fill{height:100%;background:var(--terracotta);border-radius:3px;}
-.cost-person-amt{width:52px;text-align:right;flex-shrink:0;font-weight:600;}
-.scan-btn{margin:14px 14px 0;background:var(--terracotta);color:white;border-radius:var(--radius);padding:16px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:14px;font-weight:700;cursor:pointer;}
-.scan-btn:hover{background:#c93c1c;}
-.manual-link{text-align:center;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;margin:9px 0 4px;text-decoration:underline;}
-.cost-loading{margin:10px 14px 0;background:var(--stone-light);border-radius:var(--radius);padding:16px;text-align:center;font-size:12px;color:var(--graphite);}
-.cost-preview-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;margin:0 auto 8px;display:block;}
-.cost-review-card{margin:10px 14px 0;background:var(--white);border:1.5px solid var(--slate);border-radius:var(--radius);padding:14px;}
-.cost-review-title{font-size:12px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;}
-.cost-demo-flag{font-size:9.5px;color:var(--terracotta);font-weight:600;margin-bottom:8px;}
-.cost-field-label{font-size:10px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.3px;margin:9px 0 4px;}
-.cost-input{width:100%;border:1.5px solid var(--stone-light);border-radius:var(--radius-sm);padding:9px 10px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--charcoal);box-sizing:border-box;}
-.cost-input:focus{outline:none;border-color:var(--slate);}
-.cost-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
-.cost-chip{padding:6px 11px;border-radius:16px;font-size:11px;font-weight:600;border:1.5px solid var(--stone);color:var(--graphite);cursor:pointer;background:var(--white);}
-.cost-chip.selected{background:var(--slate);border-color:var(--slate);color:white;}
-.cost-mileage-row{display:flex;gap:8px;margin-top:4px;}
-.cost-mileage-row .cost-input{flex:1;}
-.cost-save-btn{background:var(--sage);color:white;text-align:center;padding:12px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
-.cost-save-btn:hover{background:#357a3f;}
-.cost-cancel-link{text-align:center;font-size:11px;color:var(--graphite);cursor:pointer;margin-top:8px;text-decoration:underline;}
-.cost-entry-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;}
-.cost-entry-row:last-child{border-bottom:none;}
-.cost-entry-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;color:white;}
-.cost-entry-info{flex:1;}
-.cost-entry-name{font-size:12.5px;font-weight:500;color:var(--charcoal);}
-.cost-entry-meta{font-size:10px;color:var(--graphite);margin-top:1px;}
-.cost-entry-amt{font-size:13px;font-weight:700;color:var(--charcoal);}
-.cost-disclaimer{margin:10px 14px 16px;font-size:10px;color:var(--graphite);line-height:1.5;text-align:center;}
-
-/* ── HUDDLE CARD ── */
-.huddle-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;}
-.huddle-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.huddle-title{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--slate-dark);}
-.huddle-title span{font-style:italic;font-weight:400;color:var(--terracotta);}
-.huddle-count{font-size:10px;color:var(--graphite);background:var(--stone-light);padding:2px 8px;border-radius:20px;}
-.huddle-members{display:flex;gap:8px;flex-wrap:wrap;}
-.member-pill{display:flex;align-items:center;gap:5px;padding:4px 9px 4px 4px;border-radius:20px;border:1px solid var(--stone-light);background:var(--ivory);cursor:pointer;}
-.member-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:white;}
-.member-name{font-size:11px;font-weight:500;color:var(--charcoal);}
-.member-role{font-size:9px;color:var(--graphite);}
-
-/* ── APPT ── */
-.appt-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
-.appt-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;cursor:pointer;transition:background 0.15s;}
-.appt-row:last-child{border-bottom:none;}
-.appt-row:hover{background:#fafaf7;}
-.appt-date-block{width:40px;text-align:center;flex-shrink:0;}
-.appt-month{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;}
-.appt-day{font-size:20px;font-weight:600;line-height:1;}
-.appt-body{flex:1;}
-.appt-name{font-size:13px;font-weight:500;color:var(--charcoal);margin-bottom:3px;}
-.appt-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
-.appt-tag{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500;}
-.appt-tag.medical{background:var(--slate);color:white;}
-.appt-tag.personal{background:var(--sage-light);color:#245A2A;}
-.appt-tag.urgent{background:var(--crimson-light);color:var(--crimson);}
-.appt-time{font-size:10px;color:var(--graphite);}
-.appt-driver{font-size:10px;color:var(--graphite);margin-top:2px;}
-
-/* ── VIEW TOGGLE ── */
-.view-toggle{display:flex;margin:10px 14px 0;background:var(--stone-light);border-radius:var(--radius-sm);padding:3px;gap:2px;}
-.vt-btn{flex:1;text-align:center;padding:6px;font-size:11px;font-weight:500;color:var(--graphite);border-radius:5px;cursor:pointer;transition:all 0.2s;}
-.vt-btn.active{background:var(--white);color:var(--slate);}
-
-/* ── POST APPT ── */
-.post-appt{margin:10px 14px 0;background:var(--terracotta-light);border:1px solid var(--terracotta);border-left:4px solid var(--terracotta);border-radius:var(--radius-sm);padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;}
-.post-appt-text{font-size:12px;font-weight:500;color:#8A2E10;}
-.post-appt-sub{font-size:10px;color:#A8452B;margin-top:1px;}
-
-/* ── ROSTER ── */
-.emergency-banner{margin:12px 14px 0;background:var(--slate);border-radius:var(--radius);padding:12px 13px;cursor:pointer;}
-.em-label{font-size:9px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;}
-.em-title{font-family:'Lora',serif;font-size:15px;font-weight:600;color:white;}
-.em-sub{font-size:11px;color:rgba(255,255,255,0.65);margin-top:2px;}
-.contact-section{margin:12px 14px 0;}
-.contact-section-label{font-size:9px;font-weight:600;color:var(--graphite);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;padding-left:2px;}
-.contact-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;margin-bottom:8px;}
-.contact-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;cursor:pointer;transition:background 0.15s;}
-.contact-row:last-child{border-bottom:none;}
-.contact-row:hover{background:#fafaf7;}
-.contact-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;flex-shrink:0;}
-.contact-info{flex:1;}
-.contact-name{font-size:13px;font-weight:500;color:var(--charcoal);}
-.contact-role{font-size:10px;color:var(--graphite);}
-.contact-actions{display:flex;gap:5px;}
-.contact-btn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;}
-.contact-btn.call{background:var(--sage-light);}
-.contact-btn.msg{background:var(--terracotta-light);}
-
-/* ── VAULT / RED FOLDER ── */
-.vault-note{margin:8px 14px 0;font-size:11px;color:var(--graphite);line-height:1.5;}
-.redfolder-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 14px 0;}
-.redfolder-tile{background:var(--crimson-light);border:1px solid var(--crimson);border-radius:var(--radius);padding:12px 10px;cursor:pointer;text-align:center;transition:background 0.15s;}
-.redfolder-tile:hover{background:#f7c9c9;}
-.redfolder-icon{font-size:20px;margin-bottom:4px;}
-.redfolder-label{font-size:11px;font-weight:700;color:#7a1f1f;}
-.redfolder-sub{font-size:9px;color:var(--graphite);margin-top:2px;font-weight:500;}
-.doc-card{margin:0 14px 8px;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;}
-.doc-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0ece6;cursor:pointer;transition:background 0.15s;}
-.doc-row:last-child{border-bottom:none;}
-.doc-row:hover{background:#fafaf7;}
-.doc-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;color:white;}
-.doc-info{flex:1;}
-.doc-name{font-size:13px;font-weight:500;color:var(--charcoal);}
-.doc-meta{font-size:10px;color:var(--graphite);margin-top:1px;}
-.doc-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--stone-light);color:var(--graphite);white-space:nowrap;flex-shrink:0;}
-.doc-badge.all{background:var(--sage-light);color:#245A2A;}
-.doc-badge.limited{background:var(--terracotta-light);color:#8A2E10;}
-
-/* ── DOC DETAIL SHEET ── */
-.doc-sheet-overlay{display:none;position:absolute;inset:0;background:rgba(33,33,33,0.45);z-index:60;align-items:flex-end;}
-.doc-sheet{background:var(--white);width:100%;border-radius:20px 20px 0 0;padding:8px 18px 20px;box-shadow:0 -8px 32px rgba(0,0,0,0.2);max-height:82%;overflow-y:auto;}
-.doc-sheet-handle{width:36px;height:4px;background:var(--stone);border-radius:3px;margin:6px auto 14px;}
-.doc-sheet-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:12px;}
-.doc-sheet-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;}
-.doc-sheet-title{font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);line-height:1.25;}
-.doc-sheet-meta{font-size:11px;color:var(--graphite);margin-top:2px;}
-.doc-sheet-close{margin-left:auto;width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--graphite);cursor:pointer;flex-shrink:0;}
-.doc-preview-box{background:var(--ivory);border:1.5px dashed var(--stone);border-radius:var(--radius);height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;}
-.doc-preview-icon{font-size:30px;opacity:0.55;}
-.doc-preview-text{font-size:11px;color:var(--graphite);}
-.doc-sheet-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
-.doc-action-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 8px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--stone);background:var(--white);color:var(--charcoal);transition:background 0.15s;}
-.doc-action-btn:hover{background:var(--stone-light);}
-.doc-action-btn.primary{background:var(--slate);border-color:var(--slate);color:white;}
-.doc-action-btn.primary:hover{background:var(--slate-dark);}
-.doc-sheet-status{font-size:11px;font-weight:600;color:var(--sage);text-align:center;min-height:14px;margin-bottom:4px;}
-.doc-sheet-perm{font-size:10.5px;color:var(--graphite);text-align:center;line-height:1.5;padding-top:4px;border-top:1px solid var(--stone-light);}
-
-/* ── ADD BUTTON ── */
-.add-btn{margin:8px 14px 14px;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:var(--stone-light);border-radius:var(--radius);border:1.5px dashed var(--stone);cursor:pointer;font-size:12px;font-weight:500;color:var(--graphite);}
-.add-btn:hover{background:#e4ddd4;}
-
-/* ── MEDS FULL SCREEN ── */
-.summary-row{display:flex;gap:7px;padding:10px 14px 2px;}
-.sum-card{flex:1;background:var(--white);border-radius:var(--radius-sm);border:1px solid var(--stone-light);padding:8px 10px;text-align:center;}
-.sum-num{font-size:20px;font-weight:600;line-height:1;}
-.sum-label{font-size:9px;font-weight:500;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
-.time-block{margin:0 14px 2px;}
-.time-header{display:flex;align-items:center;gap:7px;margin-bottom:5px;margin-top:12px;}
-.time-pill{font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.4px;}
-.time-pill.morning{background:var(--terracotta-light);color:#8A2E10;}
-.time-pill.evening{background:var(--slate);color:white;}
-.time-line{flex:1;height:1px;background:var(--stone-light);}
-.refill-alert{margin:10px 14px 6px;background:var(--terracotta-light);border:1px solid var(--terracotta);border-left:4px solid var(--terracotta);border-radius:var(--radius-sm);padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;}
-.refill-text{font-size:12px;font-weight:500;color:#8A2E10;}
-.refill-sub{font-size:10px;color:#A8452B;margin-top:1px;}
-.full-med-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);overflow:hidden;margin-bottom:6px;}
-.full-med-row{display:flex;align-items:stretch;cursor:pointer;transition:background 0.15s;}
-.full-med-row:hover{background:#fafaf7;}
-.med-stripe{width:3px;flex-shrink:0;}
-.med-stripe.done{background:var(--sage);}
-.med-stripe.missed{background:var(--crimson);}
-.med-stripe.pending{background:var(--stone);}
-.full-med-content{flex:1;padding:10px 10px 10px 9px;display:flex;align-items:center;gap:9px;}
-.full-med-info{flex:1;}
-.full-med-name{font-size:13px;font-weight:500;color:var(--charcoal);}
-.full-med-details{font-size:10px;color:var(--graphite);margin-top:1px;}
-.full-med-right{text-align:right;}
-.full-med-time{font-size:10px;font-weight:500;color:var(--graphite);}
-.full-med-confirmed{font-size:9px;margin-top:2px;}
-.full-med-confirmed.done{color:var(--sage);}
-.full-med-confirmed.missed{color:var(--crimson);}
-
-/* ── BOTTOM NAV ── */
-.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--stone-light);display:flex;padding:7px 0 14px;}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 0;transition:opacity 0.15s;}
-.nav-item:hover{opacity:0.7;}
-.nav-label{font-size:9px;font-weight:500;color:var(--graphite);}
-.nav-item.active .nav-label{color:var(--slate);}
-
-/* ── BETA BANNER ── */
-.beta-banner{background:var(--slate);color:white;text-align:center;padding:10px 16px;font-size:12px;}
-.beta-banner a{color:var(--terracotta-light);text-decoration:underline;}
-/* ── AUTH SCREEN ── */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--ivory);}
-.auth-card{width:100%;max-width:380px;background:var(--white);border-radius:var(--radius-lg);box-shadow:0 4px 24px rgba(0,0,0,0.08);padding:32px 28px;}
-.auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:24px;}
-.auth-logo svg{width:26px;height:26px;fill:var(--crimson);}
-.auth-logo-text{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--slate-dark);}
-.auth-logo-text span{color:var(--terracotta);font-style:italic;}
-.auth-tabs{display:flex;margin-bottom:20px;border-bottom:1px solid var(--stone-light);}
-.auth-tab{flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;color:var(--graphite);cursor:pointer;border-bottom:2px solid transparent;}
-.auth-tab.active{color:var(--slate);border-bottom-color:var(--slate);}
-.auth-field-label{font-size:12px;font-weight:600;color:var(--graphite);margin:14px 0 5px;}
-.auth-input{width:100%;padding:11px 12px;border:1px solid var(--stone);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--ivory);}
-.auth-input:focus{outline:none;border-color:var(--slate);}
-.auth-password-wrap{position:relative;}
-.auth-password-wrap .auth-input{padding-right:52px;}
-.auth-password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--slate);cursor:pointer;user-select:none;}
-.auth-submit{width:100%;margin-top:20px;padding:12px;background:var(--slate);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;}
-.auth-submit:hover{background:var(--slate-dark);}
-.auth-submit:disabled{opacity:0.6;cursor:default;}
-.auth-error{margin-top:12px;padding:10px 12px;background:var(--crimson-light);color:#8A1418;border-radius:var(--radius-sm);font-size:12px;display:none;}
-.auth-status{margin-top:12px;padding:10px 12px;background:var(--sage-light);color:#245A2A;border-radius:var(--radius-sm);font-size:12px;display:none;}
-.auth-onboard-note{font-size:11px;color:var(--graphite);text-align:center;margin-top:16px;line-height:1.5;}
-.auth-forgot-link{text-align:center;font-size:12px;font-weight:600;color:var(--slate);cursor:pointer;margin-top:14px;}
-.auth-forgot-title{font-size:16px;font-weight:700;color:var(--slate-dark);text-align:center;margin-bottom:6px;}
-.auth-forgot-sub{font-size:12px;color:var(--graphite);text-align:center;margin-bottom:18px;line-height:1.5;}
-.auth-remember-row{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--graphite);cursor:pointer;}
-.auth-remember-row input{width:15px;height:15px;cursor:pointer;accent-color:var(--slate);}
-
-/* ══════════ REAL MOBILE DEVICES ══════════
-   On an actual phone, don't render a fake "phone" graphic inside the
-   real browser viewport (a viewport inside a viewport). Instead, let
-   the app fill the real screen the way any normal mobile web app would.
-   Placed last on purpose so it correctly overrides every rule above it,
-   including .bottom-nav's absolute positioning. */
-@media (max-width: 480px){
-  .screen-nav{display:none;}
-  .beta-banner{font-size:11px;padding:8px 10px;}
-  .screens-wrap{padding:0;gap:0;}
-  .phone{
-    width:100%;
-    height:100vh;
-    height:100dvh;
-    min-height:0;
-    border:none;
-    border-radius:0;
-    box-shadow:none;
-    display:flex;
-    flex-direction:column;
-  }
-  .notch,.status-bar{display:none;}
-  .app-body{flex:1;height:auto;min-height:0;}
-  .bottom-nav{position:relative;bottom:auto;left:auto;right:auto;}
-}
+.retake{text-align:center;margin-top:1.5rem;}
+.retake a{color:var(--stone);font-size:13px;cursor:pointer;text-decoration:underline;}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+<div class="wrap">
 
-<!-- ══════════ AUTH SCREEN ══════════ -->
-<div class="auth-wrap" id="auth-wrap">
-  <div class="auth-card" id="main-auth-card">
-    <div class="auth-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>
-      <div class="auth-logo-text">Handled <span>with Care</span></div>
+  <div class="page-header">
+    <div class="page-title">Do They Need <span>More Help?</span></div>
+    <div class="page-sub">A guide for deciding on assisted living or memory care</div>
+  </div>
+
+  <!-- TOP SIGNS -->
+  <div class="card" id="signs-section">
+    <h2 style="font-family:'Lora',serif;font-size:18px;color:var(--slate-dark);margin-bottom:14px;">Top Signs It May Be Time for More Support</h2>
+    <ul class="signs-list">
+      <li><div class="sign-text"><b>Medication mix-ups:</b> pills are missed, doubled, or taken at the wrong times despite reminders and pill organizers.</div></li>
+      <li><div class="sign-text"><b>Frequent falls or near-falls:</b> repeated loss of balance, unexplained bruises, or a new fear of walking without support.</div></li>
+      <li><div class="sign-text"><b>Weight loss or skipped meals:</b> empty fridge, expired food, clothes getting loose, or reliance on simple, unhealthy snacks instead of cooked meals.</div></li>
+      <li><div class="sign-text"><b>Decline in hygiene and self-care:</b> difficulty bathing, dressing properly, body odor, or wearing dirty clothes; home becomes noticeably unclean.</div></li>
+      <li><div class="sign-text"><b>Memory lapses that affect safety:</b> getting lost in familiar places, leaving the stove on, wandering, or repeated questions and confusion about time or place.</div></li>
+      <li><div class="sign-text"><b>Missed appointments and neglected health:</b> forgetting doctor visits, ignoring new symptoms, or avoiding needed medical care.</div></li>
+      <li><div class="sign-text"><b>Household neglect and safety hazards:</b> piles of mail, clutter, unpaid bills, spoiled food, or hazards like burnt pots and tripping risks.</div></li>
+      <li><div class="sign-text"><b>Social withdrawal and mood changes:</b> pulling away from friends, losing interest in hobbies, signs of depression, anxiety, or agitation.</div></li>
+      <li><div class="sign-text"><b>Caregiver burnout or inconsistent care:</b> family caregivers are exhausted, missing their own appointments, losing sleep, or feeling resentful; care routines become unreliable.</div></li>
+      <li><div class="sign-text"><b>Repeated hospital or ER visits:</b> back and forth trips for falls, infections, medication errors, or other issues that could be prevented with closer supervision.</div></li>
+    </ul>
+    <div class="memory-note"><b>When memory care specifically may be needed:</b> persistent wandering, aggressive or highly agitated episodes, moderate to severe cognitive impairment on testing, or repeated safety incidents that standard assisted living cannot safely manage.</div>
+  </div>
+
+  <!-- QUIZ TEASER -->
+  <div class="teaser" id="teaser-section">
+    <h2>Not sure how serious it is?</h2>
+    <p>Take the 2 minute quiz below. It walks through the same ten areas above and gives you a clear next step based on your answers.</p>
+    <button class="btn" onclick="startQuiz()">Take the Quiz</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="card" id="quiz-section">
+    <div class="q-count" id="q-count">Question 1 of 10</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:10%"></div></div>
+    <div class="q-prompt" id="q-prompt"></div>
+    <div id="q-options"></div>
+    <div class="quiz-nav">
+      <button class="btn-nav" id="btn-back" onclick="prevQ()">Back</button>
+      <button class="btn-nav primary" id="btn-next" onclick="nextQ()" disabled>Next</button>
     </div>
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-signin" onclick="setAuthMode('signin')">Sign In</div>
-      <div class="auth-tab" id="tab-signup" onclick="setAuthMode('signup')">Create Account</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-section">
+    <div class="result-badge" id="result-badge">
+      <div class="score" id="result-score">0 / 30</div>
+      <div class="level" id="result-level"></div>
+      <div class="desc" id="result-desc"></div>
+    </div>
+    <div class="card">
+      <div class="goal-line" id="result-goal"></div>
+      <ul class="next-steps-list" id="result-steps"></ul>
     </div>
 
-    <div id="signup-only-fields" style="display:none;">
-      <div id="invite-join-note" style="display:none;font-size:12px;color:var(--sage);background:var(--sage-light);border-radius:var(--radius-sm);padding:9px 11px;margin-bottom:12px;">You've been invited to join an existing care team. You'll join their Huddle instead of starting a new one.</div>
-      <div class="auth-field-label">Your name</div>
-      <input class="auth-input" id="auth-display-name" placeholder="e.g. Lisa" autocomplete="name">
-      <div id="signup-care-recipient-group">
-        <div class="auth-field-label">Who are you caring for?</div>
-        <input class="auth-input" id="auth-care-recipient" placeholder="e.g. Mom" autocomplete="off">
+    <div class="redflag-toggle"><a onclick="toggleRedflags()">Or jump straight to your biggest concern</a></div>
+
+    <div class="card" id="redflag-section">
+      <div class="accordion-item">
+        <div class="accordion-head" onclick="toggleAccordion(this)">If medications are the main problem <span class="chev">&#9660;</span></div>
+        <div class="accordion-body"><ul>
+          <li>Ask the pharmacy about blister packs, med sync, or delivery.</li>
+          <li>Consider a locked med dispenser with alarms or a service that pre-sorts weekly doses.</li>
+        </ul></div>
+      </div>
+      <div class="accordion-item">
+        <div class="accordion-head" onclick="toggleAccordion(this)">If falls or mobility are the main problem <span class="chev">&#9660;</span></div>
+        <div class="accordion-body"><ul>
+          <li>Request a physical therapy evaluation for strength, balance, and proper assistive devices.</li>
+          <li>Add grab bars, better lighting, and remove loose rugs; consider a medical alert button or fall detection device.</li>
+        </ul></div>
+      </div>
+      <div class="accordion-item">
+        <div class="accordion-head" onclick="toggleAccordion(this)">If memory or safety are the main problem <span class="chev">&#9660;</span></div>
+        <div class="accordion-body"><ul>
+          <li>Ask for a cognitive evaluation (Mini-Cog, MoCA, or similar) through their doctor or a memory clinic.</li>
+          <li>If there is wandering, stove issues, or getting lost, start memory care conversations immediately. Standard assisted living may not be enough.</li>
+        </ul></div>
+      </div>
+      <div class="accordion-item">
+        <div class="accordion-head" onclick="toggleAccordion(this)">If caregiver burnout is the main problem <span class="chev">&#9660;</span></div>
+        <div class="accordion-body"><ul>
+          <li>Be honest with the doctor: "I can't keep this up safely." That alone can unlock resources, referrals, and urgency.</li>
+          <li>Look into respite care (short-term stays) or adult day programs for regular breaks.</li>
+        </ul></div>
+      </div>
+      <div class="accordion-item" style="border-bottom:none;">
+        <div class="accordion-head" onclick="toggleAccordion(this)">If money is the sticking point <span class="chev">&#9660;</span></div>
+        <div class="accordion-body"><ul>
+          <li>Contact your local Area Agency on Aging or Aging and Disability Resource Center for free or low-cost counseling on benefits, Medicaid waivers, and veteran's aid.</li>
+          <li>Ask facilities directly what they accept (private pay, long-term care insurance, Medicaid, VA benefits) before you tour.</li>
+        </ul></div>
       </div>
     </div>
 
-    <div class="auth-field-label">Email</div>
-    <input class="auth-input" id="auth-email" type="email" placeholder="you@example.com" autocomplete="email">
-    <div class="auth-field-label">Password</div>
-    <div class="auth-password-wrap">
-      <input class="auth-input" id="auth-password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
-      <span class="auth-password-toggle" id="auth-password-toggle" onclick="togglePasswordVisibility()">Show</span>
-    </div>
-    <label class="auth-remember-row" id="auth-remember-row">
-      <input type="checkbox" id="auth-remember-me" checked>
-      <span>Stay signed in on this device</span>
-    </label>
-
-    <button class="auth-submit" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
-    <div class="auth-forgot-link" id="auth-forgot-link" onclick="showForgotPassword()">Forgot password?</div>
-    <div class="auth-error" id="auth-error"></div>
-    <div class="auth-status" id="auth-status"></div>
-    <div class="auth-onboard-note" id="auth-onboard-note">Your data is only visible to the family members you invite. We never sell your information.</div>
+    <div class="retake"><a onclick="restartAll()">Retake the quiz</a></div>
   </div>
 
-  <div class="auth-card" id="forgot-password-card" style="display:none;">
-    <div class="auth-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>
-      <div class="auth-logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="auth-forgot-title">Reset your password</div>
-    <div class="auth-forgot-sub">Enter the email on your account and we'll send a link to reset it.</div>
-    <div class="auth-field-label">Email</div>
-    <input class="auth-input" id="forgot-email" type="email" placeholder="you@example.com" autocomplete="email">
-    <button class="auth-submit" id="forgot-submit-btn" onclick="sendPasswordReset()">Send reset link</button>
-    <div class="auth-forgot-link" onclick="backToSignIn()">Back to sign in</div>
-    <div class="auth-error" id="forgot-error"></div>
-    <div class="auth-status" id="forgot-status"></div>
-  </div>
-
-  <div class="auth-card" id="new-password-card" style="display:none;">
-    <div class="auth-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>
-      <div class="auth-logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="auth-forgot-title">Choose a new password</div>
-    <div class="auth-field-label">New password</div>
-    <div class="auth-password-wrap">
-      <input class="auth-input" id="new-password" type="password" placeholder="At least 6 characters" autocomplete="new-password">
-      <span class="auth-password-toggle" id="new-password-toggle" onclick="toggleNewPasswordVisibility()">Show</span>
-    </div>
-    <button class="auth-submit" id="new-password-btn" onclick="submitNewPassword()">Update password</button>
-    <div class="auth-error" id="new-password-error"></div>
-    <div class="auth-status" id="new-password-status"></div>
-  </div>
-
-  <div class="auth-card" id="finish-setup-card" style="display:none;">
-    <div class="auth-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>
-      <div class="auth-logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="auth-forgot-title">Finish setting up</div>
-    <div class="auth-forgot-sub">Your account is confirmed, but we still need a couple of details before your Huddle exists.</div>
-    <div class="auth-field-label">Your name</div>
-    <input class="auth-input" id="finish-display-name" placeholder="e.g. Lisa">
-    <div id="finish-care-recipient-group">
-      <div class="auth-field-label">Who are you caring for?</div>
-      <input class="auth-input" id="finish-care-recipient" placeholder="e.g. Mom">
-    </div>
-    <button class="auth-submit" id="finish-setup-btn" onclick="submitFinishSetup()">Continue</button>
-    <div class="auth-error" id="finish-setup-error"></div>
-  </div>
 </div>
-
-<div id="app-root" style="display:none;">
-
-<!-- BETA BANNER -->
-<div class="beta-banner">
-  🌿 <strong>Handled with Care</strong> · Founder Beta Demo &nbsp;·&nbsp; Built for families caring for aging parents &nbsp;·&nbsp; <a href="mailto:hello@handledwithcare.care">Join the waitlist</a>
-</div>
-
-<!-- PAGE HEADER -->
-<div class="page-header">
-  <div class="page-title">Handled <span>with Care</span></div>
-  <div class="page-sub">Tap a screen below to explore the app · Built for Lisa, 52, before the 7:42 train</div>
-</div>
-
-<!-- SCREEN NAV -->
-<div class="screen-nav">
-  <div class="snav-btn active" onclick="showScreen('home')">Today's snapshot</div>
-  <div class="snav-btn" onclick="showScreen('meds')">Medications</div>
-  <div class="snav-btn" onclick="showScreen('appts')">Appointments</div>
-  <div class="snav-btn" onclick="showScreen('roster')">Care team</div>
-  <div class="snav-btn" onclick="showScreen('onboarding')">Onboarding</div>
-  <div class="snav-btn" onclick="showScreen('costs')">Cost tracker</div>
-</div>
-
-<div class="screens-wrap">
-
-<!-- ════════════════════════════
-     SCREEN 1: HOME / TODAY
-════════════════════════════ -->
-<div class="screen active" id="screen-home">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
-      <div class="logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab active">Today</div>
-    <div class="stab" onclick="showScreen('meds')">Meds</div>
-    <div class="stab" onclick="showScreen('appts')">Calendar</div>
-  </div>
-  <div class="app-body">
-    <div class="greeting-bar">
-      <div class="greeting-time" id="greeting-time">Friday, April 11 · Good morning</div>
-      <div class="greeting-name">Here's <em id="greeting-recipient-name">Mom's</em> morning snapshot</div>
-    </div>
-    <div class="alert-strip" id="home-alert-strip" style="display:none;" onclick="showScreen('meds')">
-      <div class="alert-dot"></div>
-      <div class="alert-text" id="home-alert-text"></div>
-    </div>
-    <div class="emergency-banner" onclick="showScreen('vault')" style="background:var(--crimson);">
-      <div class="em-label" style="color:rgba(255,255,255,0.7);">Emergency quick access</div>
-      <div class="em-title care-recipient-title">Mom's Red Folder</div>
-      <div class="em-sub">Insurance, DNR, doctor, pharmacy. One tap, no searching.</div>
-    </div>
-    <div class="slabel" id="home-progress-label">Today's Huddle · 3 of 5 handled</div>
-    <div class="progress-wrap">
-      <div class="progress-label">
-        <span style="font-weight:500;color:var(--charcoal);font-size:11px">Daily care tasks</span>
-        <span style="color:var(--graphite);font-size:11px" id="home-pct">60%</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill" id="home-pbar"></div></div>
-    </div>
-    <div class="checkin-card" id="checkin-card">
-      <div class="checkin-title">How are <em style="font-style:italic;color:var(--terracotta);">you</em> doing this week?</div>
-      <div class="checkin-sub">Just for you. Not shared with the Huddle unless you want it to be.</div>
-      <div id="checkin-body"></div>
-    </div>
-    <div class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:10px 14px 0;" onclick="showScreen('costs')">💰 Track caregiving costs →</div>
-    <div class="slabel">Medications</div>
-    <div class="med-card">
-      <div class="med-card-header">
-        <span class="med-card-title">Today's schedule</span>
-        <span class="med-badge ok" id="home-med-badge"></span>
-      </div>
-      <div id="home-med-list"></div>
-    </div>
-    <div class="slabel">Tasks</div>
-    <div class="task-card" id="home-task-list"></div>
-    <div class="add-btn" style="margin:0 14px 8px;" onclick="showAddTaskForm()">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Add task
-    </div>
-    <div id="add-task-form" style="display:none;margin:0 14px 10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
-      <div class="auth-field-label" style="margin-top:0;">Task</div>
-      <input class="auth-input" id="new-task-title" placeholder="e.g. Refill Lisinopril">
-      <div class="auth-field-label">Assign to</div>
-      <select class="auth-input" id="new-task-assignee">
-        <option value="">Unassigned</option>
-      </select>
-      <div class="auth-field-label">Due date (optional)</div>
-      <input class="auth-input" id="new-task-due" type="date">
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddTaskForm()">Cancel</div>
-        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewTask()">Save</div>
-      </div>
-      <div class="auth-error" id="new-task-error" style="margin-top:10px;"></div>
-    </div>
-    <div class="slabel">The Huddle · <span id="huddle-recipient-name-1">Mom's</span> Care Circle</div>
-    <div class="huddle-card" onclick="showScreen('roster')" style="cursor:pointer;">
-      <div class="huddle-header"><div class="huddle-title">Who's <span>in</span></div><div class="huddle-count" id="home-huddle-count">1 member</div></div>
-      <div class="huddle-members" id="home-huddle-members"></div>
-    </div>
-    <div class="slabel">Wellness Journal</div>
-    <div id="home-journal-preview"></div>
-    <div class="journal-link" onclick="showScreen('journal')">See full journal →</div>
-    <div class="note-add" onclick="showScreen('journal');setTimeout(()=>openCompose('journal'),50);"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--graphite)">+</div><div class="note-add-text">Add a care note…</div></div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label" style="color:var(--slate)">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 2: MEDICATIONS
-════════════════════════════ -->
-<div class="screen" id="screen-meds">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
-      <div class="logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab" onclick="showScreen('home')">Today</div>
-    <div class="stab active">Meds</div>
-    <div class="stab">History</div>
-  </div>
-  <div class="app-body" id="meds-app-body">
-    <div class="summary-row" id="meds-summary-row"></div>
-    <div id="meds-list-container"></div>
-    <div class="add-btn" style="margin-top:10px;" onclick="showAddMedForm()">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Add medication
-    </div>
-    <div id="add-med-form" style="display:none;margin-top:10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
-      <div class="auth-field-label" style="margin-top:0;">Medication name</div>
-      <input class="auth-input" id="new-med-name" placeholder="e.g. Lisinopril 10mg">
-      <div class="auth-field-label">Dosage</div>
-      <input class="auth-input" id="new-med-dosage" placeholder="e.g. 1 tablet">
-      <div class="auth-field-label">Schedule</div>
-      <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM">
-      <div class="auth-field-label">Instructions (optional)</div>
-      <input class="auth-input" id="new-med-instructions" placeholder="e.g. with food">
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddMedForm()">Cancel</div>
-        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
-      </div>
-      <div class="auth-error" id="new-med-error" style="margin-top:10px;"></div>
-    </div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label" style="color:var(--slate)">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 3: APPOINTMENTS
-════════════════════════════ -->
-<div class="screen" id="screen-appts">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
-      <div class="logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab active">Appointments</div>
-    <div class="stab" onclick="showScreen('meds')">Meds</div>
-    <div class="stab" onclick="showScreen('home')">Today</div>
-  </div>
-  <div class="app-body">
-    <div class="view-toggle">
-      <div class="vt-btn active" id="list-btn" onclick="switchApptView('list')">List view</div>
-      <div class="vt-btn" id="cal-btn" onclick="switchApptView('cal')">Calendar view</div>
-    </div>
-    <div id="cal-panel" style="display:none;margin:10px 14px 0;background:var(--white);border-radius:var(--radius);border:1px solid var(--stone-light);padding:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--slate-dark);" id="cal-month-label">April 2026</div>
-        <div style="display:flex;gap:6px;"><div style="width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--graphite);">‹</div><div style="width:26px;height:26px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--graphite);">›</div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:3px;">
-        <div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">S</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">M</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">T</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">W</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">T</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">F</div><div style="font-size:9px;font-weight:600;color:var(--graphite);padding:3px 0;">S</div>
-      </div>
-      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-    </div>
-    <div class="post-appt" id="pending-debrief-banner" style="display:none;" onclick="openDebriefForm()"><div><div class="post-appt-text" id="pending-debrief-text"></div><div class="post-appt-sub" id="pending-debrief-sub"></div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
-    <div class="slabel" id="appt-list-label">Upcoming appointments</div>
-    <div class="appt-card" id="appt-list"></div>
-    <div class="add-btn" onclick="showAddApptForm()">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Add appointment
-    </div>
-    <div id="add-appt-form" style="display:none;margin:0 14px 10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
-      <div class="auth-field-label" style="margin-top:0;">What's the appointment</div>
-      <input class="auth-input" id="new-appt-title" placeholder="e.g. Dr. Patel: Cardiology follow-up">
-      <div class="auth-field-label">Provider (optional)</div>
-      <input class="auth-input" id="new-appt-provider" placeholder="e.g. Dr. Patel">
-      <div class="auth-field-label">Location (optional)</div>
-      <input class="auth-input" id="new-appt-location" placeholder="e.g. Scripps Clinic">
-      <div class="auth-field-label">Date & time</div>
-      <input class="auth-input" id="new-appt-datetime" type="datetime-local">
-      <div class="auth-field-label">Notes (optional)</div>
-      <input class="auth-input" id="new-appt-notes" placeholder="Anything else the Huddle should know">
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddApptForm()">Cancel</div>
-        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewAppointment()">Save</div>
-      </div>
-      <div class="auth-error" id="new-appt-error" style="margin-top:10px;"></div>
-    </div>
-  </div>
-  <div class="doc-sheet-overlay" id="debrief-overlay" onclick="if(event.target===this)closeDebriefForm()">
-    <div class="doc-sheet">
-      <div class="doc-sheet-handle"></div>
-      <div class="doc-sheet-header">
-        <div class="doc-sheet-icon" style="background:var(--terracotta)">🩺</div>
-        <div style="flex:1;">
-          <div class="doc-sheet-title" id="debrief-title">Appointment debrief</div>
-          <div class="doc-sheet-meta" id="debrief-meta"></div>
-        </div>
-        <div class="doc-sheet-close" onclick="closeDebriefForm()">✕</div>
-      </div>
-      <div class="auth-field-label" style="margin-top:4px;">What did the doctor say?</div>
-      <textarea class="auth-input" id="debrief-doctor-said" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Summary of what was discussed"></textarea>
-      <div class="auth-field-label">New prescriptions?</div>
-      <textarea class="auth-input" id="debrief-new-rx" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Any new medications or changes"></textarea>
-      <div class="auth-field-label">Next steps / follow-up?</div>
-      <textarea class="auth-input" id="debrief-next-steps" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="What needs to happen next"></textarea>
-      <div class="compose-submit" onclick="submitDebrief()">Save debrief and share with Huddle</div>
-      <div class="doc-sheet-status" id="debrief-status"></div>
-    </div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label" style="color:var(--slate)">Calendar</div></div>
-    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 4: CARE TEAM ROSTER
-════════════════════════════ -->
-<div class="screen" id="screen-roster">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
-      <div class="logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab" onclick="showScreen('home')">The Huddle</div>
-    <div class="stab active">Care Team</div>
-    <div class="stab" onclick="showScreen('vault')">Vault</div>
-    <div class="stab" onclick="showScreen('chat')">Chat</div>
-  </div>
-  <div class="app-body">
-    <div class="emergency-banner">
-      <div class="em-label">Emergency quick access</div>
-      <div class="em-title care-recipient-title">Mom's Red Folder</div>
-      <div class="em-sub">Insurance · DNR · Primary doctor · Pharmacy · one tap</div>
-    </div>
-    <div class="contact-section">
-      <div class="contact-section-label">Medical team</div>
-      <div class="contact-card">
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate)">RP</div><div class="contact-info"><div class="contact-name">Dr. Raj Patel</div><div class="contact-role">Cardiologist · Scripps Clinic</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate-light)">LC</div><div class="contact-info"><div class="contact-name">Dr. Linda Chen</div><div class="contact-role">Primary care · Kaiser Permanente</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--sage)">KW</div><div class="contact-info"><div class="contact-name">Kim Watkins, PT</div><div class="contact-role">Physical therapist · Sharp Rehab</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
-      </div>
-    </div>
-    <div class="contact-section">
-      <div class="contact-section-label">Pharmacy & services</div>
-      <div class="contact-card">
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--terracotta)">Rx</div><div class="contact-info"><div class="contact-name">CVS Pharmacy</div><div class="contact-role">Rancho Bernardo · Refill line available</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--stone);color:var(--charcoal)">MA</div><div class="contact-info"><div class="contact-name">Mary Andersen</div><div class="contact-role">Home aide · Mon–Fri 9am–1pm</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-      </div>
-    </div>
-    <div class="contact-section">
-      <div class="contact-section-label">The Huddle · Family</div>
-      <div class="contact-card" id="huddle-family-list"></div>
-    </div>
-    <div class="add-btn" style="margin:4px 14px 14px;" onclick="showInviteForm()">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Invite a family member
-    </div>
-    <div id="invite-form" style="display:none;margin:0 14px 14px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
-      <div style="font-size:12px;color:var(--charcoal);line-height:1.5;margin-bottom:10px;">Share this link with the person you want to add. When they sign up through it, they'll join this same Huddle instead of starting a new one.</div>
-      <div style="display:flex;gap:6px;">
-        <input class="auth-input" id="invite-link-box" readonly style="font-size:11px;">
-        <div style="padding:11px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;white-space:nowrap;" onclick="copyInviteLink()">Copy</div>
-      </div>
-      <div class="auth-status" id="invite-copy-status" style="margin-top:8px;"></div>
-      <div class="auth-forgot-link" onclick="hideInviteForm()" style="margin-top:12px;">Close</div>
-    </div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 5: DOCUMENT VAULT
-════════════════════════════ -->
-<div class="screen" id="screen-vault">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
-      <div class="logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab" onclick="showScreen('home')">The Huddle</div>
-    <div class="stab" onclick="showScreen('roster')">Care Team</div>
-    <div class="stab active">Vault</div>
-    <div class="stab" onclick="showScreen('chat')">Chat</div>
-  </div>
-  <div class="app-body">
-    <div class="emergency-banner">
-      <div class="em-label">Emergency quick access</div>
-      <div class="em-title care-recipient-title">Mom's Red Folder</div>
-      <div class="em-sub">The 6 things you'd need at 2am. One tap, no searching</div>
-    </div>
-    <div class="redfolder-grid" id="redfolder-grid"></div>
-    <div class="vault-note">Tap any tile to view or update it. Everyone in the Huddle can see the Red Folder, even during a crisis when you aren't reachable.</div>
-
-    <div class="slabel">Other documents</div>
-    <div class="doc-card" id="other-docs-list"></div>
-    <div class="add-btn" style="margin:4px 14px 14px;" onclick="openVaultEditor('other',null)">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Add a document note
-    </div>
-  </div>
-  <div class="doc-sheet-overlay" id="doc-sheet-overlay" onclick="if(event.target===this)closeDoc()">
-    <div class="doc-sheet">
-      <div class="doc-sheet-handle"></div>
-      <div class="doc-sheet-header">
-        <div class="doc-sheet-icon" id="doc-sheet-icon">📄</div>
-        <div style="flex:1;">
-          <div class="doc-sheet-title" id="doc-sheet-title-label">Document</div>
-          <div class="doc-sheet-meta" id="doc-sheet-meta"></div>
-        </div>
-        <div class="doc-sheet-close" onclick="closeDoc()">✕</div>
-      </div>
-      <div id="doc-sheet-name-wrap">
-        <div class="auth-field-label" style="margin-top:4px;">Name</div>
-        <input class="auth-input" id="doc-sheet-title-input" placeholder="Enter a title">
-      </div>
-      <div id="conditions-checklist-wrap" style="display:none;">
-        <div id="conditions-selected-row" style="margin-bottom:12px;"></div>
-        <div style="display:flex;gap:6px;margin-bottom:12px;">
-          <input class="auth-input" id="conditions-custom-input" placeholder="Add a condition not listed below" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCondition();}">
-          <div style="padding:11px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;text-align:center;cursor:pointer;background:var(--slate);color:white;white-space:nowrap;" onclick="addCustomCondition()">Add</div>
-        </div>
-        <div class="auth-field-label" style="margin-top:0;">Common conditions (tap all that apply)</div>
-        <div class="cost-chip-row" id="conditions-chip-row" style="margin-top:4px;"></div>
-      </div>
-      <div id="doc-sheet-details-wrap">
-        <div class="auth-field-label" id="doc-sheet-details-label">Details</div>
-        <textarea class="auth-input" id="doc-sheet-content-input" rows="4" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Phone number, address, notes..."></textarea>
-      </div>
-      <div class="auth-field-label">Photo</div>
-      <div id="vault-photo-area">
-        <div id="vault-photo-empty" style="display:flex;gap:8px;">
-          <div style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1.5px dashed var(--stone);background:var(--stone-light);color:var(--graphite);" onclick="document.getElementById('vault-photo-input').click()">📷 Take or choose a photo</div>
-        </div>
-        <div id="vault-photo-preview-wrap" style="display:none;">
-          <img id="vault-photo-preview-img" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--stone-light);display:block;margin-bottom:8px;max-height:260px;object-fit:contain;background:var(--ivory);">
-          <div style="display:flex;gap:8px;">
-            <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="retakeVaultPhoto()">Retake / Choose different</div>
-            <div id="vault-photo-remove-btn" style="display:none;padding:9px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--crimson);color:var(--crimson);background:var(--white);" onclick="removeVaultPhoto()">Remove</div>
-          </div>
-        </div>
-        <input type="file" accept="image/*" capture="environment" id="vault-photo-input" style="display:none" onchange="handleVaultPhotoSelect(event)">
-      </div>
-      <div class="doc-sheet-actions">
-        <div class="doc-action-btn primary" onclick="saveVaultDoc()">💾 Save</div>
-        <div class="doc-action-btn" id="doc-delete-btn" style="display:none;color:var(--crimson);" onclick="deleteVaultDoc()">🗑 Delete</div>
-      </div>
-      <div class="doc-sheet-status" id="doc-sheet-status"></div>
-      <div class="doc-sheet-perm">Visible to: whole Huddle</div>
-    </div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item" onclick="showScreen(\'roster\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
-    <div class="nav-item active" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1272D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label" style="color:var(--crimson)">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN: HUDDLE CHAT
-════════════════════════════ -->
-<div class="screen" id="screen-chat">
-<div class="phone" style="display:flex;flex-direction:column;">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg></div>
-      <div class="logo-text">Handled <span>with Care</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab" onclick="showScreen('home')">The Huddle</div>
-    <div class="stab" onclick="showScreen('roster')">Care Team</div>
-    <div class="stab" onclick="showScreen('vault')">Vault</div>
-    <div class="stab active">Chat</div>
-  </div>
-  <div class="app-body" id="chat-feed" style="flex:1;min-height:400px;"></div>
-  <div style="display:flex;gap:8px;padding:8px 12px;background:var(--white);border-top:1px solid var(--stone-light);flex-shrink:0;">
-    <input class="auth-input" id="chat-message-input" placeholder="Type a message..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendChatMessage();}">
-    <div onclick="sendChatMessage()" style="width:42px;height:42px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;">➤</div>
-  </div>
-  <div class="bottom-nav" style="position:relative;flex-shrink:0;">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item active" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E6F9E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label" style="color:var(--slate)">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 6: WELLNESS JOURNAL
-════════════════════════════ -->
-<div class="screen" id="screen-journal">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="back-chevron" onclick="showScreen('home')">‹</div>
-      <div class="logo-text" style="margin-left:8px;">Wellness <span>Journal</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="screen-tabs">
-    <div class="stab active"><span id="huddle-recipient-name-2">Mom's</span> Care Circle</div>
-  </div>
-  <div class="app-body" id="journal-feed"></div>
-  <div class="journal-fab" onclick="openCompose('journal')">+</div>
-  <div class="doc-sheet-overlay" id="compose-overlay-journal" onclick="if(event.target===this)closeCompose('journal')">
-    <div class="doc-sheet">
-      <div class="doc-sheet-handle"></div>
-      <div class="doc-sheet-header">
-        <div class="doc-sheet-icon" style="background:var(--slate)">📝</div>
-        <div style="flex:1;">
-          <div class="doc-sheet-title">Add a care note</div>
-          <div class="doc-sheet-meta">Visible to the whole Huddle</div>
-        </div>
-        <div class="doc-sheet-close" onclick="closeCompose('journal')">✕</div>
-      </div>
-      <textarea class="compose-textarea" id="compose-text-journal" placeholder="How's Mom doing today? What should the family know?"></textarea>
-      <div class="compose-submit" onclick="submitNote('journal')">Post to Journal</div>
-      <div class="doc-sheet-status" id="compose-status-journal"></div>
-    </div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 7: ONBOARDING
-════════════════════════════ -->
-<div class="screen" id="screen-onboarding">
-<div class="phone" style="display:flex;flex-direction:column;">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="ob-dots" id="ob-dots"></div>
-  <div class="ob-body" id="ob-body"></div>
-  <div class="ob-nav" id="ob-nav"></div>
-</div>
-</div>
-
-<!-- ════════════════════════════
-     SCREEN 8: COST TRACKER
-════════════════════════════ -->
-<div class="screen" id="screen-costs">
-<div class="phone">
-  <div class="notch"></div>
-  <div class="status-bar"><span>7:04</span><span>●●●●</span></div>
-  <div class="top-nav">
-    <div class="logo-mark">
-      <div class="back-chevron" onclick="showScreen('home')">‹</div>
-      <div class="logo-text" style="margin-left:8px;">Cost <span>Tracker</span></div>
-    </div>
-    <div class="nav-avatar" onclick="confirmSignOut()">L</div>
-  </div>
-  <div class="app-body" id="cost-body"></div>
-  <input type="file" accept="image/*" capture="environment" id="cost-photo-input" style="display:none" onchange="handleReceiptPhoto(event)">
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
-    <div class="nav-item" onclick="showScreen('meds')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><div class="nav-label">Meds</div></div>
-    <div class="nav-item" onclick="showScreen('appts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div class="nav-label">Calendar</div></div>
-    <div class="nav-item" onclick="showScreen('roster')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="nav-label">Huddle</div></div>
-    <div class="nav-item" onclick="showScreen('vault')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><div class="nav-label">Emergency</div></div>
-  </div>
-</div>
-</div>
-
-</div><!-- end screens-wrap -->
-
-</div><!-- end app-root -->
 
 <script>
-/* ══════════ SUPABASE CONNECTION & AUTH ══════════ */
-const SUPABASE_URL='https://zrwnzqpghnpaqezgnbmc.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpyd256cXBnaG5wYXFlemduYm1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyOTA5ODcsImV4cCI6MjEwMzg2Njk4N30.UNOlbAs60xla_xRgc6BN0-fgGkpAAAn_b2hfd78H6-A';
-const authStorage={
-  getItem:(key)=>sessionStorage.getItem(key)||localStorage.getItem(key),
-  setItem:(key,value)=>{
-    if(localStorage.getItem('hwc-remember-me')==='false'){
-      sessionStorage.setItem(key,value);
-      localStorage.removeItem(key);
-    } else {
-      localStorage.setItem(key,value);
-      sessionStorage.removeItem(key);
-    }
-  },
-  removeItem:(key)=>{
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
-  }
-};
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{storage:authStorage,persistSession:true,autoRefreshToken:true}});
-
-let CURRENT_USER=null;
-let CURRENT_FAMILY_ID=null;
-let CURRENT_DISPLAY_NAME=null;
-let authMode='signin';
-const PENDING_INVITE_FAMILY_ID=new URLSearchParams(window.location.search).get('invite');
-
-function togglePasswordVisibility(){
-  const input=document.getElementById('auth-password');
-  const toggle=document.getElementById('auth-password-toggle');
-  if(input.type==='password'){input.type='text';toggle.textContent='Hide';}
-  else{input.type='password';toggle.textContent='Show';}
-}
-
-function toggleNewPasswordVisibility(){
-  const input=document.getElementById('new-password');
-  const toggle=document.getElementById('new-password-toggle');
-  if(input.type==='password'){input.type='text';toggle.textContent='Hide';}
-  else{input.type='password';toggle.textContent='Show';}
-}
-
-function showForgotPassword(){
-  document.getElementById('main-auth-card').style.display='none';
-  document.getElementById('forgot-password-card').style.display='block';
-  document.getElementById('forgot-email').value=document.getElementById('auth-email').value;
-}
-
-function backToSignIn(){
-  document.getElementById('forgot-password-card').style.display='none';
-  document.getElementById('main-auth-card').style.display='block';
-  document.getElementById('forgot-error').style.display='none';
-  document.getElementById('forgot-status').style.display='none';
-}
-
-async function sendPasswordReset(){
-  const email=document.getElementById('forgot-email').value.trim();
-  const errEl=document.getElementById('forgot-error');
-  const statusEl=document.getElementById('forgot-status');
-  errEl.style.display='none';statusEl.style.display='none';
-  if(!email){errEl.textContent='Enter your email first.';errEl.style.display='block';return;}
-  const btn=document.getElementById('forgot-submit-btn');
-  btn.disabled=true;
-  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
-  btn.disabled=false;
-  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
-  statusEl.textContent='Check your email for a link to reset your password.';
-  statusEl.style.display='block';
-}
-
-async function submitNewPassword(){
-  const password=document.getElementById('new-password').value;
-  const errEl=document.getElementById('new-password-error');
-  const statusEl=document.getElementById('new-password-status');
-  errEl.style.display='none';statusEl.style.display='none';
-  if(!password||password.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return;}
-  const btn=document.getElementById('new-password-btn');
-  btn.disabled=true;
-  const {error}=await sb.auth.updateUser({password});
-  btn.disabled=false;
-  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
-  statusEl.textContent='Password updated. Signing you in...';
-  statusEl.style.display='block';
-  const {data}=await sb.auth.getSession();
-  if(data.session){
-    document.getElementById('new-password-card').style.display='none';
-    await loadFamilyAndEnter(data.session.user);
-  }
-}
-
-sb.auth.onAuthStateChange((event,session)=>{
-  if(event==='PASSWORD_RECOVERY'){
-    document.getElementById('main-auth-card').style.display='none';
-    document.getElementById('forgot-password-card').style.display='none';
-    document.getElementById('new-password-card').style.display='block';
-  }
-});
-
-function setAuthMode(mode){
-  authMode=mode;
-  document.getElementById('tab-signin').classList.toggle('active',mode==='signin');
-  document.getElementById('tab-signup').classList.toggle('active',mode==='signup');
-  document.getElementById('signup-only-fields').style.display=mode==='signup'?'block':'none';
-  document.getElementById('auth-remember-row').style.display=mode==='signup'?'none':'flex';
-  document.getElementById('auth-submit-btn').textContent=mode==='signup'?'Create Account':'Sign In';
-  document.getElementById('auth-error').style.display='none';
-  document.getElementById('auth-status').style.display='none';
-  if(mode==='signup'&&PENDING_INVITE_FAMILY_ID){
-    document.getElementById('invite-join-note').style.display='block';
-    document.getElementById('signup-care-recipient-group').style.display='none';
-  } else if(mode==='signup'){
-    document.getElementById('invite-join-note').style.display='none';
-    document.getElementById('signup-care-recipient-group').style.display='block';
-  }
-}
-
-if(PENDING_INVITE_FAMILY_ID){
-  setAuthMode('signup');
-}
-
-function showAuthError(msg){
-  const el=document.getElementById('auth-error');
-  el.textContent=msg;
-  el.style.display='block';
-  document.getElementById('auth-status').style.display='none';
-}
-
-function showAuthStatus(msg){
-  const el=document.getElementById('auth-status');
-  el.textContent=msg;
-  el.style.display='block';
-  document.getElementById('auth-error').style.display='none';
-}
-
-async function submitAuth(){
-  const email=document.getElementById('auth-email').value.trim();
-  const password=document.getElementById('auth-password').value;
-  const btn=document.getElementById('auth-submit-btn');
-  if(!email||!password){showAuthError('Enter both email and password.');return;}
-  const rememberMe=document.getElementById('auth-remember-me').checked;
-  localStorage.setItem('hwc-remember-me',rememberMe?'true':'false');
-  btn.disabled=true;
-  if(authMode==='signup'){
-    const displayName=document.getElementById('auth-display-name').value.trim();
-    const careRecipient=PENDING_INVITE_FAMILY_ID?'':document.getElementById('auth-care-recipient').value.trim();
-    if(!displayName||(!PENDING_INVITE_FAMILY_ID&&!careRecipient)){
-      showAuthError(PENDING_INVITE_FAMILY_ID?'Enter your name to continue.':'Fill in your name and who you\'re caring for.');
-      btn.disabled=false;return;
-    }
-    const redirectUrl=PENDING_INVITE_FAMILY_ID?window.location.origin+window.location.pathname+'?invite='+PENDING_INVITE_FAMILY_ID:window.location.origin+window.location.pathname;
-    const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl}});
-    if(error){showAuthError(error.message);btn.disabled=false;return;}
-    if(!data.session){
-      showAuthStatus('Check your email to confirm your account, then sign in.');
-      btn.disabled=false;
-      return;
-    }
-    await completeAccountSetup(data.user.id,displayName,careRecipient);
-    await enterApp(data.user,displayName);
-  } else {
-    const {data,error}=await sb.auth.signInWithPassword({email,password});
-    if(error){showAuthError(error.message);btn.disabled=false;return;}
-    await loadFamilyAndEnter(data.user);
-  }
-  btn.disabled=false;
-}
-
-async function completeAccountSetup(userId,displayName,careRecipient){
-  if(PENDING_INVITE_FAMILY_ID){
-    await joinFamilyViaInvite(userId,displayName,PENDING_INVITE_FAMILY_ID);
-  } else {
-    await createFamilyForNewUser(userId,displayName,careRecipient);
-  }
-}
-
-async function joinFamilyViaInvite(userId,displayName,familyId){
-  const {error}=await sb.from('family_members').insert({
-    family_id:familyId,
-    user_id:userId,
-    display_name:displayName,
-    role:'member'
-  });
-  if(error){showAuthError('Could not join that Huddle: '+error.message);return;}
-  CURRENT_FAMILY_ID=familyId;
-}
-
-async function createFamilyForNewUser(userId,displayName,careRecipient){
-  const {data:family,error:famErr}=await sb.from('families').insert({
-    name:displayName+"'s Care Team",
-    care_recipient_name:careRecipient
-  }).select().single();
-  if(famErr){showAuthError('Could not create family: '+famErr.message);return;}
-  const {error:memberErr}=await sb.from('family_members').insert({
-    family_id:family.id,
-    user_id:userId,
-    display_name:displayName,
-    role:'coordinator'
-  });
-  if(memberErr){showAuthError('Could not join family: '+memberErr.message);return;}
-  CURRENT_FAMILY_ID=family.id;
-}
-
-let PENDING_SETUP_USER=null;
-
-async function loadFamilyAndEnter(user){
-  const {data:members,error}=await sb.from('family_members').select('*').eq('user_id',user.id).order('joined_at',{ascending:true}).limit(1);
-  const member=members&&members.length>0?members[0]:null;
-  if(error||!member){
-    PENDING_SETUP_USER=user;
-    document.getElementById('main-auth-card').style.display='none';
-    document.getElementById('finish-setup-card').style.display='block';
-    document.getElementById('finish-care-recipient-group').style.display=PENDING_INVITE_FAMILY_ID?'none':'block';
-    return;
-  }
-  CURRENT_FAMILY_ID=member.family_id;
-  await enterApp(user,member.display_name);
-}
-
-async function submitFinishSetup(){
-  const displayName=document.getElementById('finish-display-name').value.trim();
-  const careRecipient=PENDING_INVITE_FAMILY_ID?'':document.getElementById('finish-care-recipient').value.trim();
-  const errEl=document.getElementById('finish-setup-error');
-  errEl.style.display='none';
-  if(!displayName||(!PENDING_INVITE_FAMILY_ID&&!careRecipient)){
-    errEl.textContent='Fill in the required fields to continue.';
-    errEl.style.display='block';
-    return;
-  }
-  const btn=document.getElementById('finish-setup-btn');
-  btn.disabled=true;
-  await completeAccountSetup(PENDING_SETUP_USER.id,displayName,careRecipient);
-  document.getElementById('finish-setup-card').style.display='none';
-  await enterApp(PENDING_SETUP_USER,displayName);
-  btn.disabled=false;
-}
-
-async function enterApp(user,displayName){
-  CURRENT_USER=user;
-  CURRENT_DISPLAY_NAME=displayName;
-  document.getElementById('auth-wrap').style.display='none';
-  document.getElementById('app-root').style.display='block';
-  document.querySelectorAll('.nav-avatar').forEach(el=>{
-    el.textContent=(displayName||'?').charAt(0).toUpperCase();
-  });
-  await loadCareRecipientName();
-  updateGreeting();
-  await loadMedications();
-  await loadAppointments();
-  await loadPendingDebrief();
-  await loadFamilyMembers();
-  await loadCheckinHistory();
-  await loadTasks();
-  await loadVaultDocs();
-  await loadCostEntries();
-  await loadJournalEntries();
-  await loadChatMessages();
-  setupRealtimeSync();
-}
-
-/* ══════════ REAL-TIME SYNC ACROSS DEVICES ══════════
-   Whenever anyone in the Huddle changes something, everyone else's
-   already-open app updates live, no refresh needed. Each subscription
-   just re-runs the same loader function already used everywhere else
-   in this app, so the update logic only has to exist in one place. */
-let REALTIME_CHANNELS=[];
-
-function subscribeRealtime(table,onChange){
-  const channel=sb.channel('rt-'+table+'-'+CURRENT_FAMILY_ID)
-    .on('postgres_changes',{
-      event:'*',
-      schema:'public',
-      table:table,
-      filter:`family_id=eq.${CURRENT_FAMILY_ID}`
-    },onChange)
-    .subscribe();
-  REALTIME_CHANNELS.push(channel);
-}
-
-function setupRealtimeSync(){
-  if(!CURRENT_FAMILY_ID)return;
-  teardownRealtimeSync();
-  subscribeRealtime('medications',loadMedications);
-  subscribeRealtime('medication_logs',loadMedications);
-  subscribeRealtime('appointments',()=>{loadAppointments();loadPendingDebrief();});
-  subscribeRealtime('appointment_debriefs',loadPendingDebrief);
-  subscribeRealtime('tasks',loadTasks);
-  subscribeRealtime('journal_entries',loadJournalEntries);
-  subscribeRealtime('messages',loadChatMessages);
-  subscribeRealtime('cost_entries',loadCostEntries);
-  subscribeRealtime('vault_documents',loadVaultDocs);
-  subscribeRealtime('family_members',loadFamilyMembers);
-}
-
-function teardownRealtimeSync(){
-  REALTIME_CHANNELS.forEach(ch=>sb.removeChannel(ch));
-  REALTIME_CHANNELS=[];
-}
-
-/* ══════════ CARE RECIPIENT NAME (real, not hardcoded "Mom") ══════════ */
-let CARE_RECIPIENT_NAME='them';
-
-async function loadCareRecipientName(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('families').select('care_recipient_name').eq('id',CURRENT_FAMILY_ID).single();
-  if(error||!data){console.error('Failed to load care recipient name:',error?.message);return;}
-  CARE_RECIPIENT_NAME=data.care_recipient_name||'them';
-  applyCareRecipientName();
-}
-
-function applyCareRecipientName(){
-  const possessive=CARE_RECIPIENT_NAME+"'s";
-  const recipEl=document.getElementById('greeting-recipient-name');
-  if(recipEl) recipEl.textContent=possessive;
-  document.querySelectorAll('.care-recipient-title').forEach(el=>{el.textContent=possessive+' Red Folder';});
-  const h1=document.getElementById('huddle-recipient-name-1');
-  if(h1) h1.textContent=possessive;
-  const h2=document.getElementById('huddle-recipient-name-2');
-  if(h2) h2.textContent=possessive;
-}
-
-/* ══════════ REAL GREETING (real date, real time-of-day) ══════════ */
-function updateGreeting(){
-  const el=document.getElementById('greeting-time');
-  if(!el)return;
-  const now=new Date();
-  const dayName=now.toLocaleDateString([],{weekday:'long'});
-  const monthDay=now.toLocaleDateString([],{month:'long',day:'numeric'});
-  const hour=now.getHours();
-  const partOfDay=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
-  el.textContent=`${dayName}, ${monthDay} · ${partOfDay}`;
-}
-
-/* ══════════ REAL "IS EVERYTHING COVERED TODAY" ALERT ══════════ */
-function parseScheduleHour(text){
-  if(!text)return null;
-  const t=text.toLowerCase();
-  const timeMatch=t.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
-  if(timeMatch){
-    let hour=parseInt(timeMatch[1],10);
-    const meridiem=timeMatch[3];
-    if(meridiem==='pm' && hour<12) hour+=12;
-    if(meridiem==='am' && hour===12) hour=0;
-    if(!meridiem && hour>=1 && hour<=7) hour+=12;
-    if(hour>=0 && hour<=23) return hour;
-  }
-  if(t.includes('morning')||t.includes('breakfast'))return 9;
-  if(t.includes('noon')||t.includes('lunch'))return 12;
-  if(t.includes('afternoon'))return 14;
-  if(t.includes('evening')||t.includes('dinner'))return 18;
-  if(t.includes('night')||t.includes('bedtime'))return 21;
-  return null;
-}
-
-function getOverdueMedications(){
-  const currentHour=new Date().getHours();
-  return MEDICATIONS.filter(m=>{
-    const schedHour=parseScheduleHour(m.schedule_time);
-    if(schedHour===null||currentHour<schedHour)return false;
-    const log=latestLogFor(m.id);
-    return !(log&&log.status==='taken');
-  });
-}
-
-function updateHomeAlertBanner(){
-  const strip=document.getElementById('home-alert-strip');
-  const textEl=document.getElementById('home-alert-text');
-  if(!strip||!textEl)return;
-  const overdue=getOverdueMedications();
-  if(overdue.length===0){
-    strip.style.display='none';
-    return;
-  }
-  const label=overdue.length===1
-    ? `${overdue[0].name} not logged.`
-    : `${overdue.length} medications not logged.`;
-  textEl.innerHTML=`${label} <span>Tap to check Meds</span>`;
-  strip.style.display='flex';
-}
-
-/* ══════════ FAMILY MEMBERS (for task assignment) ══════════ */
-let FAMILY_MEMBERS=[];
-
-async function loadFamilyMembers(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('family_members').select('*').eq('family_id',CURRENT_FAMILY_ID).order('joined_at');
-  if(error){console.error('Failed to load family members:',error.message);return;}
-  FAMILY_MEMBERS=data||[];
-  const select=document.getElementById('new-task-assignee');
-  if(select){
-    select.innerHTML='<option value="">Unassigned</option>'+
-      FAMILY_MEMBERS.map(m=>`<option value="${m.user_id}">${m.display_name}</option>`).join('');
-  }
-  renderHuddleMembers();
-}
-
-const MEMBER_COLORS=['var(--slate)','var(--sage)','var(--terracotta)','var(--crimson)','var(--stone)'];
-
-function renderHuddleMembers(){
-  const rosterList=document.getElementById('huddle-family-list');
-  const homeList=document.getElementById('home-huddle-members');
-  const homeCount=document.getElementById('home-huddle-count');
-  if(homeCount) homeCount.textContent=FAMILY_MEMBERS.length+(FAMILY_MEMBERS.length===1?' member':' members');
-
-  if(rosterList){
-    rosterList.innerHTML=FAMILY_MEMBERS.map((m,i)=>{
-      const initial=(m.display_name||'?').charAt(0).toUpperCase();
-      const color=MEMBER_COLORS[i%MEMBER_COLORS.length];
-      const roleTag=m.role==='coordinator'?` &nbsp;<span style="color:var(--terracotta);font-size:10px;font-weight:500">Coordinator</span>`:'';
-      const you=m.user_id===CURRENT_USER?.id?' (you)':'';
-      return `<div class="contact-row"><div class="contact-avatar" style="background:${color}">${initial}</div><div class="contact-info"><div class="contact-name">${m.display_name}${you}${roleTag}</div><div class="contact-role">${m.relationship||'Family member'}</div></div></div>`;
-    }).join('');
-  }
-  if(homeList){
-    homeList.innerHTML=FAMILY_MEMBERS.map((m,i)=>{
-      const initial=(m.display_name||'?').charAt(0).toUpperCase();
-      const color=MEMBER_COLORS[i%MEMBER_COLORS.length];
-      const roleLabel=m.role==='coordinator'?'Coordinator':(m.relationship||'Member');
-      return `<div class="member-pill"><div class="member-avatar" style="background:${color}">${initial}</div><div><div class="member-name">${m.display_name}</div><div class="member-role">${roleLabel}</div></div></div>`;
-    }).join('');
-  }
-}
-
-function showInviteForm(){
-  const link=window.location.origin+window.location.pathname+'?invite='+CURRENT_FAMILY_ID;
-  document.getElementById('invite-link-box').value=link;
-  document.getElementById('invite-form').style.display='block';
-}
-function hideInviteForm(){
-  document.getElementById('invite-form').style.display='none';
-  document.getElementById('invite-copy-status').style.display='none';
-}
-function copyInviteLink(){
-  const box=document.getElementById('invite-link-box');
-  box.select();
-  navigator.clipboard?.writeText(box.value);
-  const status=document.getElementById('invite-copy-status');
-  status.textContent='Link copied.';
-  status.style.display='block';
-}
-
-function memberNameFor(userId){
-  if(!userId)return null;
-  const m=FAMILY_MEMBERS.find(fm=>fm.user_id===userId);
-  return m?m.display_name:'Someone';
-}
-
-/* ══════════ TASKS (real data) ══════════ */
-let TASKS=[];
-
-async function loadTasks(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('tasks')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID)
-    .order('status').order('due_date',{nullsFirst:false});
-  if(error){console.error('Failed to load tasks:',error.message);return;}
-  TASKS=data||[];
-  renderTasksList();
-}
-
-function formatDueDate(dateStr){
-  if(!dateStr)return'';
-  const d=new Date(dateStr+'T00:00:00');
-  const today=new Date();today.setHours(0,0,0,0);
-  const diffDays=Math.round((d-today)/86400000);
-  if(diffDays===0)return'Today';
-  if(diffDays===1)return'Tomorrow';
-  if(diffDays<0)return d.toLocaleDateString([],{month:'short',day:'numeric'});
-  return d.toLocaleDateString([],{month:'short',day:'numeric'});
-}
-
-function renderTasksList(){
-  const listEl=document.getElementById('home-task-list');
-  if(!listEl)return;
-  if(TASKS.length===0){
-    listEl.innerHTML='<div style="text-align:center;padding:20px 10px;color:var(--graphite);font-size:13px;">No tasks yet. Tap "+ Add task" to assign the first one.</div>';
-    updateHomeProgress();
-    return;
-  }
-  listEl.innerHTML=TASKS.map(t=>{
-    const isDone=t.status==='done';
-    const assignee=memberNameFor(t.assigned_to);
-    const dueLabel=isDone?'Done':(t.due_date?formatDueDate(t.due_date):'No due date');
-    return `<div class="task-row${isDone?' done':''}" onclick="toggleTaskStatus('${t.id}','${t.status}')">
-      <div class="task-check ${isDone?'done':'open'}">${isDone?'✓':''}</div>
-      <div class="task-body"><div class="task-name">${t.title}</div><div class="task-meta">${assignee?`<span class="task-assignee">${assignee}</span>`:''}<span class="task-due">${dueLabel}</span></div></div>
-    </div>`;
-  }).join('');
-  updateHomeProgress();
-}
-
-async function toggleTaskStatus(taskId,currentStatus){
-  const newStatus=currentStatus==='done'?'open':'done';
-  const {error}=await sb.from('tasks').update({status:newStatus}).eq('id',taskId);
-  if(error){alert('Could not update task: '+error.message);return;}
-  await loadTasks();
-}
-
-function showAddTaskForm(){document.getElementById('add-task-form').style.display='block';}
-function hideAddTaskForm(){
-  document.getElementById('add-task-form').style.display='none';
-  document.getElementById('new-task-title').value='';
-  document.getElementById('new-task-assignee').value='';
-  document.getElementById('new-task-due').value='';
-  document.getElementById('new-task-error').style.display='none';
-}
-
-async function saveNewTask(){
-  const title=document.getElementById('new-task-title').value.trim();
-  const assignedTo=document.getElementById('new-task-assignee').value||null;
-  const dueDate=document.getElementById('new-task-due').value||null;
-  const errEl=document.getElementById('new-task-error');
-  if(!title){errEl.textContent='Task name is required.';errEl.style.display='block';return;}
-  const {error}=await sb.from('tasks').insert({
-    family_id:CURRENT_FAMILY_ID,
-    title,
-    assigned_to:assignedTo,
-    due_date:dueDate,
-    created_by:CURRENT_USER.id
-  });
-  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
-  hideAddTaskForm();
-  await loadTasks();
-}
-
-/* ══════════ APPOINTMENTS (real data) ══════════ */
-let APPOINTMENTS=[];
-const MONTH_ABBR=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-
-async function loadAppointments(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('appointments')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID)
-    .gte('appointment_at',new Date(Date.now()-86400000).toISOString())
-    .order('appointment_at');
-  if(error){console.error('Failed to load appointments:',error.message);return;}
-  APPOINTMENTS=data||[];
-  renderAppointmentsList();
-}
-
-function renderAppointmentsList(){
-  const listEl=document.getElementById('appt-list');
-  if(!listEl)return;
-  if(APPOINTMENTS.length===0){
-    listEl.innerHTML='<div style="text-align:center;padding:24px 10px;color:var(--graphite);font-size:13px;">No upcoming appointments yet. Tap "+ Add appointment" to get started.</div>';
-    return;
-  }
-  listEl.innerHTML=APPOINTMENTS.map(a=>{
-    const dt=new Date(a.appointment_at);
-    const month=MONTH_ABBR[dt.getMonth()];
-    const day=dt.getDate();
-    const timeStr=dt.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    const metaBits=[a.provider,a.location].filter(Boolean).join(' · ');
-    return `<div class="appt-row">
-      <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">${month}</div><div class="appt-day" style="color:var(--slate)">${day}</div></div>
-      <div class="appt-body"><div class="appt-name">${a.title}</div><div class="appt-meta"><span class="appt-time">${timeStr}${metaBits?' · '+metaBits:''}</span></div>${a.notes?`<div class="appt-driver">${a.notes}</div>`:''}</div>
-      <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
-    </div>`;
-  }).join('');
-}
-
-function showAddApptForm(){document.getElementById('add-appt-form').style.display='block';}
-function hideAddApptForm(){
-  document.getElementById('add-appt-form').style.display='none';
-  ['new-appt-title','new-appt-provider','new-appt-location','new-appt-datetime','new-appt-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('new-appt-error').style.display='none';
-}
-
-async function saveNewAppointment(){
-  const title=document.getElementById('new-appt-title').value.trim();
-  const provider=document.getElementById('new-appt-provider').value.trim();
-  const location=document.getElementById('new-appt-location').value.trim();
-  const datetimeVal=document.getElementById('new-appt-datetime').value;
-  const notes=document.getElementById('new-appt-notes').value.trim();
-  const errEl=document.getElementById('new-appt-error');
-  if(!title||!datetimeVal){
-    errEl.textContent='Title and date/time are required.';
-    errEl.style.display='block';
-    return;
-  }
-  const {error}=await sb.from('appointments').insert({
-    family_id:CURRENT_FAMILY_ID,
-    title,provider,location,notes,
-    appointment_at:new Date(datetimeVal).toISOString(),
-    created_by:CURRENT_USER.id
-  });
-  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
-  hideAddApptForm();
-  await loadAppointments();
-}
-
-/* ══════════ MEDICATIONS (real data) ══════════ */
-let MEDICATIONS=[];
-let MED_LOGS_TODAY=[];
-
-function todayStart(){
-  const d=new Date();
-  d.setHours(0,0,0,0);
-  return d.toISOString();
-}
-
-async function loadMedications(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data:meds,error:medErr}=await sb.from('medications')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).eq('active',true).order('schedule_time');
-  if(medErr){console.error('Failed to load medications:',medErr.message);return;}
-  MEDICATIONS=meds||[];
-  const {data:logs,error:logErr}=await sb.from('medication_logs')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).gte('logged_at',todayStart());
-  if(logErr){console.error('Failed to load medication logs:',logErr.message);return;}
-  MED_LOGS_TODAY=logs||[];
-  renderMedsScreen();
-  renderHomeMedPreview();
-  updateHomeAlertBanner();
-}
-
-function renderHomeMedPreview(){
-  const badgeEl=document.getElementById('home-med-badge');
-  const listEl=document.getElementById('home-med-list');
-  if(!badgeEl||!listEl)return;
-
-  if(MEDICATIONS.length===0){
-    badgeEl.textContent='No meds yet';
-    listEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--graphite);font-size:12px;">No medications added yet.</div>';
-    return;
-  }
-
-  let taken=0;
-  MEDICATIONS.forEach(m=>{
-    const log=latestLogFor(m.id);
-    if(log&&log.status==='taken')taken++;
-  });
-  badgeEl.textContent=`${taken} of ${MEDICATIONS.length} logged`;
-  badgeEl.className='med-badge '+(taken===MEDICATIONS.length?'ok':'missed');
-
-  listEl.innerHTML=MEDICATIONS.map(m=>{
-    const log=latestLogFor(m.id);
-    const isTaken=log&&log.status==='taken';
-    const rightInfo=isTaken
-      ? `Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`
-      : 'Not logged';
-    return `<div class="med-row" onclick="showScreen('meds')">
-      <div class="med-check ${isTaken?'done':'missed'}">${isTaken?'✓':'!'}</div>
-      <div class="med-info"><div class="med-name">${m.name}</div><div class="med-sub">${[m.dosage,m.instructions].filter(Boolean).join(' · ')}</div></div>
-      <div class="med-right"><div class="med-time">${m.schedule_time||''}</div><div class="med-logged ${isTaken?'ok':'missed'}">${rightInfo}</div></div>
-    </div>`;
-  }).join('');
-}
-
-function latestLogFor(medId){
-  const logs=MED_LOGS_TODAY.filter(l=>l.medication_id===medId);
-  if(!logs.length)return null;
-  return logs.sort((a,b)=>new Date(b.logged_at)-new Date(a.logged_at))[0];
-}
-
-function renderMedsScreen(){
-  const summaryEl=document.getElementById('meds-summary-row');
-  const listEl=document.getElementById('meds-list-container');
-  if(!summaryEl||!listEl)return;
-
-  if(MEDICATIONS.length===0){
-    summaryEl.innerHTML='';
-    listEl.innerHTML='<div style="text-align:center;padding:30px 10px;color:var(--graphite);font-size:13px;">No medications added yet. Tap "+ Add medication" below to get started.</div>';
-    return;
-  }
-
-  let taken=0,pending=0;
-  MEDICATIONS.forEach(m=>{
-    const log=latestLogFor(m.id);
-    if(log&&log.status==='taken')taken++;else pending++;
-  });
-
-  summaryEl.innerHTML=`
-    <div class="sum-card"><div class="sum-num" style="color:var(--sage)">${taken}</div><div class="sum-label">Taken</div></div>
-    <div class="sum-card"><div class="sum-num" style="color:var(--graphite)">${pending}</div><div class="sum-label">Pending</div></div>
-    <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">${MEDICATIONS.length}</div><div class="sum-label">Total</div></div>
-  `;
-
-  listEl.innerHTML=MEDICATIONS.map(m=>{
-    const log=latestLogFor(m.id);
-    const isTaken=log&&log.status==='taken';
-    const details=[m.dosage,m.instructions].filter(Boolean).join(' · ');
-    const rightInfo=isTaken
-      ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>`
-      : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Not logged</div>`;
-    const actionBtn=isTaken
-      ?`<div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;border:1px solid var(--stone);background:var(--white);color:var(--graphite);" onclick="unmarkMedTaken('${m.id}')">Undo</div>`
-      :`<div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="markMedTaken('${m.id}')">Mark taken</div>`;
-    return `<div class="full-med-card">
-      <div class="full-med-row">
-        <div class="med-stripe ${isTaken?'done':'pending'}"></div>
-        <div class="full-med-content">
-          <div class="med-check ${isTaken?'done':'pending'}">${isTaken?'✓':''}</div>
-          <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div></div>
-          <div class="full-med-right"><div class="full-med-time">${m.schedule_time||''}</div>${rightInfo}</div>
-        </div>
-      </div>
-      ${actionBtn?`<div style="display:flex;gap:5px;padding:0 12px 10px;">${actionBtn}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-async function markMedTaken(medId){
-  try{
-    if(!CURRENT_USER||!CURRENT_FAMILY_ID){
-      alert('Session issue: please refresh the page and sign in again.');
-      return;
-    }
-    const {error}=await sb.from('medication_logs').insert({
-      medication_id:medId,
-      family_id:CURRENT_FAMILY_ID,
-      status:'taken',
-      logged_by:CURRENT_USER.id
-    });
-    if(error){alert('Could not log medication: '+error.message);return;}
-    await loadMedications();
-  }catch(err){
-    console.error('markMedTaken failed:',err);
-    alert('Something went wrong marking this as taken: '+err.message);
-  }
-}
-
-async function unmarkMedTaken(medId){
-  try{
-    const log=latestLogFor(medId);
-    if(!log){await loadMedications();return;}
-    const {error}=await sb.from('medication_logs').delete().eq('id',log.id);
-    if(error){alert('Could not undo: '+error.message);return;}
-    await loadMedications();
-  }catch(err){
-    console.error('unmarkMedTaken failed:',err);
-    alert('Something went wrong undoing this: '+err.message);
-  }
-}
-
-function showAddMedForm(){
-  document.getElementById('add-med-form').style.display='block';
-}
-function hideAddMedForm(){
-  document.getElementById('add-med-form').style.display='none';
-  document.getElementById('new-med-name').value='';
-  document.getElementById('new-med-dosage').value='';
-  document.getElementById('new-med-schedule').value='';
-  document.getElementById('new-med-instructions').value='';
-  document.getElementById('new-med-error').style.display='none';
-}
-
-async function saveNewMedication(){
-  const name=document.getElementById('new-med-name').value.trim();
-  const dosage=document.getElementById('new-med-dosage').value.trim();
-  const schedule_time=document.getElementById('new-med-schedule').value.trim();
-  const instructions=document.getElementById('new-med-instructions').value.trim();
-  const errEl=document.getElementById('new-med-error');
-  if(!name){errEl.textContent='Medication name is required.';errEl.style.display='block';return;}
-  const {error}=await sb.from('medications').insert({
-    family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions
-  });
-  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
-  hideAddMedForm();
-  await loadMedications();
-}
-
-function confirmSignOut(){
-  if(confirm('Sign out of Handled with Care?')) signOutUser();
-}
-
-async function signOutUser(){
-  teardownRealtimeSync();
-  await sb.auth.signOut();
-  CURRENT_USER=null;CURRENT_FAMILY_ID=null;CURRENT_DISPLAY_NAME=null;
-  document.getElementById('app-root').style.display='none';
-  document.getElementById('auth-wrap').style.display='flex';
-  document.getElementById('auth-email').value='';
-  document.getElementById('auth-password').value='';
-}
-
-async function checkExistingSession(){
-  const {data}=await sb.auth.getSession();
-  if(data.session){
-    await loadFamilyAndEnter(data.session.user);
-  }
-}
-checkExistingSession();
-
-/* ══════════ VAULT (real data) ══════════ */
-let VAULT_DOCS_DATA=[];
-let editingVaultDoc=null;
-
-const VAULT_CATEGORY_META={
-  doctor:{icon:'👨‍⚕️',color:'var(--sage)',bg:'var(--sage-light)',label:'Primary Doctor',titlePlaceholder:'e.g. Dr. Linda Chen',placeholder:'Name, practice, phone number'},
-  pharmacy:{icon:'💊',color:'var(--terracotta)',bg:'var(--terracotta-light)',label:'Pharmacy',titlePlaceholder:'e.g. CVS, Walgreens',placeholder:'Pharmacy name, location, phone'},
-  conditions:{icon:'🩺',color:'var(--crimson)',bg:'var(--crimson-light)',label:'Conditions',titlePlaceholder:'e.g. High Blood Pressure, COPD',placeholder:'List each condition and any notes, one per line'},
-  allergies:{icon:'⚠️',color:'#B8860B',bg:'#FBEFD2',label:'Allergies',titlePlaceholder:'e.g. Penicillin, Peanuts',placeholder:'List each allergy and its reaction, one per line, e.g.\nPenicillin: hives, shortness of breath\nPeanuts: swelling'},
-  insurance:{icon:'🪪',color:'var(--slate)',bg:'#D8E9F8',label:'Insurance (Primary)',titlePlaceholder:'e.g. Kaiser, Blue Cross',placeholder:'Provider, policy number, plan details'},
-  insurance_secondary:{icon:'🪪',color:'var(--slate-light)',bg:'#EFF7FD',label:'Insurance (Secondary)',titlePlaceholder:'e.g. Aetna Supplemental',placeholder:'Provider, policy number, plan details'},
-  emergency_contact:{icon:'📞',color:'var(--stone)',bg:'var(--stone-light)',label:'Emergency Contact',titlePlaceholder:'e.g. Lisa M., Daughter',placeholder:'Name, relationship, phone number'},
-  legal:{icon:'📋',color:'#7B4B8A',bg:'#F0E4F0',label:'Advance Directive',titlePlaceholder:'e.g. Advance Directive, DNR',placeholder:'DNR status, POA, where the original is kept'}
-};
-const VAULT_TILE_ORDER=['doctor','pharmacy','conditions','allergies','insurance','insurance_secondary','emergency_contact','legal'];
-
-const COMMON_CONDITIONS=['Anemia','Anxiety disorders','Arthritis','Asthma','Atrial fibrillation','BPH','Cancer','Cataracts','Chronic back pain','Chronic constipation','Chronic kidney disease','Chronic liver disease','Chronic pain','Chronic sinusitis','Chronic venous insufficiency','COPD','Coronary heart disease','Dementia','Depression','Diabetic retinopathy','Diverticulosis','Erectile dysfunction','Fatty liver disease','Fibromyalgia','Gallstones','GERD','Glaucoma','Gout','Hearing loss','Heart failure','High blood pressure','High cholesterol','Hypothyroidism','Irritable bowel syndrome','Low bone mass','Macular degeneration','Migraine',"Parkinson's disease",'Pelvic organ prolapse','Peripheral artery disease','Peripheral neuropathy','Prediabetes','Psoriasis','Rheumatoid arthritis','Sleep apnea','Type 2 diabetes','Urinary incontinence','Vision impairment','Obesity','Osteoporosis'].sort();
-
-let selectedConditions=new Set();
-
-async function loadVaultDocs(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('vault_documents')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('updated_at',{ascending:false});
-  if(error){console.error('Failed to load vault documents:',error.message);return;}
-  VAULT_DOCS_DATA=data||[];
-  renderVaultGrid();
-  renderOtherDocsList();
-}
-
-function findVaultDoc(category){
-  return VAULT_DOCS_DATA.find(d=>d.category===category)||null;
-}
-
-function renderVaultGrid(){
-  const grid=document.getElementById('redfolder-grid');
-  if(!grid)return;
-  grid.innerHTML=VAULT_TILE_ORDER.map(cat=>{
-    const meta=VAULT_CATEGORY_META[cat];
-    const doc=findVaultDoc(cat);
-    const sub=cat==='conditions'
-      ?(doc?'Listed':'Tap to add')
-      :(doc?(doc.title||'Added'):'Tap to add');
-    return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openVaultEditor('${cat}',${doc?`'${doc.id}'`:'null'})"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
-  }).join('');
-}
-
-function renderOtherDocsList(){
-  const listEl=document.getElementById('other-docs-list');
-  if(!listEl)return;
-  const others=VAULT_DOCS_DATA.filter(d=>d.category==='other');
-  if(others.length===0){
-    listEl.innerHTML='<div style="text-align:center;padding:18px 10px;color:var(--graphite);font-size:13px;">No other documents added yet.</div>';
-    return;
-  }
-  listEl.innerHTML=others.map(d=>{
-    const dateStr=new Date(d.updated_at).toLocaleDateString([],{month:'short',day:'numeric'});
-    return `<div class="doc-row" onclick="openVaultEditor('other','${d.id}')">
-      <div class="doc-icon" style="background:var(--stone);color:var(--charcoal)">📄</div>
-      <div class="doc-info"><div class="doc-name">${d.title}</div><div class="doc-meta">Updated ${dateStr}</div></div>
-      <div class="doc-badge all">Whole Huddle</div>
-    </div>`;
-  }).join('');
-}
-
-let pendingVaultPhotoFile=null;
-let existingVaultPhotoPath=null;
-let removeExistingVaultPhoto=false;
-
-function resetVaultPhotoUI(){
-  pendingVaultPhotoFile=null;
-  existingVaultPhotoPath=null;
-  removeExistingVaultPhoto=false;
-  document.getElementById('vault-photo-input').value='';
-  document.getElementById('vault-photo-empty').style.display='flex';
-  document.getElementById('vault-photo-preview-wrap').style.display='none';
-  document.getElementById('vault-photo-preview-img').src='';
-}
-
-async function openVaultEditor(category,docId){
-  const doc=docId?VAULT_DOCS_DATA.find(d=>d.id===docId):null;
-  editingVaultDoc={id:doc?doc.id:null,category};
-  const meta=VAULT_CATEGORY_META[category];
-  const icon=document.getElementById('doc-sheet-icon');
-  if(meta){icon.textContent=meta.icon;icon.style.background=meta.color;}
-  else{icon.textContent='📄';icon.style.background='var(--stone)';}
-  document.getElementById('doc-sheet-title-label').textContent=meta?meta.label:'Document note';
-  document.getElementById('doc-sheet-meta').textContent=doc?('Updated '+new Date(doc.updated_at).toLocaleDateString()):'Not added yet';
-  document.getElementById('doc-sheet-title-input').value=doc?doc.title:'';
-  document.getElementById('doc-sheet-title-input').placeholder=meta?meta.titlePlaceholder:'Enter a title';
-  document.getElementById('doc-sheet-title-input').style.borderColor='';
-  document.getElementById('doc-sheet-title-input').style.borderWidth='';
-
-  selectedConditions=new Set();
-  let remainingContent=doc?(doc.content||''):'';
-  const checklistWrap=document.getElementById('conditions-checklist-wrap');
-  const nameWrap=document.getElementById('doc-sheet-name-wrap');
-  const detailsWrap=document.getElementById('doc-sheet-details-wrap');
-  if(category==='conditions'){
-    checklistWrap.style.display='block';
-    nameWrap.style.display='none';
-    detailsWrap.style.display='none';
-    const match=remainingContent.match(/^Conditions:\s*(.+?)(?:\n\n|$)/s);
-    if(match){
-      match[1].split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>selectedConditions.add(c));
-      remainingContent=remainingContent.slice(match[0].length).replace(/^\n+/,'');
-    }
-    if(remainingContent.trim()){
-      remainingContent.split('\n').map(s=>s.trim()).filter(Boolean).forEach(c=>selectedConditions.add(c));
-      remainingContent='';
-    }
-    renderConditionChips();
-  } else {
-    checklistWrap.style.display='none';
-    nameWrap.style.display='block';
-    detailsWrap.style.display='block';
-  }
-
-  document.getElementById('doc-sheet-content-input').value=remainingContent;
-  document.getElementById('doc-sheet-content-input').placeholder=meta?meta.placeholder:'Notes about this document';
-  document.getElementById('doc-delete-btn').style.display=doc?'flex':'none';
-  document.getElementById('doc-sheet-status').textContent='';
-  resetVaultPhotoUI();
-  document.getElementById('doc-sheet-overlay').style.display='flex';
-
-  if(doc&&doc.file_url){
-    existingVaultPhotoPath=doc.file_url;
-    const {data}=await sb.storage.from('vault-documents').createSignedUrl(doc.file_url,3600);
-    if(data?.signedUrl){
-      document.getElementById('vault-photo-preview-img').src=data.signedUrl;
-      document.getElementById('vault-photo-empty').style.display='none';
-      document.getElementById('vault-photo-preview-wrap').style.display='block';
-      document.getElementById('vault-photo-remove-btn').style.display='block';
-    }
-  }
-}
-
-function renderConditionChips(){
-  const row=document.getElementById('conditions-chip-row');
-  row.innerHTML=COMMON_CONDITIONS.map(c=>
-    `<div class="cost-chip ${selectedConditions.has(c)?'selected':''}" onclick="toggleConditionChip('${c.replace(/'/g,"\\'")}')">${c}</div>`
-  ).join('');
-  renderSelectedConditionsRow();
-}
-
-function renderSelectedConditionsRow(){
-  const el=document.getElementById('conditions-selected-row');
-  if(!el)return;
-  if(selectedConditions.size===0){
-    el.innerHTML='<div class="auth-field-label" style="margin-top:0;">Known Conditions</div><div style="font-size:11px;color:var(--graphite);">Nothing added yet.</div>';
-    return;
-  }
-  el.innerHTML=`<div class="auth-field-label" style="margin-top:0;">Known Conditions (${selectedConditions.size})</div>
-    <div class="cost-chip-row">${[...selectedConditions].map(c=>
-      `<div class="cost-chip selected" style="padding-right:8px;">${c} <span onclick="event.stopPropagation();removeSelectedCondition('${c.replace(/'/g,"\\'")}')" style="margin-left:5px;font-weight:800;cursor:pointer;">✕</span></div>`
-    ).join('')}</div>`;
-}
-
-function removeSelectedCondition(name){
-  selectedConditions.delete(name);
-  renderConditionChips();
-}
-
-function addCustomCondition(){
-  const input=document.getElementById('conditions-custom-input');
-  const name=input.value.trim();
-  if(!name)return;
-  selectedConditions.add(name);
-  input.value='';
-  renderConditionChips();
-}
-
-function toggleConditionChip(name){
-  if(selectedConditions.has(name)) selectedConditions.delete(name);
-  else selectedConditions.add(name);
-  renderConditionChips();
-}
-
-function handleVaultPhotoSelect(event){
-  const file=event.target.files[0];
-  if(!file)return;
-  pendingVaultPhotoFile=file;
-  removeExistingVaultPhoto=false;
-  const previewUrl=URL.createObjectURL(file);
-  document.getElementById('vault-photo-preview-img').src=previewUrl;
-  document.getElementById('vault-photo-empty').style.display='none';
-  document.getElementById('vault-photo-preview-wrap').style.display='block';
-  document.getElementById('vault-photo-remove-btn').style.display='block';
-}
-
-function retakeVaultPhoto(){
-  document.getElementById('vault-photo-input').click();
-}
-
-function removeVaultPhoto(){
-  pendingVaultPhotoFile=null;
-  if(existingVaultPhotoPath) removeExistingVaultPhoto=true;
-  document.getElementById('vault-photo-input').value='';
-  document.getElementById('vault-photo-empty').style.display='flex';
-  document.getElementById('vault-photo-preview-wrap').style.display='none';
-  document.getElementById('vault-photo-preview-img').src='';
-}
-
-function closeDoc(){
-  document.getElementById('doc-sheet-overlay').style.display='none';
-  editingVaultDoc=null;
-  resetVaultPhotoUI();
-}
-
-async function saveVaultDoc(){
-  const statusEl=document.getElementById('doc-sheet-status');
-  try{
-    const isConditions=editingVaultDoc&&editingVaultDoc.category==='conditions';
-    let title=document.getElementById('doc-sheet-title-input').value.trim();
-    let content=isConditions?'':document.getElementById('doc-sheet-content-input').value.trim();
-    if(isConditions){
-      title=selectedConditions.size>0?[...selectedConditions].join(', '):'Conditions';
-      content=selectedConditions.size>0?`Conditions: ${[...selectedConditions].join(', ')}`:'';
-    }
-    statusEl.style.color='var(--sage)';
-    if(!title){
-      statusEl.style.color='var(--crimson)';
-      statusEl.textContent='A title is required.';
-      const titleInput=document.getElementById('doc-sheet-title-input');
-      titleInput.style.borderColor='var(--crimson)';
-      titleInput.style.borderWidth='2px';
-      titleInput.scrollIntoView({behavior:'smooth',block:'center'});
-      titleInput.focus();
-      return;
-    }
-    if(!editingVaultDoc){return;}
-    if(!CURRENT_USER||!CURRENT_FAMILY_ID){
-      statusEl.style.color='var(--crimson)';
-      statusEl.textContent='Session issue: please refresh the page and sign in again.';
-      return;
-    }
-
-    let fileUrl=existingVaultPhotoPath;
-
-    if(pendingVaultPhotoFile){
-      statusEl.style.color='var(--graphite)';
-      statusEl.textContent='Uploading photo...';
-      const ext=(pendingVaultPhotoFile.name.split('.').pop()||'jpg').toLowerCase();
-      const path=`${CURRENT_FAMILY_ID}/${editingVaultDoc.category}-${Date.now()}.${ext}`;
-      const {error:uploadErr}=await sb.storage.from('vault-documents').upload(path,pendingVaultPhotoFile);
-      if(uploadErr){statusEl.style.color='var(--crimson)';statusEl.textContent='Photo upload failed: '+uploadErr.message;return;}
-      if(existingVaultPhotoPath){
-        await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
-      }
-      fileUrl=path;
-    } else if(removeExistingVaultPhoto&&existingVaultPhotoPath){
-      await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
-      fileUrl=null;
-    }
-
-    let error;
-    if(editingVaultDoc.id){
-      ({error}=await sb.from('vault_documents').update({
-        title,content,file_url:fileUrl,updated_by:CURRENT_USER.id,updated_at:new Date().toISOString()
-      }).eq('id',editingVaultDoc.id));
-    } else {
-      ({error}=await sb.from('vault_documents').insert({
-        family_id:CURRENT_FAMILY_ID,category:editingVaultDoc.category,title,content,file_url:fileUrl,updated_by:CURRENT_USER.id
-      }));
-    }
-    if(error){statusEl.style.color='var(--crimson)';statusEl.textContent=error.message;return;}
-    closeDoc();
-    await loadVaultDocs();
-  }catch(err){
-    console.error('saveVaultDoc failed:',err);
-    statusEl.style.color='var(--crimson)';
-    statusEl.textContent='Something went wrong saving this: '+err.message;
-  }
-}
-
-async function deleteVaultDoc(){
-  if(!editingVaultDoc||!editingVaultDoc.id)return;
-  if(existingVaultPhotoPath){
-    await sb.storage.from('vault-documents').remove([existingVaultPhotoPath]);
-  }
-  const {error}=await sb.from('vault_documents').delete().eq('id',editingVaultDoc.id);
-  if(error){alert('Could not delete: '+error.message);return;}
-  closeDoc();
-  await loadVaultDocs();
-}
-
-/* ── WELLNESS JOURNAL ── */
-/* ══════════ WELLNESS JOURNAL (real data) ══════════ */
-let JOURNAL_ENTRIES=[];
-
-function timeAgo(dateStr){
-  const diffMs=Date.now()-new Date(dateStr).getTime();
-  const mins=Math.floor(diffMs/60000);
-  if(mins<1)return'Just now';
-  if(mins<60)return mins+' min ago';
-  const hrs=Math.floor(mins/60);
-  if(hrs<24)return hrs+' hr'+(hrs>1?'s':'')+' ago';
-  const days=Math.floor(hrs/24);
-  if(days===1)return'Yesterday';
-  if(days<7)return days+' days ago';
-  return new Date(dateStr).toLocaleDateString([],{month:'short',day:'numeric'});
-}
-
-/* ══════════ HUDDLE CHAT (real data, real-time) ══════════ */
-let CHAT_MESSAGES=[];
-
-async function loadChatMessages(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('messages')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at',{ascending:true});
-  if(error){console.error('Failed to load messages:',error.message);return;}
-  CHAT_MESSAGES=data||[];
-  renderChatFeed();
-}
-
-function renderChatFeed(){
-  const feed=document.getElementById('chat-feed');
-  if(!feed)return;
-  if(CHAT_MESSAGES.length===0){
-    feed.innerHTML='<div style="text-align:center;padding:24px 14px;color:var(--graphite);font-size:13px;">No messages yet. Say hello to your Huddle.</div>';
-    return;
-  }
-  feed.innerHTML=CHAT_MESSAGES.map(m=>{
-    const isMine=m.sender_id===CURRENT_USER.id;
-    const name=memberNameFor(m.sender_id)||'Someone';
-    const idx=FAMILY_MEMBERS.findIndex(fm=>fm.user_id===m.sender_id);
-    const color=MEMBER_COLORS[idx>=0?idx%MEMBER_COLORS.length:0];
-    const time=new Date(m.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    if(isMine){
-      return `<div style="display:flex;justify-content:flex-end;margin:0 14px 8px;">
-        <div style="max-width:75%;">
-          <div style="background:var(--slate);color:white;border-radius:14px 14px 3px 14px;padding:9px 12px;font-size:13px;line-height:1.4;">${m.content}</div>
-          <div style="font-size:9px;color:var(--graphite);text-align:right;margin-top:2px;">${time}</div>
-        </div>
-      </div>`;
-    }
-    return `<div style="display:flex;gap:7px;margin:0 14px 8px;">
-      <div style="width:24px;height:24px;border-radius:50%;background:${color};color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;margin-top:2px;">${name.charAt(0).toUpperCase()}</div>
-      <div style="max-width:75%;">
-        <div style="font-size:10px;color:var(--graphite);margin-bottom:2px;">${name}</div>
-        <div style="background:var(--stone-light);color:var(--charcoal);border-radius:14px 14px 14px 3px;padding:9px 12px;font-size:13px;line-height:1.4;">${m.content}</div>
-        <div style="font-size:9px;color:var(--graphite);margin-top:2px;">${time}</div>
-      </div>
-    </div>`;
-  }).join('');
-  feed.scrollTop=feed.scrollHeight;
-}
-
-async function sendChatMessage(){
-  const input=document.getElementById('chat-message-input');
-  const content=input.value.trim();
-  if(!content||!CURRENT_USER||!CURRENT_FAMILY_ID)return;
-  input.value='';
-  const {error}=await sb.from('messages').insert({
-    family_id:CURRENT_FAMILY_ID,
-    sender_id:CURRENT_USER.id,
-    content
-  });
-  if(error){alert('Could not send message: '+error.message);input.value=content;return;}
-  await loadChatMessages();
-}
-
-async function loadJournalEntries(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('journal_entries')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at',{ascending:false});
-  if(error){console.error('Failed to load journal entries:',error.message);return;}
-  JOURNAL_ENTRIES=data||[];
-  renderJournal();
-  renderHomePreview();
-}
-
-function journalEntryHTML(e){
-  const authorName=memberNameFor(e.author_id)||'Someone';
-  const initial=authorName.charAt(0).toUpperCase();
-  const idx=FAMILY_MEMBERS.findIndex(m=>m.user_id===e.author_id);
-  const color=MEMBER_COLORS[idx>=0?idx%MEMBER_COLORS.length:0];
-  return `<div class="note-card" style="margin:0 14px 8px;">
-    <div class="note-header"><div class="note-avatar" style="background:${color}">${initial}</div><div><div class="note-who">${authorName}</div><div class="note-when">${timeAgo(e.created_at)}</div></div></div>
-    <div class="note-text">${e.content}</div>
-  </div>`;
-}
-
-function renderJournal(){
-  const feed=document.getElementById('journal-feed');
-  if(!feed)return;
-  if(JOURNAL_ENTRIES.length===0){
-    feed.innerHTML='<div style="text-align:center;padding:24px 14px;color:var(--graphite);font-size:13px;">No care notes yet. Tap the + button to add the first one.</div>';
-    return;
-  }
-  feed.innerHTML=JOURNAL_ENTRIES.map(journalEntryHTML).join('');
-}
-
-function renderHomePreview(){
-  const el=document.getElementById('home-journal-preview');
-  if(!el)return;
-  el.innerHTML=JOURNAL_ENTRIES.length?journalEntryHTML(JOURNAL_ENTRIES[0]):'<div style="text-align:center;padding:14px;color:var(--graphite);font-size:12px;">No care notes yet.</div>';
-}
-
-function openCompose(ctx){
-  const overlay=document.getElementById('compose-overlay-'+ctx);
-  if(overlay) overlay.style.display='flex';
-}
-function closeCompose(ctx){
-  const overlay=document.getElementById('compose-overlay-'+ctx);
-  if(overlay) overlay.style.display='none';
-}
-
-function toggleChip(el){
-  el.parentElement.querySelectorAll('.compose-chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-async function submitNote(ctx){
-  const textarea=document.getElementById('compose-text-'+ctx);
-  const status=document.getElementById('compose-status-'+ctx);
-  const text=textarea.value.trim();
-  if(!text){ if(status) status.textContent='Add a few words before posting'; return; }
-  const {error}=await sb.from('journal_entries').insert({
-    family_id:CURRENT_FAMILY_ID,
-    author_id:CURRENT_USER.id,
-    content:text
-  });
-  if(error){ if(status) status.textContent=error.message; return; }
-  await loadJournalEntries();
-  textarea.value='';
-  if(status) status.textContent='Posted to the Journal ✓';
-  setTimeout(()=>{closeCompose(ctx);if(status)status.textContent='';},900);
-}
-
-/* ══════════ POST-APPOINTMENT DEBRIEF (real table) ══════════ */
-let PENDING_DEBRIEF_APPT=null;
-
-async function loadPendingDebrief(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data:pastAppts,error}=await sb.from('appointments')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID)
-    .lt('appointment_at',new Date().toISOString())
-    .order('appointment_at',{ascending:false})
-    .limit(10);
-  if(error||!pastAppts||pastAppts.length===0){
-    hideDebriefBanner();
-    return;
-  }
-  const ids=pastAppts.map(a=>a.id);
-  const {data:existingDebriefs}=await sb.from('appointment_debriefs')
-    .select('appointment_id').in('appointment_id',ids);
-  const debriefedIds=new Set((existingDebriefs||[]).map(d=>d.appointment_id));
-  const needsDebrief=pastAppts.find(a=>!debriefedIds.has(a.id));
-  if(!needsDebrief){
-    hideDebriefBanner();
-    return;
-  }
-  PENDING_DEBRIEF_APPT=needsDebrief;
-  const banner=document.getElementById('pending-debrief-banner');
-  const dt=new Date(needsDebrief.appointment_at);
-  document.getElementById('pending-debrief-text').textContent=`How did "${needsDebrief.title}" go?`;
-  document.getElementById('pending-debrief-sub').textContent=`${dt.toLocaleDateString([],{month:'short',day:'numeric'})} → helps the whole Huddle`;
-  if(banner) banner.style.display='flex';
-}
-
-function hideDebriefBanner(){
-  PENDING_DEBRIEF_APPT=null;
-  const banner=document.getElementById('pending-debrief-banner');
-  if(banner) banner.style.display='none';
-}
-
-function openDebriefForm(){
-  if(!PENDING_DEBRIEF_APPT)return;
-  document.getElementById('debrief-title').textContent=PENDING_DEBRIEF_APPT.title;
-  const dt=new Date(PENDING_DEBRIEF_APPT.appointment_at);
-  const metaBits=[dt.toLocaleDateString(),PENDING_DEBRIEF_APPT.provider,PENDING_DEBRIEF_APPT.location].filter(Boolean).join(' · ');
-  document.getElementById('debrief-meta').textContent=metaBits;
-  document.getElementById('debrief-doctor-said').value='';
-  document.getElementById('debrief-new-rx').value='';
-  document.getElementById('debrief-next-steps').value='';
-  document.getElementById('debrief-status').textContent='';
-  document.getElementById('debrief-overlay').style.display='flex';
-}
-function closeDebriefForm(){
-  document.getElementById('debrief-overlay').style.display='none';
-}
-
-async function submitDebrief(){
-  const doctorSaid=document.getElementById('debrief-doctor-said').value.trim();
-  const newRx=document.getElementById('debrief-new-rx').value.trim();
-  const nextSteps=document.getElementById('debrief-next-steps').value.trim();
-  const status=document.getElementById('debrief-status');
-  if(!doctorSaid&&!newRx&&!nextSteps){
-    status.textContent='Add at least a note before saving.';
-    return;
-  }
-  const {error}=await sb.from('appointment_debriefs').insert({
-    appointment_id:PENDING_DEBRIEF_APPT.id,
-    family_id:CURRENT_FAMILY_ID,
-    doctor_said:doctorSaid,
-    new_prescriptions:newRx,
-    next_steps:nextSteps,
-    created_by:CURRENT_USER.id
-  });
-  if(error){status.textContent=error.message;return;}
-
-  const summaryParts=[];
-  if(doctorSaid) summaryParts.push(`Doctor said: ${doctorSaid}`);
-  if(newRx) summaryParts.push(`New prescriptions: ${newRx}`);
-  if(nextSteps) summaryParts.push(`Next steps: ${nextSteps}`);
-  await sb.from('journal_entries').insert({
-    family_id:CURRENT_FAMILY_ID,
-    author_id:CURRENT_USER.id,
-    content:`[Post-appointment debrief · ${PENDING_DEBRIEF_APPT.title}] ${summaryParts.join(' — ')}`
-  });
-  await loadJournalEntries();
-
-  status.textContent='Saved and shared with the Huddle ✓';
-  setTimeout(()=>{closeDebriefForm();loadPendingDebrief();},900);
-}
-
-/* ── CAREGIVER CHECK-IN ── */
-const CHECKIN_MOODS={
-  great:{emoji:'😊',label:'Actually good',color:'var(--sage)'},
-  okay:{emoji:'🙂',label:'Doing okay',color:'var(--slate)'},
-  tired:{emoji:'😮\u200d💨',label:'Running on empty',color:'var(--terracotta)'},
-  overwhelmed:{emoji:'😞',label:'Overwhelmed',color:'var(--crimson)'}
-};
-const CHECKIN_EXERCISES=[
-  {emoji:'🧘',label:'Desk Stretch',how:'Reach both arms overhead and hold for 10 seconds.'},
-  {emoji:'💭',label:'Inner Monologue Interrupt',how:"Say the word 'pause' out loud, once."},
-  {emoji:'🌿',label:'5-4-3-2-1 Grounding',how:'Name 5 things you see, 4 you hear, 3 you feel, 2 you smell, 1 you taste.'},
-  {emoji:'🌬️',label:'Box Breathing',how:'Inhale 4 counts, hold 4, exhale 4, hold 4. Repeat twice.'},
-  {emoji:'💧',label:'Cold Water Reset',how:'Run cold water over your wrists for 15 seconds.'},
-  {emoji:'🎵',label:'One Song Pause',how:'Play one song and just listen. No multitasking.'},
-  {emoji:'📱',label:'Phone Face Down, 60 Seconds',how:'Set your phone face down and look up for one full minute.'},
-  {emoji:'🪟',label:'Window Gaze',how:'Look out a window and find three different colors.'},
-  {emoji:'👐',label:'Squeeze and Release',how:'Clench both fists for 5 seconds, then release slowly.'},
-  {emoji:'🚶',label:'Ten Slow Steps',how:'Walk ten steps, slower than you normally would.'},
-  {emoji:'☕',label:'Warm Sip, No Multitasking',how:'Take one sip of something warm. Do nothing else while you swallow.'},
-  {emoji:'📝',label:'One Sentence Brain Dump',how:"Write one sentence about whatever's stuck in your head."},
-  {emoji:'🙆',label:'Shoulder Rolls',how:'Roll your shoulders back slowly, 5 times.'},
-  {emoji:'🎯',label:'Name One Win Today',how:'Say one thing you did today, out loud, even a small one.'},
-  {emoji:'🌤️',label:'Step Outside',how:'Stand outside for 30 seconds and feel the air.'},
-  {emoji:'🫁',label:'Long Exhale x3',how:'Exhale twice as long as you inhale. Do this 3 times.'},
-  {emoji:'🧊',label:'Hold Something Cold',how:'Hold a cold drink or ice cube in your palm for 15 seconds.'},
-  {emoji:'🕯️',label:'Smell Something You Like',how:'Find something with a scent you like and breathe it in slowly.'},
-  {emoji:'🖐️',label:'Palm Press',how:'Press your palms together and push for 10 seconds.'},
-  {emoji:'📖',label:'Read One Line Slowly',how:'Read one sentence of anything, twice, slowly.'},
-  {emoji:'🎧',label:'Thirty Seconds of Silence',how:'Sit with no sound and no screen for 30 seconds.'},
-  {emoji:'🤲',label:'Name One Small Good Thing',how:'Think of one small thing that went okay today.'},
-  {emoji:'🚿',label:'Splash Cool Water on Your Face',how:'Splash cool water on your face and pat dry.'},
-  {emoji:'🪑',label:'Feel Your Feet on the Floor',how:'Notice your feet on the floor and the weight of your body in the chair.'}
+const questions = [
+  {q:"How is your parent managing their medications (pills, injections, patches)?",
+   opts:[["Takes them correctly almost all the time; maybe 1 to 2 missed or late doses in months.",0],
+         ["Often forgets or is confused; you or others must remind several times a week.",2],
+         ["Frequently misses doses, doubles up, or mixes them up; you're managing most or all of it.",3]]},
+  {q:"In the last 6 months, how often has your parent fallen or nearly fallen?",
+   opts:[["No falls; maybe one minor stumble with no injury.",0],
+         ["One or two falls or frequent near-falls; starting to use furniture or walls for support.",2],
+         ["Multiple falls, injuries, or a strong fear of walking; needs hands-on help to move safely.",3]]},
+  {q:"How are their eating habits and weight?",
+   opts:[["Eating regular, balanced meals; weight is stable.",0],
+         ["Skipping meals sometimes; relying on simple snacks; slight weight loss or gain.",2],
+         ["Often not eating, significant weight loss or gain, spoiled food in the fridge, or you're providing most meals.",3]]},
+  {q:"How is your parent handling bathing, dressing, and basic grooming?",
+   opts:[["Manages independently; home and personal cleanliness are acceptable.",0],
+         ["Needs reminders or some hands-on help; hygiene or housekeeping is slipping.",2],
+         ["Regularly needs full help or refuses care; noticeable odor, dirty clothes, or unsafe/very messy home.",3]]},
+  {q:"How often do memory problems create safety concerns?",
+   opts:[["Occasional forgetfulness, but no real safety issues.",0],
+         ["Sometimes gets confused, repeats questions, or leaves things on the stove; you worry but can manage with reminders.",2],
+         ["Frequently gets lost, leaves appliances on, wanders, or has serious judgment errors; you can't safely leave them alone.",3]]},
+  {q:"How well are medical appointments and health instructions being followed?",
+   opts:[["Attends appointments and follows instructions most of the time.",0],
+         ["Misses some appointments or forgets parts of the care plan; you must track and remind.",2],
+         ["Frequently misses visits, ignores new symptoms, or doesn't follow through; health is clearly worsening.",3]]},
+  {q:"What's happening with the house, bills, and daily tasks?",
+   opts:[["Home is reasonably clean and safe; bills paid on time; mail handled.",0],
+         ["Some clutter, a few late bills, or piles of mail; you're starting to step in regularly.",2],
+         ["Home is unsafe or very dirty; frequent unpaid bills, utilities shut off, or major disorganization.",3]]},
+  {q:"How are their mood, behavior, and social engagement?",
+   opts:[["Generally stable mood; still engaged with some friends and activities.",0],
+         ["More withdrawn, anxious, irritable, or depressed; less interest in usual activities.",2],
+         ["Significant depression, agitation, aggression, or complete withdrawal; interactions are often difficult or unsafe.",3]]},
+  {q:"How is the primary family caregiver holding up?",
+   opts:[["Care feels manageable; you have time for your own life and health.",0],
+         ["You're often tired, stressed, or missing your own appointments; care is becoming a strain.",2],
+         ["You feel burned out, resentful, or overwhelmed; care is unreliable or affecting your health or work.",3]]},
+  {q:"How often has your parent been in the ER or hospital in the past year for preventable issues?",
+   opts:[["None or one brief visit.",0],
+         ["Two visits, or one longer stay; you see a pattern starting.",2],
+         ["Three or more visits, or repeated admissions for similar issues.",3]]}
 ];
-let CHECKIN_HISTORY=[];
-let checkedInThisWeek=false;
-let currentExercisePicks=[];
-let exerciseState={};
 
-function getMondayOf(d){
-  const date=new Date(d);
-  const day=date.getDay();
-  const diff=(day===0?-6:1-day);
-  date.setDate(date.getDate()+diff);
-  date.setHours(0,0,0,0);
-  return date;
-}
-function isoDate(d){ return d.toISOString().split('T')[0]; }
+const resultTiers = [
+  {min:0,max:7,level:"Low immediate need",cls:"lvl-0",
+   desc:"Your parent is mostly independent.",
+   goal:"Goal: prevent problems before they start.",
+   steps:[
+     "Set up a simple safety check: walk through their home once with a \u201cfalls lens\u201d (rugs, cords, lighting, grab bars) and fix the top 3 hazards.",
+     "Create a med system that doesn't rely on memory: use a weekly pill organizer plus phone alarm, or ask their pharmacy about blister packs or auto-refills.",
+     "Schedule a baseline visit: ask their primary care doctor for a wellness visit focused on memory, balance, and mood so you have something to compare against later.",
+     "Start the money talk lightly: make sure you know where key documents are (will, POA, insurance) and who their main contacts are (doctor, pharmacist, neighbor)."]},
+  {min:8,max:15,level:"Moderate need, time to plan",cls:"lvl-1",
+   desc:"There are clear warning signs that independent living is getting risky.",
+   goal:"Goal: get options on the table before a crisis forces your hand.",
+   steps:[
+     "Book a geriatric assessment or care consult through their doctor or local Area Agency on Aging.",
+     "Try light support first: add in-home help for meals, cleaning, or bathing 2 to 3 times a week to see if that stabilizes things.",
+     "Tour 2 to 3 communities now, just to learn what's out there and what costs look like.",
+     "Run the money numbers: list income vs. likely costs of in-home care, assisted living, and memory care.",
+     "Have the \u201cwhat if\u201d conversation: \u201cIf you had a fall or got sick, what would you want me to do?\u201d"]},
+  {min:16,max:23,level:"High need, act soon",cls:"lvl-2",
+   desc:"Safety and health are increasingly at risk; the current setup may not be sustainable.",
+   goal:"Goal: reduce risk and put a new care plan in place within weeks.",
+   steps:[
+     "Call their doctor and say it plainly: \u201cWe're seeing falls, med errors, or confusion. I'm worried about safety at home.\u201d Ask for referrals to geriatrics, social work, or care management.",
+     "Increase in-home support immediately to cover the highest-risk times of day.",
+     "Narrow to 2 to 3 serious options: assisted living with high support, memory care, or skilled nursing.",
+     "Do a crisis drill: put emergency numbers, keys, and documents somewhere you can grab in 30 seconds.",
+     "Bring in backup: identify at least one other person who can share calls, visits, or decisions."]},
+  {min:24,max:30,level:"Urgent need, higher level of care now",cls:"lvl-3",
+   desc:"Your parent likely needs 24/7 supervision or skilled support.",
+   goal:"Goal: move quickly to a safer setting; treat this like a medical urgency.",
+   steps:[
+     "Tell the doctor it's urgent and ask for a referral to facilities with available beds.",
+     "Prioritize safety over perfection. You're looking for a safe place with an opening, not the perfect one.",
+     "Call facilities directly: describe the specific needs and ask about availability within your timeframe.",
+     "Line up transition help: move-in coordinators, what to bring, how they handle medications and family updates.",
+     "Protect your own health. If you're sleeping poorly or feeling constantly on edge, tell your own doctor too."]}
+];
 
-async function loadCheckinHistory(){
-  if(!CURRENT_FAMILY_ID||!CURRENT_USER)return;
-  const {data,error}=await sb.from('checkin_entries')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).eq('user_id',CURRENT_USER.id)
-    .order('week_of',{ascending:true});
-  if(error){console.error('Failed to load checkin history:',error.message);return;}
-  CHECKIN_HISTORY=data||[];
-  const thisMonday=isoDate(getMondayOf(new Date()));
-  checkedInThisWeek=CHECKIN_HISTORY.some(h=>h.week_of===thisMonday);
-  currentExercisePicks=[];
-  exerciseState={};
-  renderCheckin();
-}
+let current = 0;
+let answers = new Array(questions.length).fill(null);
 
-function weekLabel(weekOf){
-  const thisMonday=getMondayOf(new Date());
-  const entryMonday=new Date(weekOf+'T00:00:00');
-  const diffWeeks=Math.round((thisMonday-entryMonday)/(7*86400000));
-  if(diffWeeks===0)return'This week';
-  if(diffWeeks===1)return'Last week';
-  if(diffWeeks>1)return diffWeeks+' weeks ago';
-  return new Date(weekOf).toLocaleDateString();
-}
-
-function checkinHistoryHTML(){
-  return `<div class="checkin-history">${CHECKIN_HISTORY.map(h=>`<div class="checkin-dot" style="background:${CHECKIN_MOODS[h.mood].color}" title="${weekLabel(h.week_of)}: ${CHECKIN_MOODS[h.mood].label}"></div>`).join('')}</div>`;
-}
-
-function stressPattern(){
-  const recent=CHECKIN_HISTORY.slice(-2);
-  return recent.length===2 && recent.every(h=>h.mood==='tired'||h.mood==='overwhelmed');
-}
-
-function pickExercises(n){
-  const pool=CHECKIN_EXERCISES.slice();
-  const picks=[];
-  while(picks.length<n && pool.length){
-    const i=Math.floor(Math.random()*pool.length);
-    picks.push(pool.splice(i,1)[0]);
-  }
-  return picks;
+function startQuiz(){
+  document.getElementById('teaser-section').style.display = 'none';
+  document.getElementById('quiz-section').style.display = 'block';
+  renderQuestion();
+  document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'});
 }
 
-function exercisesHTML(){
-  return `<div class="checkin-exercise-intro">That's a lot to be carrying right now. Got 30 seconds for one small thing, just for you?</div>
-    <div id="checkin-exercise-list">${currentExercisePicks.map((e,i)=>exerciseItemHTML(e,i)).join('')}</div>
-    <div class="checkin-exercise-refresh" onclick="refreshExercises()">Show me different ones →</div>`;
-}
-
-function exerciseItemHTML(e,i){
-  const state=exerciseState[i]||{expanded:false,done:false};
-  const btnClass='checkin-exercise-btn'+(state.done?' done':'')+(state.expanded&&!state.done?' open':'');
-  let extra='';
-  if(state.done){
-    extra='';
-  } else if(state.expanded){
-    extra=`<div class="checkin-exercise-how">${e.how}<span class="checkin-exercise-markdone" onclick="markExerciseDone(${i})">Mark done ✓</span></div>`;
-  }
-  return `<div class="checkin-exercise-wrap"><div class="${btnClass}" onclick="toggleExercise(${i})">${e.emoji} ${e.label}</div>${extra}</div>`;
-}
-
-function toggleExercise(i){
-  if(!exerciseState[i]) exerciseState[i]={expanded:false,done:false};
-  if(exerciseState[i].done) return;
-  exerciseState[i].expanded=!exerciseState[i].expanded;
-  renderCheckin();
-}
-
-function markExerciseDone(i){
-  exerciseState[i]={expanded:false,done:true};
-  renderCheckin();
-}
-
-function doExercise(i){
-  toggleExercise(i);
-}
-
-function refreshExercises(){
-  currentExercisePicks=pickExercises(3);
-  exerciseState={};
-  renderCheckin();
-}
-
-function renderCheckin(){
-  const body=document.getElementById('checkin-body');
-  if(!body)return;
-  if(!checkedInThisWeek){
-    body.innerHTML=`<div class="checkin-options">
-      ${Object.keys(CHECKIN_MOODS).map(k=>`<div class="checkin-opt" onclick="selectMood('${k}')"><div class="checkin-opt-emoji">${CHECKIN_MOODS[k].emoji}</div><div class="checkin-opt-label">${CHECKIN_MOODS[k].label}</div></div>`).join('')}
-    </div>${checkinHistoryHTML()}`;
-    return;
-  }
-  const last=CHECKIN_HISTORY[CHECKIN_HISTORY.length-1];
-  if(!last){checkedInThisWeek=false;renderCheckin();return;}
-  const m=CHECKIN_MOODS[last.mood];
-  let exercises='';
-  if(last.mood==='tired'||last.mood==='overwhelmed'){
-    if(currentExercisePicks.length===0) currentExercisePicks=pickExercises(3);
-    exercises=exercisesHTML();
-  }
-  let followup='';
-  if(stressPattern()){
-    const others=FAMILY_MEMBERS.filter(fm=>fm.user_id!==CURRENT_USER.id);
-    if(others.length>0){
-      followup=`<div class="checkin-followup">
-        <div class="checkin-followup-text">Two rough weeks in a row is worth noticing. You're carrying a lot right now. Want to loop someone else in?</div>
-        <div class="checkin-followup-actions">
-          ${others.map(o=>`<div class="checkin-followup-btn" onclick="checkinFollowup('${o.display_name.replace(/'/g,"\\'")}')">Ask ${o.display_name} to step in</div>`).join('')}
-        </div>
-        <div class="checkin-followup-status" id="checkin-followup-status"></div>
-      </div>`;
-    }
-  }
-  body.innerHTML=`<div class="checkin-done">${m.emoji} You checked in: ${m.label}</div>${checkinHistoryHTML()}${exercises}${followup}`;
-}
-
-async function selectMood(key){
-  if(!CURRENT_USER||!CURRENT_FAMILY_ID)return;
-  const weekOf=isoDate(getMondayOf(new Date()));
-  const {error}=await sb.from('checkin_entries').insert({
-    family_id:CURRENT_FAMILY_ID,
-    user_id:CURRENT_USER.id,
-    mood:key,
-    week_of:weekOf
+function renderQuestion(){
+  const item = questions[current];
+  document.getElementById('q-count').textContent = `Question ${current+1} of ${questions.length}`;
+  document.getElementById('progress-fill').style.width = `${((current+1)/questions.length)*100}%`;
+  document.getElementById('q-prompt').textContent = item.q;
+  const optsDiv = document.getElementById('q-options');
+  optsDiv.innerHTML = '';
+  item.opts.forEach((opt, i) => {
+    const label = document.createElement('label');
+    label.className = 'q-option' + (answers[current]===i ? ' selected' : '');
+    label.innerHTML = `<input type="radio" name="q${current}"> ${opt[0]}`;
+    label.onclick = () => selectOption(i);
+    optsDiv.appendChild(label);
   });
-  if(error){alert('Could not save check-in: '+error.message);return;}
-  await loadCheckinHistory();
+  document.getElementById('btn-back').disabled = current === 0;
+  document.getElementById('btn-next').disabled = answers[current] === null;
+  document.getElementById('btn-next').textContent = current === questions.length-1 ? 'See My Results' : 'Next';
 }
 
-function checkinFollowup(name){
-  const status=document.getElementById('checkin-followup-status');
-  if(status) status.textContent=`Sent. ${name} will see a note asking them to check in more this week ✓`;
+function selectOption(i){
+  answers[current] = i;
+  renderQuestion();
 }
 
-/* ── ONBOARDING ── */
-let OB_STEP=0;
-const OB_TOTAL=5;
-let OB_STATE={
-  recipientName:'',
-  relationship:'',
-  members:[{id:1,name:'Dave',role:'Contributor'},{id:2,name:'Sarah',role:'Contributor'}],
-  addingMember:false,
-  newMemberRole:'Contributor',
-  checklist:{meds:false,appt:false,doc:false}
-};
-
-function obDotsHTML(){
-  let d='';
-  for(let i=0;i<OB_TOTAL;i++) d+=`<div class="ob-dot ${i===OB_STEP?'active':''}"></div>`;
-  return d;
-}
-
-function obStepContent(){
-  if(OB_STEP===0){
-    return `<div class="ob-icon-big">💙</div>
-      <div class="ob-headline">Welcome to <em style="font-style:italic;color:var(--terracotta);">Handled</em> with Care</div>
-      <div class="ob-sub">One place for your whole family to help care for someone you love. No more scattered texts, sticky notes, or wondering who did what.</div>`;
-  }
-  if(OB_STEP===1){
-    return `<div class="ob-label">Who are you caring for?</div>
-      <input class="ob-input" id="ob-recipient-name" placeholder="e.g. Mom, Dad, Aunt Carol" value="${OB_STATE.recipientName}">
-      <div class="ob-label">Your relationship</div>
-      <div class="ob-chip-row" id="ob-relationship-chips">
-        ${['Daughter','Son','Spouse','Other'].map(r=>`<div class="ob-chip ${OB_STATE.relationship===r?'selected':''}" onclick="obSelectRelationship('${r}')">${r}</div>`).join('')}
-      </div>`;
-  }
-  if(OB_STEP===2){
-    const memberRows=OB_STATE.members.map(m=>`<div class="ob-member-row"><div class="ob-member-avatar">${m.name.charAt(0)}</div><div class="ob-member-info"><div class="ob-member-name">${m.name}</div><div class="ob-member-role">${m.role}</div></div></div>`).join('');
-    const addForm=OB_STATE.addingMember?`<div class="ob-add-member-form">
-        <input class="ob-input" id="ob-new-member-name" placeholder="Name">
-        <div class="ob-chip-row">
-          ${['Coordinator','Contributor','Viewer'].map(r=>`<div class="ob-chip ${OB_STATE.newMemberRole===r?'selected':''}" onclick="obSelectRole('${r}')">${r}</div>`).join('')}
-        </div>
-        <div style="display:flex;gap:8px;margin-top:10px;">
-          <div class="ob-btn primary" style="padding:9px;font-size:12px;" onclick="obConfirmAddMember()">Add to Huddle</div>
-          <div class="ob-btn ghost" style="padding:9px;font-size:12px;" onclick="obCancelAddMember()">Cancel</div>
-        </div>
-      </div>`:`<div class="ob-inline-add" onclick="obShowAddMember()"><span style="font-size:16px;">+</span> Invite someone to the Huddle</div>`;
-    return `<div class="ob-label">Build your Huddle</div>
-      <div class="ob-sub" style="margin-top:0;">You're the Coordinator by default. Everyone else can be a Contributor (can log and update) or a Viewer (can see everything, can't edit).</div>
-      ${memberRows}
-      ${addForm}`;
-  }
-  if(OB_STEP===3){
-    const items=[
-      {key:'meds',label:'Add ' + (OB_STATE.recipientName||'their') + "'s first medication"},
-      {key:'appt',label:'Add an upcoming appointment'},
-      {key:'doc',label:'Upload one document to the Red Folder'}
-    ];
-    return `<div class="ob-label">Quick setup</div>
-      <div class="ob-sub" style="margin-top:0;">Optional, but these three take under two minutes and make the first week much smoother.</div>
-      ${items.map(it=>`<div class="ob-checklist-row" onclick="obToggleChecklist('${it.key}')"><div class="ob-checklist-circle ${OB_STATE.checklist[it.key]?'done':''}">${OB_STATE.checklist[it.key]?'✓':''}</div><div class="ob-checklist-text">${it.label}</div></div>`).join('')}
-      <div class="ob-skip" onclick="obNext()">Skip for now</div>`;
-  }
-  return `<div class="ob-icon-big">🎉</div>
-    <div class="ob-headline">You're all set</div>
-    <div class="ob-sub">${OB_STATE.recipientName?("Your Huddle for "+OB_STATE.recipientName+" is ready."):"Your Huddle is ready."} ${OB_STATE.members.length} member${OB_STATE.members.length===1?'':'s'} invited. You can add more anytime from Care Team.</div>`;
-}
-
-function obNavHTML(){
-  if(OB_STEP===0) return `<div class="ob-btn primary" onclick="obNext()">Get started</div>`;
-  if(OB_STEP===OB_TOTAL-1) return `<div class="ob-btn primary" onclick="obFinish()">Go to Today</div>`;
-  return `<div class="ob-btn ghost" onclick="obBack()">Back</div><div class="ob-btn primary" onclick="obNext()">Continue</div>`;
-}
-
-function renderOnboarding(){
-  document.getElementById('ob-dots').innerHTML=obDotsHTML();
-  document.getElementById('ob-body').innerHTML=obStepContent();
-  document.getElementById('ob-nav').innerHTML=obNavHTML();
-}
-
-function obSelectRelationship(r){ OB_STATE.relationship=r; renderOnboarding(); }
-function obShowAddMember(){ OB_STATE.addingMember=true; renderOnboarding(); }
-function obCancelAddMember(){ OB_STATE.addingMember=false; renderOnboarding(); }
-function obSelectRole(r){ OB_STATE.newMemberRole=r; renderOnboarding(); }
-function obConfirmAddMember(){
-  const nameInput=document.getElementById('ob-new-member-name');
-  const name=nameInput?nameInput.value.trim():'';
-  if(!name) return;
-  OB_STATE.members.push({id:Date.now(),name:name,role:OB_STATE.newMemberRole});
-  OB_STATE.addingMember=false;
-  OB_STATE.newMemberRole='Contributor';
-  renderOnboarding();
-}
-function obToggleChecklist(key){ OB_STATE.checklist[key]=!OB_STATE.checklist[key]; renderOnboarding(); }
-
-function obNext(){
-  if(OB_STEP===1){
-    const nameInput=document.getElementById('ob-recipient-name');
-    if(nameInput) OB_STATE.recipientName=nameInput.value.trim();
-  }
-  if(OB_STEP<OB_TOTAL-1) OB_STEP++;
-  renderOnboarding();
-}
-function obBack(){
-  if(OB_STEP>0) OB_STEP--;
-  renderOnboarding();
-}
-function obFinish(){
-  showScreen('home');
-}
-
-/* ── COST TRACKER ── */
-const COST_CATEGORIES={
-  'Medical':{icon:'🏥',color:'var(--crimson)'},
-  'Pharmacy':{icon:'💊',color:'var(--terracotta)'},
-  'Home Modifications':{icon:'🔨',color:'var(--slate)'},
-  'Supplies':{icon:'📦',color:'var(--sage)'},
-  'Travel/Mileage':{icon:'🚗',color:'var(--stone)'},
-  'Other':{icon:'📎',color:'var(--graphite)'}
-};
-const TODAY_REF=new Date();
-
-let COST_ENTRIES=[];
-let costReviewData=null;
-
-async function loadCostEntries(){
-  if(!CURRENT_FAMILY_ID)return;
-  const {data,error}=await sb.from('cost_entries')
-    .select('*').eq('family_id',CURRENT_FAMILY_ID).order('entry_date',{ascending:false});
-  if(error){console.error('Failed to load cost entries:',error.message);return;}
-  COST_ENTRIES=data||[];
-  renderCostBody();
-}
-
-function costMonthTotal(){
-  return COST_ENTRIES.filter(e=>{
-    const d=new Date(e.entry_date);
-    return d.getFullYear()===TODAY_REF.getFullYear() && d.getMonth()===TODAY_REF.getMonth();
-  }).reduce((s,e)=>s+Number(e.amount),0);
-}
-function costYTDTotal(){
-  return COST_ENTRIES.filter(e=>new Date(e.entry_date).getFullYear()===TODAY_REF.getFullYear()).reduce((s,e)=>s+Number(e.amount),0);
-}
-function costPersonTotal(userId){
-  return COST_ENTRIES.filter(e=>e.paid_by===userId).reduce((s,e)=>s+Number(e.amount),0);
-}
-
-function renderCostBody(){
-  const body=document.getElementById('cost-body');
-  if(!body)return;
-  const monthTotal=costMonthTotal().toFixed(2);
-  const ytdTotal=costYTDTotal().toFixed(2);
-  const maxPerson=Math.max(1,...FAMILY_MEMBERS.map(m=>costPersonTotal(m.user_id)));
-
-  let html=`<div class="cost-summary-card">
-    <div class="cost-summary-row">
-      <div><div class="cost-summary-label">This month</div><div class="cost-summary-figure">$${monthTotal}</div></div>
-      <div><div class="cost-summary-label">Year to date</div><div class="cost-summary-figure">$${ytdTotal}</div></div>
-    </div>
-    <div class="cost-person-breakdown">
-      ${FAMILY_MEMBERS.map(m=>{
-        const amt=costPersonTotal(m.user_id);
-        const pct=Math.round((amt/maxPerson)*100);
-        return `<div class="cost-person-row"><div class="cost-person-name">${m.display_name}</div><div class="cost-person-track"><div class="cost-person-fill" style="width:${pct}%"></div></div><div class="cost-person-amt">$${amt.toFixed(2)}</div></div>`;
-      }).join('')}
-    </div>
-  </div>
-  <div class="scan-btn" onclick="triggerReceiptPhoto()">📷 Scan a receipt</div>
-  <div class="manual-link" onclick="openCostReview(null)">or enter an expense manually</div>`;
-
-  if(costReviewData) html+=costReviewCardHTML();
-
-  if(COST_ENTRIES.length===0){
-    html+=`<div class="slabel">Recent expenses</div>
-    <div style="text-align:center;padding:20px 10px;color:var(--graphite);font-size:13px;">No expenses logged yet. Scan a receipt or enter one manually.</div>`;
+function nextQ(){
+  if(current < questions.length-1){
+    current++;
+    renderQuestion();
   } else {
-    html+=`<div class="slabel">Recent expenses</div>
-    <div class="doc-card">
-      ${COST_ENTRIES.map(costEntryRowHTML).join('')}
-    </div>`;
+    showResults();
   }
-  html+=`<div class="cost-disclaimer">These totals are for your own records. Talk to a tax preparer about what may be deductible for your family's situation.</div>`;
-
-  body.innerHTML=html;
 }
 
-function costEntryRowHTML(e){
-  const cat=COST_CATEGORIES[e.category]||COST_CATEGORIES['Other'];
-  const paidByName=memberNameFor(e.paid_by)||'Unknown';
-  return `<div class="cost-entry-row">
-    <div class="cost-entry-icon" style="background:${cat.color}">${cat.icon}</div>
-    <div class="cost-entry-info"><div class="cost-entry-name">${e.merchant}</div><div class="cost-entry-meta">${e.entry_date} · ${e.category} · Paid by ${paidByName}</div></div>
-    <div class="cost-entry-amt">$${Number(e.amount).toFixed(2)}</div>
-  </div>`;
-}
-
-function triggerReceiptPhoto(){
-  document.getElementById('cost-photo-input').click();
-}
-
-function handleReceiptPhoto(evt){
-  const file=evt.target.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=async function(e){
-    const dataUrl=e.target.result;
-    const base64=dataUrl.split(',')[1];
-    showCostLoading(dataUrl);
-    let result;
-    let isDemo=false;
-    try{
-      const res=await fetch('/.netlify/functions/parse-receipt',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({imageBase64:base64,mediaType:file.type||'image/jpeg'})
-      });
-      if(!res.ok) throw new Error('backend not available');
-      result=await res.json();
-    }catch(err){
-      isDemo=true;
-      result=demoReceiptResult();
-      await new Promise(r=>setTimeout(r,900));
-    }
-    openCostReview(result,isDemo);
-  };
-  reader.readAsDataURL(file);
-  evt.target.value='';
-}
-
-function demoReceiptResult(){
-  const samples=[
-    {merchant:'Rite Aid Pharmacy',date:'2026-07-19',total:28.14,category:'Pharmacy',confidence:'demo'},
-    {merchant:'Lowe\'s, bathroom safety rail',date:'2026-07-15',total:64.99,category:'Home Modifications',confidence:'demo'},
-    {merchant:'Kaiser copay',date:'2026-07-11',total:40.00,category:'Medical',confidence:'demo'}
-  ];
-  return samples[Math.floor(Math.random()*samples.length)];
-}
-
-function showCostLoading(dataUrl){
-  const body=document.getElementById('cost-body');
-  const existing=document.getElementById('cost-loading-slot');
-  const html=`<div class="cost-loading" id="cost-loading-slot"><img src="${dataUrl}" class="cost-preview-thumb">Reading your receipt…</div>`;
-  if(existing) existing.outerHTML=html;
-  else body.insertAdjacentHTML('afterbegin',html);
-}
-
-function costReviewCardHTML(){
-  const d=costReviewData;
-  const catChips=Object.keys(COST_CATEGORIES).map(c=>`<div class="cost-chip ${d.category===c?'selected':''}" onclick="costSetCategory('${c}')">${c}</div>`).join('');
-  const personChips=FAMILY_MEMBERS.map(m=>`<div class="cost-chip ${d.paidBy===m.user_id?'selected':''}" onclick="costSetPaidBy('${m.user_id}')">${m.display_name}</div>`).join('');
-  const mileageFields=d.category==='Travel/Mileage'?`<div class="cost-field-label">Miles &amp; rate (optional, auto-fills amount)</div>
-    <div class="cost-mileage-row">
-      <input class="cost-input" type="number" placeholder="Miles" id="cost-miles" value="${d.miles||''}" oninput="costRecalcMileage()">
-      <input class="cost-input" type="number" step="0.01" placeholder="Rate/mile" id="cost-rate" value="${d.rate||0.21}" oninput="costRecalcMileage()">
-    </div>
-    <div style="font-size:9.5px;color:var(--graphite);margin-top:3px;">Estimated rate, confirm the current mileage rate with a tax preparer.</div>`:'';
-  return `<div class="cost-review-card">
-    <div class="cost-review-title">Review expense</div>
-    ${d.isDemo?'<div class="cost-demo-flag">⚠ Demo result, backend function not connected yet</div>':''}
-    <div class="cost-field-label">Merchant / provider</div>
-    <input class="cost-input" id="cost-merchant" value="${d.merchant||''}" placeholder="Where was this?">
-    <div class="cost-field-label">Date</div>
-    <input class="cost-input" type="date" id="cost-date" value="${d.date||''}">
-    <div class="cost-field-label">Amount</div>
-    <input class="cost-input" type="number" step="0.01" id="cost-amount" value="${d.amount||''}">
-    <div class="cost-field-label">Category</div>
-    <div class="cost-chip-row">${catChips}</div>
-    ${mileageFields}
-    <div class="cost-field-label">Paid by</div>
-    <div class="cost-chip-row">${personChips}</div>
-    <div class="cost-save-btn" onclick="saveCostEntry()">Save expense</div>
-    <div class="cost-cancel-link" onclick="cancelCostReview()">Cancel</div>
-  </div>`;
-}
-
-function openCostReview(parsed,isDemo){
-  costReviewData={
-    merchant:parsed?parsed.merchant:'',
-    date:(parsed&&parsed.date)?parsed.date:'',
-    amount:parsed?parsed.total:'',
-    category:(parsed&&COST_CATEGORIES[parsed.category])?parsed.category:'Other',
-    paidBy:CURRENT_USER?.id||'',
-    isDemo:!!isDemo
-  };
-  renderCostBody();
-}
-function costSetCategory(c){ costReviewData.category=c; renderCostBody(); }
-function costSetPaidBy(userId){ costReviewData.paidBy=userId; renderCostBody(); }
-function costRecalcMileage(){
-  const miles=parseFloat(document.getElementById('cost-miles').value)||0;
-  const rate=parseFloat(document.getElementById('cost-rate').value)||0;
-  costReviewData.miles=miles;costReviewData.rate=rate;
-  const amtField=document.getElementById('cost-amount');
-  if(amtField) amtField.value=(miles*rate).toFixed(2);
-}
-function cancelCostReview(){ costReviewData=null; renderCostBody(); }
-
-async function saveCostEntry(){
-  const merchant=document.getElementById('cost-merchant').value.trim();
-  const date=document.getElementById('cost-date').value;
-  const amount=parseFloat(document.getElementById('cost-amount').value);
-  if(!merchant||!date||!amount){
-    alert('Please fill in merchant, date, and amount.');
-    return;
+function prevQ(){
+  if(current > 0){
+    current--;
+    renderQuestion();
   }
-  const {error}=await sb.from('cost_entries').insert({
-    family_id:CURRENT_FAMILY_ID,
-    merchant,
-    entry_date:date,
-    amount,
-    category:costReviewData.category,
-    paid_by:costReviewData.paidBy||null,
-    created_by:CURRENT_USER.id
+}
+
+function showResults(){
+  let score = 0;
+  answers.forEach((ansIdx, qIdx) => { score += questions[qIdx].opts[ansIdx][1]; });
+  const tier = resultTiers.find(t => score >= t.min && score <= t.max);
+
+  document.getElementById('quiz-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+
+  const badge = document.getElementById('result-badge');
+  badge.className = 'result-badge ' + tier.cls;
+  document.getElementById('result-score').textContent = `${score} / 30`;
+  document.getElementById('result-level').textContent = tier.level;
+  document.getElementById('result-desc').textContent = tier.desc;
+  document.getElementById('result-goal').textContent = tier.goal;
+
+  const stepsList = document.getElementById('result-steps');
+  stepsList.innerHTML = '';
+  tier.steps.forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    stepsList.appendChild(li);
   });
-  if(error){alert('Could not save expense: '+error.message);return;}
-  costReviewData=null;
-  await loadCostEntries();
+
+  document.getElementById('results-section').scrollIntoView({behavior:'smooth'});
 }
 
-function showScreen(name){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
-  const map={home:0,meds:1,appts:2,roster:3,vault:3,onboarding:4,costs:5};
-  const btn=document.querySelectorAll('.snav-btn')[map[name]];
-  if(btn) btn.classList.add('active');
-  if(name==='meds') renderMedsScreen();
-  if(name==='appts') renderAppointmentsList();
-  if(name==='vault'){renderVaultGrid();renderOtherDocsList();}
-  if(name==='roster') renderHuddleMembers();
-  if(name==='costs') renderCostBody();
-  if(name==='journal') renderJournal();
-  if(name==='chat') renderChatFeed();
+function toggleRedflags(){
+  const el = document.getElementById('redflag-section');
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
 }
 
-function updateHomeProgress(){
-  const tasks=document.querySelectorAll('#screen-home .task-row');
-  const done=document.querySelectorAll('#screen-home .task-row.done');
-  const pct=tasks.length?Math.round((done.length/tasks.length)*100):0;
-  document.getElementById('home-pbar').style.width=pct+'%';
-  document.getElementById('home-pct').textContent=pct+'%';
-  document.getElementById('home-progress-label').textContent="Today's Huddle · "+done.length+" of "+tasks.length+" handled";
+function toggleAccordion(headEl){
+  headEl.parentElement.classList.toggle('open');
 }
 
-function toggleMedDetail(id){
-  const el=document.getElementById(id);
-  if(el) el.style.display=el.style.display==='none'?'block':'none';
+function restartAll(){
+  current = 0;
+  answers = new Array(questions.length).fill(null);
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('teaser-section').style.display = 'block';
+  document.getElementById('teaser-section').scrollIntoView({behavior:'smooth'});
 }
-
-function switchApptView(v){
-  const cal=document.getElementById('cal-panel');
-  const list=document.getElementById('appt-list');
-  const label=document.getElementById('appt-list-label');
-  const lb=document.getElementById('list-btn');
-  const cb=document.getElementById('cal-btn');
-  if(v==='cal'){
-    cal.style.display='block';lb.classList.remove('active');cb.classList.add('active');
-    list.style.display='none';label.style.display='none';
-    buildCal();
-  } else {
-    cal.style.display='none';lb.classList.add('active');cb.classList.remove('active');
-    list.style.display='';label.style.display='';
-  }
-}
-
-function buildCal(){
-  const grid=document.getElementById('cal-grid');
-  grid.innerHTML='';
-  const now=new Date();
-  const year=now.getFullYear();
-  const monthIdx=now.getMonth();
-  const today=now.getDate();
-  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const labelEl=document.getElementById('cal-month-label');
-  if(labelEl) labelEl.textContent=monthNames[monthIdx]+' '+year;
-  const firstDay=new Date(year,monthIdx,1).getDay();
-  const daysInMonth=new Date(year,monthIdx+1,0).getDate();
-  const apptDays=APPOINTMENTS
-    .map(a=>new Date(a.appointment_at))
-    .filter(d=>d.getFullYear()===year&&d.getMonth()===monthIdx)
-    .map(d=>d.getDate());
-  for(let i=0;i<firstDay;i++){
-    const c=document.createElement('div');
-    c.style.cssText='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;';
-    grid.appendChild(c);
-  }
-  for(let d=1;d<=daysInMonth;d++){
-    const c=document.createElement('div');
-    c.style.cssText='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;position:relative;';
-    let numStyle='font-size:11px;color:var(--charcoal);';
-    let bg='';
-    if(d===today){bg='background:var(--slate);border-radius:50%;';numStyle='font-size:11px;color:white;font-weight:600;';}
-    else if(apptDays.includes(d)){numStyle='font-size:11px;color:var(--slate);font-weight:600;';}
-    c.style.cssText+=bg;
-    c.innerHTML='<span style="'+numStyle+'">'+d+'</span>'+(apptDays.includes(d)&&d!==today?'<span style="width:4px;height:4px;border-radius:50%;background:var(--terracotta);position:absolute;bottom:2px;"></span>':'');
-    grid.appendChild(c);
-  }
-}
-
-renderJournal();
-renderHomePreview();
-renderCheckin();
-renderOnboarding();
-renderCostBody();
 </script>
 </body>
 </html>
