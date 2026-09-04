@@ -749,7 +749,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="add-btn" style="flex:1;margin:0;" onclick="showAddMedForm()">
         <span style="font-size:18px;color:var(--graphite)">+</span>Add medication
       </div>
-      <div class="scan-btn" style="flex:1;margin:0;" onclick="triggerMedPhoto()">📷 Scan a bottle</div>
+      <div class="scan-btn" style="flex:1;margin:0;" onclick="triggerMedPhoto()">📷 Scan a bottle or list</div>
     </div>
     <input type="file" accept="image/*" capture="environment" id="med-photo-input" style="display:none" onchange="handleMedPhoto(event)">
     <div id="add-med-form" style="display:none;margin-top:10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
@@ -2266,16 +2266,20 @@ function medScanReviewHTML(){
   const d=MED_SCAN_QUEUE[MED_SCAN_INDEX]||{};
   const total=MED_SCAN_QUEUE.length;
   const isMulti=total>1;
-  const summaryParts=[];
-  summaryParts.push(`The medicine is <b>${d.name||'(not read — please fill in)'}</b>.`);
-  summaryParts.push(`The dose is <b>${d.dosage||'(not read)'}</b>.`);
-  summaryParts.push(`Taken at <b>${d.schedule_time||'(not read)'}</b>.`);
-  if(d.instructions) summaryParts.push(`Special instructions: <b>${d.instructions}</b>.`);
+  const confirmLine=(filledPrefix,value,emptyText)=>value
+    ?`<div style="margin-bottom:6px;">${filledPrefix} <b>${value}</b> — is that correct?</div>`
+    :`<div style="margin-bottom:6px;color:var(--terracotta);">${emptyText}</div>`;
+  const confirmLines=[
+    confirmLine('You entered',d.name,"The medication name wasn't read — please fill it in below."),
+    confirmLine('The dose you entered is',d.dosage,"The dose wasn't read — please fill it in below."),
+    confirmLine("It's taken",d.schedule_time,"The schedule wasn't read — please fill it in below.")
+  ];
+  if(d.instructions) confirmLines.push(confirmLine('The instructions are',d.instructions,''));
   return `<div class="cost-review-card" style="margin-top:10px;">
     <div class="cost-review-title">Confirm before saving${isMulti?` · Medication ${MED_SCAN_INDEX+1} of ${total}`:''}</div>
     ${MED_SCAN_ISDEMO?'<div class="cost-demo-flag">⚠ Demo result, backend function not connected yet</div>':''}
     ${d.confidence==='low'?'<div class="cost-demo-flag">⚠ This one was hard to read — please check it carefully</div>':''}
-    <div style="font-size:13px;line-height:1.5;color:var(--charcoal);background:var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;">${summaryParts.join(' ')} <b>Is this right?</b></div>
+    <div style="font-size:13px;line-height:1.4;color:var(--charcoal);background:var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;">${confirmLines.join('')}</div>
     <div class="cost-field-label">Medication name</div>
     <input class="cost-input" id="med-scan-name" value="${(d.name||'').replace(/"/g,'&quot;')}" placeholder="e.g. Lisinopril 10mg">
     <div class="cost-field-label">Dosage</div>
