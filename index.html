@@ -1005,6 +1005,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
           <input class="auth-input" id="conditions-custom-input" placeholder="Add a condition not listed below" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCondition();}">
           <div style="padding:11px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;text-align:center;cursor:pointer;background:var(--slate);color:white;white-space:nowrap;" onclick="addCustomCondition()">Add</div>
         </div>
+        <div class="scan-btn" style="margin:0 0 12px;" onclick="triggerConditionsPhoto()">📷 Scan a doctor's note or list</div>
+        <input type="file" accept="image/*" capture="environment" id="conditions-photo-input" style="display:none" onchange="handleConditionsPhoto(event)">
+        <div id="conditions-scan-panel"></div>
         <div class="auth-field-label" style="margin-top:0;">Common conditions (tap all that apply)</div>
         <div class="cost-chip-row" id="conditions-chip-row" style="margin-top:4px;"></div>
       </div>
@@ -2704,6 +2707,8 @@ async function openVaultEditor(category,docId){
       remainingContent='';
     }
     renderConditionChips();
+    CONDITIONS_SCAN_ITEMS=[];
+    document.getElementById('conditions-scan-panel').innerHTML='';
   } else {
     checklistWrap.style.display='none';
     nameWrap.style.display='block';
@@ -2765,6 +2770,120 @@ function addCustomCondition(){
 function toggleConditionChip(name){
   if(selectedConditions.has(name)) selectedConditions.delete(name);
   else selectedConditions.add(name);
+  renderConditionChips();
+}
+
+/* ══════════ CONDITIONS SCAN (photo → AI read → mandatory checklist confirm → merge) ══════════
+   Reads a doctor's note, discharge summary, or list and extracts
+   candidate condition names. Nothing is added to the Vault's Known
+   Conditions until the caregiver reviews the checklist (every item
+   editable/removable, all pre-checked) and taps Add — and even then,
+   the overall doc-sheet Save button is still required to actually
+   write anything to the database. Never auto-saves. */
+let CONDITIONS_SCAN_ITEMS=[];
+let CONDITIONS_SCAN_ISDEMO=false;
+
+function triggerConditionsPhoto(){
+  document.getElementById('conditions-photo-input').click();
+}
+
+function demoConditionsResult(){
+  const samples=[
+    [{name:'High blood pressure',confidence:'demo'},{name:'Type 2 diabetes',confidence:'demo'},{name:'High cholesterol',confidence:'demo'}],
+    [{name:'Osteoarthritis',confidence:'demo'},{name:'GERD',confidence:'demo'}],
+    [{name:'Atrial fibrillation',confidence:'demo'},{name:'Chronic kidney disease (stage 3)',confidence:'demo'},{name:'Hypothyroidism',confidence:'demo'},{name:'Sleep apnea',confidence:'demo'}]
+  ];
+  return samples[Math.floor(Math.random()*samples.length)];
+}
+
+async function handleConditionsPhoto(evt){
+  const file=evt.target.files[0];
+  if(!file)return;
+  if(!(await checkFairUseCap())){evt.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const dataUrl=e.target.result;
+    const base64=dataUrl.split(',')[1];
+    showConditionsScanLoading(dataUrl);
+    let conditions;
+    let isDemo=false;
+    try{
+      const res=await fetch('/.netlify/functions/parse-conditions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageBase64:base64,mediaType:file.type||'image/jpeg'})
+      });
+      if(!res.ok) throw new Error('backend not available');
+      const result=await res.json();
+      conditions=Array.isArray(result.conditions)?result.conditions:[];
+    }catch(err){
+      isDemo=true;
+      conditions=demoConditionsResult();
+      await new Promise(r=>setTimeout(r,900));
+    }
+    await logAction('conditions_scan');
+    openConditionsScanReview(conditions,isDemo);
+  };
+  reader.readAsDataURL(file);
+  evt.target.value='';
+}
+
+function showConditionsScanLoading(dataUrl){
+  const panel=document.getElementById('conditions-scan-panel');
+  panel.innerHTML=`<div class="cost-loading" style="margin-top:0 0 12px;"><img src="${dataUrl}" class="cost-preview-thumb">Reading the document…</div>`;
+}
+
+function openConditionsScanReview(conditions,isDemo){
+  CONDITIONS_SCAN_ITEMS=(conditions||[]).map(c=>({name:c.name,confidence:c.confidence,checked:true}));
+  CONDITIONS_SCAN_ISDEMO=!!isDemo;
+  const panel=document.getElementById('conditions-scan-panel');
+  if(CONDITIONS_SCAN_ITEMS.length===0){
+    panel.innerHTML=`<div class="cost-loading" style="margin:0 0 12px;">Couldn't find any conditions in that photo. Try a clearer photo, or add conditions manually above.</div>`;
+    setTimeout(()=>{ if(CONDITIONS_SCAN_ITEMS.length===0) panel.innerHTML=''; },3200);
+    return;
+  }
+  renderConditionsScanReview();
+}
+
+function renderConditionsScanReview(){
+  const panel=document.getElementById('conditions-scan-panel');
+  const rows=CONDITIONS_SCAN_ITEMS.map((item,i)=>`
+    <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--stone-light);">
+      <input type="checkbox" ${item.checked?'checked':''} onchange="toggleConditionsScanItem(${i})" style="width:17px;height:17px;flex-shrink:0;">
+      <input class="cost-input" value="${(item.name||'').replace(/"/g,'&quot;')}" oninput="editConditionsScanItem(${i},this.value)" style="flex:1;">
+      ${item.confidence==='low'?'<span style="font-size:9.5px;color:var(--terracotta);font-weight:700;white-space:nowrap;">low confidence</span>':''}
+    </div>`).join('');
+  const checkedCount=CONDITIONS_SCAN_ITEMS.filter(i=>i.checked).length;
+  panel.innerHTML=`<div class="cost-review-card" style="margin:0 0 12px;">
+    <div class="cost-review-title">Confirm before adding</div>
+    ${CONDITIONS_SCAN_ISDEMO?'<div class="cost-demo-flag">⚠ Demo result, backend function not connected yet</div>':''}
+    <div style="font-size:12px;color:var(--graphite);margin-bottom:8px;">Found ${CONDITIONS_SCAN_ITEMS.length} condition${CONDITIONS_SCAN_ITEMS.length===1?'':'s'}. Uncheck anything that's wrong, or edit the text, before adding.</div>
+    ${rows}
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="cancelConditionsScanReview()">Cancel, don't add</div>
+      <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="confirmConditionsScan()">Add ${checkedCount} checked</div>
+    </div>
+  </div>`;
+}
+
+function toggleConditionsScanItem(i){
+  CONDITIONS_SCAN_ITEMS[i].checked=!CONDITIONS_SCAN_ITEMS[i].checked;
+  renderConditionsScanReview();
+}
+
+function editConditionsScanItem(i,value){
+  CONDITIONS_SCAN_ITEMS[i].name=value;
+}
+
+function cancelConditionsScanReview(){
+  CONDITIONS_SCAN_ITEMS=[];
+  document.getElementById('conditions-scan-panel').innerHTML='';
+}
+
+function confirmConditionsScan(){
+  CONDITIONS_SCAN_ITEMS.filter(i=>i.checked&&i.name.trim()).forEach(i=>selectedConditions.add(i.name.trim()));
+  CONDITIONS_SCAN_ITEMS=[];
+  document.getElementById('conditions-scan-panel').innerHTML='';
   renderConditionChips();
 }
 
