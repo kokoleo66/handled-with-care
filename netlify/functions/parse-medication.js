@@ -1,33 +1,43 @@
 // netlify/functions/parse-medication.js
 //
-// Takes a base64 photo of a pill bottle label (or a written medication
-// list) from the app's medication scanner and asks Claude to read it and
-// return structured medication data. Requires ANTHROPIC_API_KEY set as an
-// environment variable in the Netlify site settings (Site configuration >
+// Takes a base64 photo from the app's medication scanner — a single pill
+// bottle label, OR a typed/printed medication list (e.g. a discharge
+// sheet or pharmacy printout listing several medications) — and asks
+// Claude to read it and return structured medication data for EACH
+// medication found. Requires ANTHROPIC_API_KEY set as an environment
+// variable in the Netlify site settings (Site configuration >
 // Environment variables). Never hardcode the key here or ship it in the
 // frontend bundle.
 //
+// Always returns an array, even for a single bottle (array of length 1).
 // Extracted data is NEVER auto-saved by the frontend — the app always
 // shows a confirmation screen ("The medicine is... the dose is... taken
-// at... is this right?") before writing anything to the medications
-// table. This function only reads and structures; it does not decide.
+// at... is this right?") for EACH medication before writing anything to
+// the medications table. This function only reads and structures; it
+// does not decide.
 
-const SYSTEM_PROMPT = `You read photos of medication labels (pill bottles, blister packs, or a handwritten/printed medication list) and return ONLY a JSON object, no other text, no markdown fences.
+const MAX_MEDICATIONS = 25; // sane cap against a runaway/garbled read
 
-Return exactly these fields:
+const SYSTEM_PROMPT = `You read photos of medication information — this may be a SINGLE pill bottle label, OR a TYPED/PRINTED LIST of several medications (e.g. a hospital discharge sheet or pharmacy printout) — and return ONLY a JSON array, no other text, no markdown fences.
+
+Return a JSON array. Each element represents ONE medication, with exactly these fields:
 {
   "name": string (the medication name as printed, including strength if shown, e.g. "Lisinopril 10mg"),
   "dosage": string (how much is taken per dose, e.g. "1 tablet", "2 capsules"; empty string if not shown),
   "schedule_time": string (when it's taken, in the label's own words, e.g. "8:00 AM", "twice daily", "with dinner"; empty string if not shown),
   "instructions": string (any special instructions printed on the label, e.g. "take with food", "do not crush"; empty string if none),
-  "confidence": "high" or "low" (low if the image is blurry, cropped, or you had to guess at any field)
+  "confidence": "high" or "low" (low if the image is blurry, cropped, or you had to guess at any field for this specific medication)
 }
 
-Reading carefully matters most for the medication name and dosage, since a caregiver may rely on this to give the right medicine:
-- If a label shows multiple numbers (prescription number, NDC number, refill number, pharmacy phone number), do not confuse these with the dosage or strength. The strength is usually right next to the drug name (e.g. "500 MG", "10MG").
-- If any field is unclear, illegible, or the photo does not appear to be a medication label at all, set confidence to "low" and make your best reasonable guess rather than leaving fields blank, except when you cannot tell what the medication is at all — in that case return name as an empty string and set confidence to "low".
+If the photo shows a single pill bottle, return an array with exactly one element.
+If the photo shows a list with multiple medications (a discharge sheet, a printed med list, several bottles lined up), return one array element per distinct medication, in the order they appear on the page. Do not merge different medications into one entry, and do not split one medication's name and dosage across two entries.
 
-Respond with the JSON object and nothing else.`;
+Reading carefully matters most for each medication's name and dosage, since a caregiver may rely on this to give the right medicine:
+- If a label or list shows other numbers (prescription number, NDC number, refill number, pharmacy phone number, patient ID), do not confuse these with a dosage or strength. The strength is usually right next to the drug name (e.g. "500 MG", "10MG").
+- If any field for a given medication is unclear or illegible, set that medication's confidence to "low" and make your best reasonable guess rather than leaving fields blank.
+- If the photo does not appear to show any medication information at all, return an empty array: []
+
+Respond with the JSON array and nothing else.`;
 
 exports.handler = async function (event) {
   const headers = {
@@ -76,7 +86,7 @@ exports.handler = async function (event) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 300,
+        max_tokens: 2000,
         system: SYSTEM_PROMPT,
         messages: [
           {
@@ -92,7 +102,7 @@ exports.handler = async function (event) {
               },
               {
                 type: 'text',
-                text: 'Read this medication label and return the JSON object described in your instructions.',
+                text: 'Read this photo (a single medication label, or a list of several medications) and return the JSON array described in your instructions.',
               },
             ],
           },
@@ -103,7 +113,7 @@ exports.handler = async function (event) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('parse-medication: Anthropic API error', response.status, errText);
-      return { statusCode: 502, headers, body: JSON.stringify({ error: 'Could not read medication label' }) };
+      return { statusCode: 502, headers, body: JSON.stringify({ error: 'Could not read medication information' }) };
     }
 
     const data = await response.json();
@@ -121,16 +131,23 @@ exports.handler = async function (event) {
       return { statusCode: 502, headers, body: JSON.stringify({ error: 'Could not parse medication data' }) };
     }
 
-    const name = typeof parsed.name === 'string' ? parsed.name.slice(0, 120) : '';
-    const dosage = typeof parsed.dosage === 'string' ? parsed.dosage.slice(0, 80) : '';
-    const schedule_time = typeof parsed.schedule_time === 'string' ? parsed.schedule_time.slice(0, 80) : '';
-    const instructions = typeof parsed.instructions === 'string' ? parsed.instructions.slice(0, 200) : '';
-    const confidence = parsed.confidence === 'low' ? 'low' : 'high';
+    const rawList = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === 'object' ? [parsed] : []);
+
+    const medications = rawList.slice(0, MAX_MEDICATIONS).map((item) => {
+      const it = item || {};
+      return {
+        name: typeof it.name === 'string' ? it.name.slice(0, 120) : '',
+        dosage: typeof it.dosage === 'string' ? it.dosage.slice(0, 80) : '',
+        schedule_time: typeof it.schedule_time === 'string' ? it.schedule_time.slice(0, 80) : '',
+        instructions: typeof it.instructions === 'string' ? it.instructions.slice(0, 200) : '',
+        confidence: it.confidence === 'low' ? 'low' : 'high',
+      };
+    }).filter((m) => m.name); // drop any entry with no name at all — nothing useful to confirm
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ name, dosage, schedule_time, instructions, confidence }),
+      body: JSON.stringify({ medications }),
     };
   } catch (err) {
     console.error('parse-medication: unexpected error', err);
