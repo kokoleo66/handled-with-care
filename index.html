@@ -814,6 +814,15 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
     </div>
     <div class="post-appt" id="pending-debrief-banner" style="display:none;" onclick="openDebrief()"><div><div class="post-appt-text" id="pending-debrief-text"></div><div class="post-appt-sub" id="pending-debrief-sub"></div></div><div style="font-size:16px;color:var(--terracotta);margin-left:auto">→</div></div>
+    <div id="pre-appt-prompt-banner" style="display:none;margin:10px 14px 0;background:var(--white);border:1.5px solid var(--slate);border-radius:var(--radius);padding:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--slate-dark);margin-bottom:4px;" id="pre-appt-prompt-title"></div>
+      <div style="font-size:12.5px;color:var(--charcoal);margin-bottom:8px;">Anything specific to ask your provider about when to call vs. wait?</div>
+      <input class="auth-input" id="pre-appt-prompt-input" placeholder="e.g. When does a fever mean call vs. wait until morning?">
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <div style="flex:1;padding:8px;border-radius:var(--radius-sm);font-size:11.5px;font-weight:600;text-align:center;cursor:pointer;color:var(--graphite);" onclick="dismissPreApptPrompt()">Not this time</div>
+        <div style="flex:1;padding:8px;border-radius:var(--radius-sm);font-size:11.5px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="savePreApptNote()">Save as a note for the visit</div>
+      </div>
+    </div>
     <div class="slabel" id="appt-list-label">Upcoming appointments</div>
     <div class="appt-card" id="appt-list"></div>
     <div class="add-btn" onclick="showAddApptForm()">
@@ -835,6 +844,25 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewAppointment()">Save</div>
       </div>
       <div class="auth-error" id="new-appt-error" style="margin-top:10px;"></div>
+    </div>
+    <div class="slabel" style="margin-top:18px;">What Do I Do If…</div>
+    <div style="font-size:11px;color:var(--graphite);margin:0 14px 8px;">Instructions from your care team, in your own words — not medical advice from this app.</div>
+    <div id="if-then-list" style="margin:0 14px;"></div>
+    <div class="add-btn" onclick="showAddIfThenForm()">
+      <span style="font-size:18px;color:var(--graphite)">+</span>Add an instruction
+    </div>
+    <div id="add-if-then-form" style="display:none;margin:0 14px 10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div class="auth-field-label" style="margin-top:0;">IF…</div>
+      <input class="auth-input" id="new-ifthen-condition" placeholder="e.g. Mom's blood pressure is over 160/100 for 2 readings">
+      <div class="auth-field-label">THEN…</div>
+      <input class="auth-input" id="new-ifthen-action" placeholder="e.g. Call Dr. Patel's office, don't wait for the next appointment">
+      <div class="auth-field-label">PER (who told you this, optional)</div>
+      <input class="auth-input" id="new-ifthen-provider" placeholder="e.g. Dr. Patel, 3/2026 visit">
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddIfThenForm()">Cancel</div>
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewIfThen()">Save</div>
+      </div>
+      <div class="auth-error" id="new-ifthen-error" style="margin-top:10px;"></div>
     </div>
   </div>
   <div class="doc-sheet-overlay" id="debrief-overlay" onclick="if(event.target===this)closeDebriefForm()">
@@ -864,6 +892,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <textarea class="auth-input" id="debrief-new-rx" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Any new medications or changes"></textarea>
         <div class="auth-field-label">Next steps / follow-up?</div>
         <textarea class="auth-input" id="debrief-next-steps" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="What needs to happen next"></textarea>
+        <div class="auth-field-label" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--stone-light);">Did they give you a new "call vs. wait" rule? (optional)</div>
+        <input class="auth-input" id="debrief-ifthen-condition" placeholder="IF... e.g. temperature is over 101°F">
+        <input class="auth-input" id="debrief-ifthen-action" style="margin-top:6px;" placeholder="THEN... e.g. call the after-hours line">
         <div class="compose-submit" onclick="submitDebrief()">Save debrief and share with Huddle</div>
         <div class="doc-sheet-status" id="debrief-status"></div>
       </div>
@@ -1613,6 +1644,7 @@ async function enterApp(user,displayName){
   await loadCostEntries();
   await loadJournalEntries();
   await loadChatMessages();
+  await loadIfThenInstructions();
   setupRealtimeSync();
   startMedAlertTicker();
 }
@@ -1649,6 +1681,7 @@ function setupRealtimeSync(){
   subscribeRealtime('cost_entries',loadCostEntries);
   subscribeRealtime('vault_documents',loadVaultDocs);
   subscribeRealtime('family_members',loadFamilyMembers);
+  subscribeRealtime('if_then_instructions',loadIfThenInstructions);
 }
 
 function teardownRealtimeSync(){
@@ -1962,6 +1995,7 @@ async function loadAppointments(){
   if(error){console.error('Failed to load appointments:',error.message);return;}
   APPOINTMENTS=data||[];
   renderAppointmentsList();
+  renderPreApptPrompt();
 }
 
 function renderAppointmentsList(){
@@ -1983,6 +2017,128 @@ function renderAppointmentsList(){
       <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
     </div>`;
   }).join('');
+}
+
+/* ══════════ PRE-APPOINTMENT PROMPT ══════════
+   Prompts once per relevant upcoming appointment (within 3 days) to
+   jot down a question for the provider. Saves as a plain note on that
+   appointment — never auto-generates a call/wait rule on its own. */
+let PRE_APPT_TARGET=null;
+let PRE_APPT_DISMISSED=new Set();
+
+function renderPreApptPrompt(){
+  const banner=document.getElementById('pre-appt-prompt-banner');
+  if(!banner)return;
+  const now=Date.now();
+  const soon=APPOINTMENTS.find(a=>{
+    const t=new Date(a.appointment_at).getTime();
+    return t>now && t-now<=3*86400000 && !PRE_APPT_DISMISSED.has(a.id);
+  });
+  if(!soon){
+    banner.style.display='none';
+    PRE_APPT_TARGET=null;
+    return;
+  }
+  PRE_APPT_TARGET=soon;
+  const dt=new Date(soon.appointment_at);
+  document.getElementById('pre-appt-prompt-title').textContent=`Upcoming: ${soon.title} · ${dt.toLocaleDateString()}`;
+  document.getElementById('pre-appt-prompt-input').value='';
+  banner.style.display='block';
+}
+
+function dismissPreApptPrompt(){
+  if(PRE_APPT_TARGET) PRE_APPT_DISMISSED.add(PRE_APPT_TARGET.id);
+  document.getElementById('pre-appt-prompt-banner').style.display='none';
+}
+
+async function savePreApptNote(){
+  if(!PRE_APPT_TARGET)return;
+  const note=document.getElementById('pre-appt-prompt-input').value.trim();
+  if(!note){dismissPreApptPrompt();return;}
+  const existing=PRE_APPT_TARGET.notes?PRE_APPT_TARGET.notes+'\n':'';
+  const {error}=await sb.from('appointments').update({
+    notes:existing+`To ask: ${note}`
+  }).eq('id',PRE_APPT_TARGET.id);
+  if(!error){
+    PRE_APPT_DISMISSED.add(PRE_APPT_TARGET.id);
+    document.getElementById('pre-appt-prompt-banner').style.display='none';
+    await loadAppointments();
+  }
+}
+
+/* ══════════ WHAT DO I DO IF… ══════════
+   Free-text if/then instructions the caregiver writes themselves,
+   based on what their own care team told them. Never generated or
+   evaluated by this app — plain storage and a way to log "yes, this
+   happened, I followed it." */
+let IF_THEN_ITEMS=[];
+
+async function loadIfThenInstructions(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('if_then_instructions')
+    .select('*').eq('family_id',CURRENT_FAMILY_ID)
+    .eq('archived',false)
+    .order('created_at',{ascending:false});
+  if(error){console.error('Failed to load if/then instructions:',error.message);return;}
+  IF_THEN_ITEMS=data||[];
+  renderIfThenList();
+}
+
+function renderIfThenList(){
+  const listEl=document.getElementById('if-then-list');
+  if(!listEl)return;
+  if(IF_THEN_ITEMS.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:16px 10px;color:var(--graphite);font-size:12.5px;">Nothing saved yet. Add instructions from your care team, or they\'ll show up here automatically after an appointment debrief.</div>';
+    return;
+  }
+  listEl.innerHTML=IF_THEN_ITEMS.map(item=>`
+    <div style="background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;">
+      <div style="font-size:12.5px;color:var(--charcoal);line-height:1.4;"><b>IF</b> ${item.condition_text}</div>
+      <div style="font-size:12.5px;color:var(--charcoal);line-height:1.4;margin-top:2px;"><b>THEN</b> ${item.action_text}</div>
+      ${item.per_provider?`<div style="font-size:11px;color:var(--graphite);margin-top:2px;">Per ${item.per_provider}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <div style="flex:1;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;text-align:center;cursor:pointer;background:var(--sage-light);color:var(--charcoal);" onclick="logIfThenHappened('${item.id}')">Log that this just happened</div>
+        <div style="padding:7px 12px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);color:var(--graphite);" onclick="deleteIfThen('${item.id}')">Remove</div>
+      </div>
+    </div>`).join('');
+}
+
+function showAddIfThenForm(){document.getElementById('add-if-then-form').style.display='block';}
+function hideAddIfThenForm(){
+  document.getElementById('add-if-then-form').style.display='none';
+  ['new-ifthen-condition','new-ifthen-action','new-ifthen-provider'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-ifthen-error').style.display='none';
+}
+
+async function saveNewIfThen(){
+  const condition=document.getElementById('new-ifthen-condition').value.trim();
+  const action=document.getElementById('new-ifthen-action').value.trim();
+  const provider=document.getElementById('new-ifthen-provider').value.trim();
+  const errEl=document.getElementById('new-ifthen-error');
+  if(!condition||!action){errEl.textContent='Both the IF and THEN parts are required.';errEl.style.display='block';return;}
+  const {error}=await sb.from('if_then_instructions').insert({
+    family_id:CURRENT_FAMILY_ID,condition_text:condition,action_text:action,per_provider:provider||null,created_by:CURRENT_USER.id
+  });
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  hideAddIfThenForm();
+  await loadIfThenInstructions();
+}
+
+async function logIfThenHappened(id){
+  const item=IF_THEN_ITEMS.find(i=>i.id===id);
+  if(!item)return;
+  await sb.from('journal_entries').insert({
+    family_id:CURRENT_FAMILY_ID,
+    author_id:CURRENT_USER.id,
+    content:`[Followed instruction] IF ${item.condition_text} — THEN ${item.action_text}`
+  });
+  await loadJournalEntries();
+}
+
+async function deleteIfThen(id){
+  if(!confirm('Remove this instruction?'))return;
+  await sb.from('if_then_instructions').update({archived:true}).eq('id',id);
+  await loadIfThenInstructions();
 }
 
 function showAddApptForm(){document.getElementById('add-appt-form').style.display='block';}
@@ -3237,6 +3393,8 @@ function openDebriefForm(apptId){
   document.getElementById('debrief-doctor-said').value='';
   document.getElementById('debrief-new-rx').value='';
   document.getElementById('debrief-next-steps').value='';
+  document.getElementById('debrief-ifthen-condition').value='';
+  document.getElementById('debrief-ifthen-action').value='';
   document.getElementById('debrief-status').textContent='';
   document.getElementById('debrief-overlay').style.display='flex';
 }
@@ -3253,6 +3411,8 @@ async function submitDebrief(){
   const doctorSaid=document.getElementById('debrief-doctor-said').value.trim();
   const newRx=document.getElementById('debrief-new-rx').value.trim();
   const nextSteps=document.getElementById('debrief-next-steps').value.trim();
+  const ifThenCondition=document.getElementById('debrief-ifthen-condition').value.trim();
+  const ifThenAction=document.getElementById('debrief-ifthen-action').value.trim();
   const status=document.getElementById('debrief-status');
   if(!doctorSaid&&!newRx&&!nextSteps){
     status.textContent='Add at least a note before saving.';
@@ -3267,6 +3427,18 @@ async function submitDebrief(){
     created_by:CURRENT_USER.id
   });
   if(error){status.textContent=error.message;return;}
+
+  if(ifThenCondition&&ifThenAction){
+    const perLabel=[PENDING_DEBRIEF_APPT.provider,new Date(PENDING_DEBRIEF_APPT.appointment_at).toLocaleDateString()].filter(Boolean).join(', ');
+    await sb.from('if_then_instructions').insert({
+      family_id:CURRENT_FAMILY_ID,
+      condition_text:ifThenCondition,
+      action_text:ifThenAction,
+      per_provider:perLabel||null,
+      created_by:CURRENT_USER.id
+    });
+    await loadIfThenInstructions();
+  }
 
   const summaryParts=[];
   if(doctorSaid) summaryParts.push(`Doctor said: ${doctorSaid}`);
