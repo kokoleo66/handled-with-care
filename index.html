@@ -332,6 +332,29 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .doc-badge.all{background:var(--sage-light);color:#245A2A;}
 .doc-badge.limited{background:var(--terracotta-light);color:#8A2E10;}
 
+/* ── CARE GUIDES ── */
+.guide-disclaimer{font-size:10.5px;color:var(--graphite);background:var(--stone-light);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;line-height:1.4;}
+.guide-category-label{font-size:10px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.6px;padding:12px 2px 6px;}
+.guide-match-note{font-size:10.5px;font-weight:600;color:var(--sage);background:var(--sage-light);display:inline-block;padding:2px 8px;border-radius:20px;margin-bottom:6px;}
+.guide-card{border:1px solid var(--stone-light);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;background:var(--white);}
+.guide-card-head{padding:11px 12px;font-size:13px;font-weight:600;color:var(--slate-dark);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.guide-card-head .chev{transition:transform 0.2s;color:var(--stone);flex-shrink:0;font-size:11px;}
+.guide-card.open .guide-card-head .chev{transform:rotate(180deg);}
+.guide-card-body{display:none;padding:0 12px 12px;font-size:12px;color:var(--charcoal);line-height:1.5;}
+.guide-card.open .guide-card-body{display:block;}
+.guide-section-label{font-size:10px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 4px;}
+.guide-section-label:first-child{margin-top:2px;}
+.guide-bullets{padding-left:16px;margin:0;}
+.guide-bullets li{margin-bottom:3px;}
+.guide-stage-row{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed var(--stone-light);}
+.guide-stage-row:last-child{border-bottom:none;}
+.guide-stage-tag{flex-shrink:0;width:74px;font-size:10px;font-weight:700;color:var(--slate);}
+.guide-stage-desc{flex:1;font-size:12px;color:var(--charcoal);}
+.guide-redflag-box{background:var(--crimson-light);border-left:3px solid var(--crimson);border-radius:var(--radius-sm);padding:8px 10px;margin-top:8px;}
+.guide-redflag-box .guide-section-label{color:var(--crimson);margin-top:0;}
+.guide-redflag-box li{color:#7a1f1f;}
+.guide-no-results{text-align:center;padding:20px 10px;color:var(--graphite);font-size:12.5px;}
+
 /* ── DOC DETAIL SHEET ── */
 .doc-sheet-overlay{display:none;position:absolute;inset:0;background:rgba(33,33,33,0.45);z-index:60;align-items:flex-end;}
 .doc-sheet{background:var(--white);width:100%;border-radius:20px 20px 0 0;padding:8px 18px 20px;box-shadow:0 -8px 32px rgba(0,0,0,0.2);max-height:82%;overflow-y:auto;}
@@ -1089,6 +1112,22 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div id="sl-list"></div>
       <div id="sl-add-form"></div>
       <div class="doc-sheet-perm">Visible to: whole Huddle</div>
+    </div>
+  </div>
+  <div class="doc-sheet-overlay" id="guides-overlay" onclick="if(event.target===this)closeConditionGuides()">
+    <div class="doc-sheet">
+      <div class="doc-sheet-handle"></div>
+      <div class="doc-sheet-header">
+        <div class="doc-sheet-icon" style="background:var(--slate)">📚</div>
+        <div style="flex:1;">
+          <div class="doc-sheet-title">Care Guides</div>
+          <div class="doc-sheet-meta">What to watch for, stage by stage</div>
+        </div>
+        <div class="doc-sheet-close" onclick="closeConditionGuides()">✕</div>
+      </div>
+      <div class="guide-disclaimer">General reference info, not a diagnosis or medical advice. When in doubt, call their doctor.</div>
+      <input class="auth-input" id="guide-search-input" placeholder="Search a condition…" oninput="renderGuideList()" style="margin-bottom:10px;">
+      <div id="guide-list"></div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -2586,9 +2625,10 @@ const VAULT_CATEGORY_META={
   insurance:{icon:'🪪',color:'var(--slate)',bg:'#D8E9F8',label:'Insurance (Primary)',titlePlaceholder:'e.g. Kaiser, Blue Cross',placeholder:'Provider, policy number, plan details'},
   insurance_secondary:{icon:'🪪',color:'var(--slate-light)',bg:'#EFF7FD',label:'Insurance (Secondary)',titlePlaceholder:'e.g. Aetna Supplemental',placeholder:'Provider, policy number, plan details'},
   emergency_contact:{icon:'📞',color:'var(--stone)',bg:'var(--stone-light)',label:'Emergency Contact',titlePlaceholder:'e.g. Lisa M., Daughter',placeholder:'Name, relationship, phone number'},
-  legal:{icon:'📋',color:'#7B4B8A',bg:'#F0E4F0',label:'Advance Directive',titlePlaceholder:'e.g. Advance Directive, DNR',placeholder:'DNR status, POA, where the original is kept'}
+  legal:{icon:'📋',color:'#7B4B8A',bg:'#F0E4F0',label:'Advance Directive',titlePlaceholder:'e.g. Advance Directive, DNR',placeholder:'DNR status, POA, where the original is kept'},
+  guides:{icon:'📚',color:'var(--slate)',bg:'#EAF3FB',label:'Care Guides',titlePlaceholder:'',placeholder:''}
 };
-const VAULT_TILE_ORDER=['doctor','pharmacy','conditions','allergies','insurance','insurance_secondary','emergency_contact','legal'];
+const VAULT_TILE_ORDER=['doctor','pharmacy','conditions','allergies','insurance','insurance_secondary','emergency_contact','legal','guides'];
 
 const COMMON_CONDITIONS=['Anemia','Anxiety disorders','Arthritis','Asthma','Atrial fibrillation','BPH','Cancer','Cataracts','Chronic back pain','Chronic constipation','Chronic kidney disease','Chronic liver disease','Chronic pain','Chronic sinusitis','Chronic venous insufficiency','COPD','Coronary heart disease','Dementia','Depression','Diabetic retinopathy','Diverticulosis','Erectile dysfunction','Fatty liver disease','Fibromyalgia','Gallstones','GERD','Glaucoma','Gout','Hearing loss','Heart failure','High blood pressure','High cholesterol','Hypothyroidism','Irritable bowel syndrome','Low bone mass','Macular degeneration','Migraine',"Parkinson's disease",'Pelvic organ prolapse','Peripheral artery disease','Peripheral neuropathy','Prediabetes','Psoriasis','Rheumatoid arthritis','Sleep apnea','Type 2 diabetes','Urinary incontinence','Vision impairment','Obesity','Osteoporosis'].sort();
 
@@ -2596,6 +2636,115 @@ let selectedConditions=new Set();
 
 let CONDITIONS_DATA=[];
 let ALLERGIES_DATA=[];
+
+/* ══════════ CARE GUIDES (static reference library) ══════════
+   Condition-stage progression reference for caregivers: early warning
+   signs, typical stages, and red-flag escalation triggers. This is
+   general reference content, not clinical guidance generated by the
+   app or tailored to any individual — same spirit as the "What Do I
+   Do If..." feature: informational, not decision-support. */
+const CONDITION_GUIDES=[
+{name:"Alzheimer's / Dementia",category:"Neurological & Chronic",early:["Short-term memory lapses","Losing items","Difficulty finding words","Mild confusion with familiar tasks"],stages:[["Early","Mild cognitive decline, independent but forgetful."],["Mid","Needs help with daily activities (ADLs), behavioral changes, wandering."],["Late","Loss of speech, mobility, and swallowing reflexes."]],red:["Sudden spike in agitation/aggression","Wandering off","Inability to swallow liquids"]},
+{name:"Congestive Heart Failure (CHF)",category:"Neurological & Chronic",early:["Shortness of breath during normal activities","Persistent cough","Swelling in ankles/feet"],stages:[["Stage A/B","Asymptomatic or mild structural changes."],["Stage C","Symptoms with normal activity, fatigue."],["Stage D","Severe symptoms at rest, frequent hospitalizations."]],red:["Rapid weight gain (2-3 lbs in a day)","Severe shortness of breath at rest","Chest pain"]},
+{name:"COPD",category:"Neurological & Chronic",early:["Frequent throat clearing","\"Smoker's cough\"","Mild shortness of breath on stairs","Chest tightness"],stages:[["Mild","Chronic cough, mild airflow limitation."],["Moderate","Worse shortness of breath, frequent colds."],["Severe","Severe airflow limit, fatigue."],["End-Stage","Chronic respiratory failure."]],red:["Blue tint to lips/fingernails (cyanosis)","Confusion","Inability to catch breath"]},
+{name:"Parkinson's Disease",category:"Neurological & Chronic",early:["Slight hand tremor at rest","Smaller handwriting (micrographia)","Loss of smell","Stiff facial expression"],stages:[["Stage 1-2","Mild, one/both sides affected, balance intact."],["Stage 3","Mid-stage, loss of balance, slow movements."],["Stage 4-5","Severe rigidity, requires wheelchair, needs 24/7 care."]],red:["Sudden freezing of gait causing falls","Sudden hallucinations","Choking on food"]},
+{name:"Osteoarthritis",category:"Neurological & Chronic",early:["Joint stiffness (especially in the morning)","Grating sound in joints","Reduced range of motion"],stages:[["Minor","Minor wear, little to no pain."],["Mild","Noticeable bone spurs, some pain after activity."],["Moderate","Cartilage damage, frequent pain, joint stiffness."],["Severe","Cartilage gone, bone-on-bone, severe pain."]],red:["Sudden joint lock","Rapid swelling","Pain that completely prevents walking"]},
+{name:"Type 2 Diabetes (Late-Life)",category:"Neurological & Chronic",early:["Increased thirst/urination","Blurred vision","Slow-healing bruises or cuts","Tingling in feet"],stages:[["Pre-diabetes","Elevated A1C, no severe symptoms."],["Controlled","Managed with diet/meds."],["Complicated","Neuropathy, retinopathy, kidney function decline."],["Advanced","Foot ulcers, severe vascular issues."]],red:["Confusion or dizziness (hypoglycemia)","Sores on feet that turn black","Sudden vision loss"]},
+{name:"Chronic Kidney Disease (CKD)",category:"Neurological & Chronic",early:["Often silent early on","Later: fatigue","Dry/itchy skin","Frequent urination","Puffy eyes"],stages:[["Stage 1-2","Mild damage, normal function."],["Stage 3","Moderate drop in filtration rate."],["Stage 4","Severe drop, symptoms become obvious."],["Stage 5","End-stage renal disease (ESRD), requires dialysis."]],red:["Drastic drop in urine output","Severe nausea/vomiting","Metallic taste in the mouth"]},
+{name:"Macular Degeneration",category:"Neurological & Chronic",early:["Blurry center of vision","Straight lines appearing wavy","Difficulty reading in low light"],stages:[["Early","Small drusen (deposits), no vision loss."],["Intermediate","Larger drusen, mild blurring."],["Late (Dry/Wet)","Significant central vision loss, blind spots."]],red:["Sudden and rapid onset of severe central vision loss (indicates \"wet\" AMD bleeding)"]},
+{name:"Osteoporosis",category:"Neurological & Chronic",early:["Silent initially","Loss of height over time","Stooped posture","Receding gums"],stages:[["Normal","Healthy bone density."],["Osteopenia","Low bone mass, increased risk."],["Osteoporosis","Fragile bones, fracture risk high."],["Severe","Multiple fractures (often spinal/hip)."]],red:["Any fall resulting in severe hip/back pain","Sudden severe back pain without injury"]},
+{name:"Post-Stroke / Vascular Dementia",category:"Neurological & Chronic",early:["Transient Ischemic Attacks (TIAs): brief slurred speech","Temporary weakness","Mild confusion"],stages:[["Early","Mild cognitive slowing, difficulty organizing tasks."],["Mid","Step-wise decline (drops in function after mini-strokes), mood swings."],["Late","Severe memory loss, loss of motor control."]],red:["FAST signs (Face drooping, Arm weakness, Speech difficulty, Time to call 911)"]},
+{name:"Severe UTI / Sepsis",category:"Acute & Infection Risk",early:["Strong/cloudy urine","Slight fatigue","Mild behavioral changes"],stages:[["Mild","Localized infection."],["Moderate","Kidney involvement, low fever."],["Severe","Sepsis (systemic infection, organ strain)."]],red:["Sudden extreme confusion/delirium","Spiking fever or severe chills","Sudden lack of urine output"]},
+{name:"Pneumonia (Community & Aspiration)",category:"Acute & Infection Risk",early:["Increased throat clearing","Mild lethargy","Loss of appetite","Low energy"],stages:[["Early","Viral/bacterial colonization."],["Mid","Fluid fills air sacs, persistent cough."],["Late","Respiratory distress, oxygen drop."]],red:["Chest pain when drawing a breath","Bluish tint to lips/fingernails","Sudden fever spike"]},
+{name:"Acute Delirium",category:"Acute & Infection Risk",early:["Sudden distraction","Mixing up days and nights","Sudden restlessness"],stages:[["Onset","Rapid (over hours/days)."],["Type","Hyperactive (agitated) or hypoactive (lethargic)."],["Resolution","Often reversible if underlying cause (UTI/meds) is treated."]],red:["Sudden hallucinations","Inability to recognize family","Severe and sudden lethargy"]},
+{name:"Dysphagia (Swallowing Disorders)",category:"Acute & Infection Risk",early:["Coughing while drinking water","Clearing throat after eating","Eating much slower"],stages:[["Mild","Occasional coughing."],["Moderate","Pocketing food in cheeks, needing soft foods."],["Severe","Requires thickened liquids or feeding tube."]],red:["Spiking a fever (the primary sign of aspiration pneumonia)","Choking that blocks the airway"]},
+{name:"Pressure Ulcers (Bedsores)",category:"Acute & Infection Risk",early:["A localized patch of red skin that does not turn white when pressed"],stages:[["Stage 1","Persistent redness, warm skin."],["Stage 2","Shallow open ulcer or blister."],["Stage 3","Deep wound into fat tissue."],["Stage 4","Exposed muscle or bone."]],red:["Foul odor from the wound","Black/dead tissue (necrosis)","Extreme heat around the area"]},
+{name:"Sarcopenia (Severe Muscle Loss)",category:"Mobility & Fall Risk",early:["Needing to use arms to push out of a chair","Noticeably slower walking pace"],stages:[["Early","Mild weakness."],["Mid","Requires cane/walker for stability."],["Late","Complete loss of independent transfers (bed to chair)."]],red:["Sudden inability to bear weight on legs","Unexplained and rapid weight loss"]},
+{name:"Spinal Stenosis",category:"Mobility & Fall Risk",early:["Lower back pain that improves when leaning forward (like on a shopping cart)"],stages:[["Mild","Occasional ache."],["Moderate","Numbness or cramping in legs after walking."],["Severe","Constant leg pain, inability to walk far."]],red:["Sudden loss of bowel or bladder control (Cauda Equina syndrome — a medical emergency)"]},
+{name:"Peripheral Neuropathy",category:"Mobility & Fall Risk",early:["Tingling in toes/fingers","Feeling like walking on cotton or pebbles"],stages:[["Early","Occasional numbness."],["Mid","Chronic burning pain or \"pins and needles.\""],["Late","Total loss of protective sensation in feet."]],red:["An unseen cut, blister, or sore on the foot that becomes infected due to lack of feeling"]},
+{name:"Vestibular & Gait Disorders",category:"Mobility & Fall Risk",early:["Mild dizziness when standing up quickly","Holding onto walls while walking"],stages:[["Mild","Occasional imbalance."],["Moderate","Frequent stumbling, fear of falling."],["Severe","Chronic vertigo, requiring a wheelchair to avoid falls."]],red:["Drop attacks (a sudden fall without losing consciousness)","Severe spinning sensation with vomiting"]},
+{name:"Polymyalgia Rheumatica (PMR)",category:"Mobility & Fall Risk",early:["Sudden, severe stiffness in the shoulders and hips, especially in the mornings"],stages:[["Onset","Very sudden ache and restricted movement."],["Management","Usually highly responsive to low-dose steroids."],["Late","Chronic management required."]],red:["Sudden severe headache, scalp tenderness, or vision loss (indicates Temporal Arteritis — an emergency)"]},
+{name:"Lewy Body Dementia (LBD)",category:"Cognitive & Behavioral",early:["Detailed visual hallucinations","Acting out dreams in sleep (REM disorder)","Fluctuating alertness"],stages:[["Early","Hallucinations, mild cognitive shifts."],["Mid","Parkinsonism (tremors/stiffness), frequent falls."],["Late","Severe dementia, extreme rigidity, swallowing difficulty."]],red:["Severe reaction to standard antipsychotic medications","Sudden dramatic drops in blood pressure when standing"]},
+{name:"Frontotemporal Dementia (FTD)",category:"Cognitive & Behavioral",early:["Sudden personality shifts","Loss of empathy","Inappropriate remarks","Difficulty finding words"],stages:[["Early","Behavioral disinhibition or speech loss."],["Mid","Loss of social filter, compulsion/routine fixations."],["Late","Mutism, mobility loss, total dependence."]],red:["Eating non-food objects (hyperorality)","Dangerous wandering or impulsivity (e.g. walking into traffic)"]},
+{name:"Late-Life Depression & Apathy",category:"Cognitive & Behavioral",early:["Social withdrawal","\"Slowing down\"","Loss of interest in hobbies","Subtle memory complaints"],stages:[["Early","Mild isolation, neglect of hobbies."],["Mid","Neglect of personal hygiene and medication routines."],["Late","Complete social refusal, failure to thrive."]],red:["Expressing a wish to end life","Total refusal of food/water","Severe unprovoked weight loss"]},
+{name:"Sundowning / BPSD",category:"Cognitive & Behavioral",early:["Increasing restlessness, anxiety, or pacing starting in the late afternoon/dusk"],stages:[["Mild","Pacing or anxiety as shadows fall."],["Moderate","Confusion over shadows, demanding to \"go home.\""],["Severe","Nighttime wandering, physical combativeness."]],red:["Attempting to leave the house at night","Severe physical aggression during evening care tasks"]},
+{name:"Vascular / Mixed Dementia",category:"Cognitive & Behavioral",early:["Trouble planning/organizing","Abrupt drops in function following minor strokes or TIAs"],stages:[["Early","Executive dysfunction (handling bills/schedules)."],["Mid","\"Step-wise\" decline (sudden drops in ability)."],["Late","Severe loss of motor skills and memory."]],red:["Signs of a new stroke (FAST: Face drooping, Arm weakness, Speech difficulty, Time to call 911)"]},
+{name:"Atrial Fibrillation (A-Fib)",category:"Chronic Systemic Management",early:["Fluttering/racing heart","Unexplained shortness of breath","Lightheadedness"],stages:[["Paroxysmal","Occasional irregular rhythm."],["Persistent","Rhythm stays irregular for >7 days."],["Permanent","Chronic irregular heart rhythm."]],red:["Sudden weakness or numbness on one side","Slurred speech (high stroke risk)","Pulse >120 bpm at rest"]},
+{name:"Late-Life Hypertension",category:"Chronic Systemic Management",early:["Often silent","Morning headaches","Occasional dizziness","Subtle nosebleeds"],stages:[["Controlled","Managed with diet/single medication."],["Moderate","Requires multi-drug regimen."],["Uncontrolled","Severe pressure causing organ strain."]],red:["Blood pressure reading above 180/120 (Hypertensive Crisis)","Severe sudden headache","Chest pain"]},
+{name:"Anemia (Iron/Chronic Disease)",category:"Chronic Systemic Management",early:["Pale lower eyelids or gums","Unusually cold hands/feet","Chronic fatigue"],stages:[["Mild","Mild weakness, pale skin."],["Moderate","Shortness of breath on mild exertion."],["Severe","Strain on heart function, severe lethargy."]],red:["Black, tarry stools (indicates internal GI bleeding)","Fainting spells","Sudden chest pain"]},
+{name:"Severe GERD & Hiatal Hernia",category:"Chronic Systemic Management",early:["Chronic dry night cough","Frequent throat clearing","Bitter taste when lying down"],stages:[["Mild","Occasional heartburn after meals."],["Moderate","Esophagitis, painful swallowing."],["Severe","Strictures, aspiration risk into lungs."]],red:["Vomiting material that looks like dark coffee grounds","Feeling like food is stuck in the throat","Severe chest pain"]},
+{name:"Hypothyroidism (Senior Onset)",category:"Chronic Systemic Management",early:["Severe cold intolerance","Dry skin","Chronic constipation","Unexplained weight gain","Slowed speech"],stages:[["Subclinical","Mild fatigue, subtle slowing."],["Moderate","Noticeable cognitive slowing, facial puffiness."],["Severe","Extreme lethargy, organ slowing."]],red:["Hypothermia","Extreme unresponsiveness or stupor (indicates Myxedema Coma — an emergency)"]},
+{name:"Dehydration & Hyponatremia",category:"Oncology, Dermatological & End-of-Life",early:["Dry mouth","Dark urine","Headache","Dizziness when standing","Extreme fatigue"],stages:[["Early","Thirst, mild lethargy."],["Mid","Sunken eyes, poor skin elasticity, muscle cramps."],["Severe","Confusion, low blood pressure, seizures."]],red:["Sudden delirium","Seizures","Unresponsiveness","Inability to retain liquids"]},
+{name:"Shingles (Herpes Zoster)",category:"Oncology, Dermatological & End-of-Life",early:["Burning or tingling pain on one side of the body/face","Localized skin sensitivity before any rash appears"],stages:[["Prodrome","Pain/tingling."],["Active","Red rash forming fluid-filled blisters."],["Post-Herpetic","Chronic nerve pain."]],red:["Blisters appearing on or near the eye or tip of the nose (vision threat)","Spreading secondary bacterial skin infection"]},
+{name:"Orthostatic Hypotension",category:"Oncology, Dermatological & End-of-Life",early:["Head rush or lightheadedness when rising from sitting or lying down","Feeling unsteady"],stages:[["Mild","Brief lightheadedness."],["Moderate","Recurrent dizzy spells, unsteady standing."],["Severe","Syncope (fainting), fall injuries."]],red:["Fainting/loss of consciousness","Fall with head impact","Blood pressure drop below 80/50"]},
+{name:"Skin Cancer (Melanoma/SCC)",category:"Oncology, Dermatological & End-of-Life",early:["New or changing mole (ABCDE rules)","Non-healing scaly sores","Scabs that bleed repeatedly"],stages:[["Early","Localized surface lesion."],["Mid","Expanding, ulcerating, or crusting lesion."],["Late","Metastasis to lymph nodes or organs."]],red:["Rapidly growing sore that bleeds continuously","Firm painful nodule under the skin"]},
+{name:"Venous Stasis Ulcers",category:"Oncology, Dermatological & End-of-Life",early:["Lower leg swelling","Dark reddish-brown skin discoloration around ankles","Dry itchy skin"],stages:[["Early","Stasis dermatitis, skin darkening."],["Mid","Shallow open sores on ankles/shins."],["Late","Chronic non-healing ulcers, cellulitis."]],red:["Redness spreading rapidly up the leg","Foul drainage, fever","Severe increasing pain"]},
+{name:"Chemotherapy / Cancer Toxicity",category:"Oncology, Dermatological & End-of-Life",early:["Severe fatigue","Mouth sores (mucositis)","Loss of appetite","Persistent mild nausea"],stages:[["Mild","Low energy, hair loss."],["Moderate","Neutropenia, severe nausea/vomiting."],["Severe","Neutropenic sepsis, organ failure."]],red:["Fever > 100.4°F during chemo (Neutropenic Fever — medical emergency)","Intractable vomiting/diarrhea"]},
+{name:"End-Stage Renal Failure (ESRD)",category:"Oncology, Dermatological & End-of-Life",early:["Metallic taste in mouth","Puffy eyes/hands","Severe nausea","Sleep disruption"],stages:[["Stage 4","Severe drop in function, fluid retention."],["Stage 5","ESRD, uremic toxin buildup."],["Terminal","Unmanaged uremia."]],red:["Severe muscle twitching","Confusion","Shortness of breath from fluid in lungs","Total lack of urine"]},
+{name:"Cirrhosis / End-Stage Liver Disease",category:"Oncology, Dermatological & End-of-Life",early:["Yellowing of skin/eyes (jaundice)","Easy bruising","Swollen abdomen (ascites)"],stages:[["Early","Fatigue, mild jaundice."],["Mid","Ascites, spider veins, portal hypertension."],["Late","Hepatic encephalopathy, bleeding."]],red:["Vomiting blood or coffee-ground material","Severe sudden confusion","Black tarry stools"]},
+{name:"Active Dying (Terminal Phase)",category:"Oncology, Dermatological & End-of-Life",early:["Loss of appetite/thirst","Sleeping most of the day","Cool hands/feet","Blue/mottled skin"],stages:[["Early","Reduced intake, social withdrawal."],["Mid","Bedbound, rattling breath."],["Late","Cheyne-Stokes breathing, unresponsiveness."]],red:["Unmanaged severe pain","Extreme gasping/respiratory distress","Severe terminal agitation"]},
+{name:"Elder Trauma / Physical Fragility",category:"Oncology, Dermatological & End-of-Life",early:["Unexplained bruises at different healing stages","Social hesitation","Fearfulness around specific people"],stages:[["Early","Minor bruises, quietness."],["Mid","Multiple injuries, frequent \"clumsiness.\""],["Severe","Severe physical trauma, head injury."]],red:["Head impact from a fall","Severe localized bone pain","Visible signs of physical abuse or neglect"]}
+];
+const GUIDE_CATEGORY_ORDER=["Neurological & Chronic","Acute & Infection Risk","Mobility & Fall Risk","Cognitive & Behavioral","Chronic Systemic Management","Oncology, Dermatological & End-of-Life"];
+let GUIDE_OPEN=new Set();
+
+function openConditionGuides(){
+  document.getElementById('guide-search-input').value='';
+  GUIDE_OPEN=new Set();
+  renderGuideList();
+  document.getElementById('guides-overlay').style.display='flex';
+}
+function closeConditionGuides(){
+  document.getElementById('guides-overlay').style.display='none';
+}
+function toggleGuideCard(name){
+  if(GUIDE_OPEN.has(name)) GUIDE_OPEN.delete(name);
+  else GUIDE_OPEN.add(name);
+  renderGuideList();
+}
+function guideCardHTML(g){
+  const isOpen=GUIDE_OPEN.has(g.name);
+  const guideBaseName=g.name.split(' (')[0].trim().toLowerCase();
+  const isMatch=CONDITIONS_DATA.some(c=>{
+    const fam=c.name.trim().toLowerCase();
+    return fam.length>2&&(guideBaseName.includes(fam)||fam.includes(guideBaseName));
+  });
+  let body='';
+  if(isOpen){
+    body=`<div class="guide-card-body">
+      <div class="guide-section-label">Early warning signs</div>
+      <ul class="guide-bullets">${g.early.map(s=>`<li>${s}</li>`).join('')}</ul>
+      <div class="guide-section-label">Typical progression</div>
+      ${g.stages.map(s=>`<div class="guide-stage-row"><div class="guide-stage-tag">${s[0]}</div><div class="guide-stage-desc">${s[1]}</div></div>`).join('')}
+      <div class="guide-redflag-box">
+        <div class="guide-section-label">Red flags — escalate now</div>
+        <ul class="guide-bullets">${g.red.map(s=>`<li>${s}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+  }
+  return `<div class="guide-card${isOpen?' open':''}">
+    <div class="guide-card-head" onclick="toggleGuideCard('${g.name.replace(/'/g,"\\'")}')"><span>${isMatch?'<span class=\"guide-match-note\">Your family</span><br>':''}${g.name}</span><span class="chev">▾</span></div>
+    ${body}
+  </div>`;
+}
+function renderGuideList(){
+  const listEl=document.getElementById('guide-list');
+  if(!listEl)return;
+  const q=(document.getElementById('guide-search-input')?.value||'').trim().toLowerCase();
+  const filtered=q?CONDITION_GUIDES.filter(g=>g.name.toLowerCase().includes(q)):CONDITION_GUIDES;
+  if(filtered.length===0){
+    listEl.innerHTML='<div class="guide-no-results">No conditions match that search.</div>';
+    return;
+  }
+  let html='';
+  GUIDE_CATEGORY_ORDER.forEach(cat=>{
+    const inCat=filtered.filter(g=>g.category===cat);
+    if(inCat.length===0)return;
+    html+=`<div class="guide-category-label">${cat}</div>`;
+    html+=inCat.map(guideCardHTML).join('');
+  });
+  listEl.innerHTML=html;
+}
 
 async function loadVaultDocs(){
   if(!CURRENT_FAMILY_ID)return;
@@ -2636,6 +2785,9 @@ function renderVaultGrid(){
       const count=cat==='conditions'?CONDITIONS_DATA.length:ALLERGIES_DATA.length;
       const sub=count>0?`${count} listed`:'Tap to add';
       return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openStructuredList('${cat}')"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${sub}</div></div>`;
+    }
+    if(cat==='guides'){
+      return `<div class="redfolder-tile" style="background:${meta.bg};border-color:${meta.color};" onclick="openConditionGuides()"><div class="redfolder-icon">${meta.icon}</div><div class="redfolder-label" style="color:${meta.color}">${meta.label}</div><div class="redfolder-sub">${CONDITION_GUIDES.length} conditions</div></div>`;
     }
     const doc=findVaultDoc(cat);
     const sub=doc?(doc.title||'Added'):'Tap to add';
