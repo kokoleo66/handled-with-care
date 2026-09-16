@@ -1,0 +1,31 @@
+-- Run this in Supabase SQL Editor (same place you've run all the other
+-- migrations). Creates the table that stores each device's push
+-- subscription, scoped to the family and user it belongs to.
+
+create table if not exists push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  family_id uuid not null references families(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table push_subscriptions enable row level security;
+
+-- A user can see and manage only their own subscriptions.
+create policy "select own push subscriptions"
+  on push_subscriptions for select
+  using (auth.uid() = user_id);
+
+create policy "insert own push subscriptions"
+  on push_subscriptions for insert
+  with check (auth.uid() = user_id and is_family_member(family_id));
+
+create policy "delete own push subscriptions"
+  on push_subscriptions for delete
+  using (auth.uid() = user_id);
+
+-- No update policy: a changed subscription is just a delete + re-insert
+-- from the client, simpler than reconciling partial updates.
