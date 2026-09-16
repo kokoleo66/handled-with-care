@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Handled with Care · Demo</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1273C4">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -699,6 +701,8 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:10px 14px 0;" onclick="showScreen('costs')">💰 Track caregiving costs →</div>
     <div class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:6px 14px 0;" onclick="showScreen('care-guide')">🧭 Do they need more help? →</div>
+    <div id="push-enable-link" class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:6px 14px 0;display:none;" onclick="enablePushNotifications()">🔔 Get alerted when a medication is overdue →</div>
+    <div id="push-enabled-note" style="display:none;margin:6px 14px 0;font-size:11px;color:var(--sage);font-weight:600;text-align:center;">🔔 Medication alerts are on for this device</div>
     <div class="slabel">Medications</div>
     <div class="med-card">
       <div class="med-card-header">
@@ -1401,6 +1405,97 @@ const authStorage={
 };
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{storage:authStorage,persistSession:true,autoRefreshToken:true}});
 
+/* ══════════ PUSH NOTIFICATIONS (PWA + Web Push) ══════════
+   Two independent pieces: (1) the service worker + this client code,
+   which registers the device and asks the browser for permission to
+   push to it, and (2) the check-overdue-meds Netlify scheduled
+   function, which is what actually decides when to send one. This
+   file only ever handles subscribing/unsubscribing a device — it
+   never sends a notification itself. The public VAPID key below is
+   meant to be public (it's how the browser verifies pushes really
+   came from our server); the matching private key lives only in the
+   Netlify function's environment variables, never here. */
+const VAPID_PUBLIC_KEY='BHmRhplvAUvDCZM8-eGHTBECLUsJBjChXfq3Tl_EbWicn74d0SneEhPCgkW69B10y046-rZgE6R7DfPiDxHfe1Y';
+
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const rawData=atob(base64);
+  return Uint8Array.from([...rawData].map(c=>c.charCodeAt(0)));
+}
+
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return null;
+  try{
+    return await navigator.serviceWorker.register('/sw.js');
+  }catch(err){
+    console.error('Service worker registration failed:',err);
+    return null;
+  }
+}
+
+// Shows the "get alerted" prompt only when it's actually actionable:
+// browser supports push, permission hasn't been denied outright, and
+// this device isn't already subscribed.
+async function setupPushUI(){
+  const link=document.getElementById('push-enable-link');
+  const enabledNote=document.getElementById('push-enabled-note');
+  if(!link||!enabledNote)return;
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    link.style.display='none';enabledNote.style.display='none';return;
+  }
+  if(Notification.permission==='denied'){
+    link.style.display='none';enabledNote.style.display='none';return;
+  }
+  const reg=await registerServiceWorker();
+  if(!reg){link.style.display='none';return;}
+  const existing=await reg.pushManager.getSubscription();
+  if(existing){
+    link.style.display='none';
+    enabledNote.style.display='block';
+  } else {
+    link.style.display='flex';
+    enabledNote.style.display='none';
+  }
+}
+
+async function enablePushNotifications(){
+  const link=document.getElementById('push-enable-link');
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    alert("This browser doesn't support push notifications. On an iPhone, add this app to your Home Screen first (Share button → Add to Home Screen), then try again from there.");
+    return;
+  }
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){
+    alert('Notifications are blocked. You can turn them back on in your browser or phone settings whenever you\'re ready.');
+    return;
+  }
+  const reg=await registerServiceWorker();
+  if(!reg){alert('Could not set up notifications on this device.');return;}
+  try{
+    const sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const raw=sub.toJSON();
+    const{error}=await sb.from('push_subscriptions').insert({
+      family_id:CURRENT_FAMILY_ID,
+      user_id:CURRENT_USER.id,
+      endpoint:raw.endpoint,
+      p256dh:raw.keys.p256dh,
+      auth:raw.keys.auth
+    });
+    if(error&&!error.message.includes('duplicate')){
+      alert('Could not save your notification settings: '+error.message);
+      return;
+    }
+    await setupPushUI();
+  }catch(err){
+    console.error('Push subscription failed:',err);
+    alert('Could not turn on notifications on this device: '+err.message);
+  }
+}
+
 let CURRENT_USER=null;
 let CURRENT_FAMILY_ID=null;
 let CURRENT_DISPLAY_NAME=null;
@@ -1687,6 +1782,7 @@ async function enterApp(user,displayName){
   await loadIfThenInstructions();
   setupRealtimeSync();
   startMedAlertTicker();
+  setupPushUI();
 }
 
 /* ══════════ REAL-TIME SYNC ACROSS DEVICES ══════════
