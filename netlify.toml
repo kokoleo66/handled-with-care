@@ -5,3 +5,8 @@
   for = "/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+[[redirects]]
+  from = "/health-privacy-request"
+  to = "/privacy-request.html"
+  status = 200
