@@ -558,6 +558,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="auth-field-label">Who are you caring for?</div>
         <input class="auth-input" id="auth-care-recipient" placeholder="e.g. Mom" autocomplete="off">
       </div>
+      <label class="auth-remember-row" style="align-items:flex-start;">
+        <input type="checkbox" id="auth-consent-checkbox">
+        <span>I've read and agree to the <a href="#" onclick="event.preventDefault();openConsentPolicy();" style="color:var(--slate);font-weight:600;">Consumer Health Data Privacy Policy</a> — what health information this app collects, why, and my rights to withdraw or delete it.</span>
+      </label>
     </div>
 
     <div class="auth-field-label">Email</div>
@@ -623,8 +627,29 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="auth-field-label">Who are you caring for?</div>
       <input class="auth-input" id="finish-care-recipient" placeholder="e.g. Mom">
     </div>
+    <label class="auth-remember-row" style="align-items:flex-start;">
+      <input type="checkbox" id="finish-consent-checkbox">
+      <span>I've read and agree to the <a href="#" onclick="event.preventDefault();openConsentPolicy();" style="color:var(--slate);font-weight:600;">Consumer Health Data Privacy Policy</a>.</span>
+    </label>
     <button class="auth-submit" id="finish-setup-btn" onclick="submitFinishSetup()">Continue</button>
     <div class="auth-error" id="finish-setup-error"></div>
+  </div>
+  <div id="consent-policy-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--white);border-radius:var(--radius-lg);max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:24px 24px 20px;">
+      <div style="font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--slate-dark);margin-bottom:4px;">Consumer Health Data Privacy Policy</div>
+      <div style="font-size:11px;color:var(--graphite);margin-bottom:16px;">Effective September 16, 2026 · separate from our general Privacy Policy</div>
+      <div style="font-size:12.5px;color:var(--charcoal);line-height:1.6;">
+        <p style="margin-bottom:10px;">This policy applies to consumers in Washington, Nevada, California, and other states with consumer health data laws. It covers "Consumer Health Data" — information linked to you that identifies a past, present, or future physical or mental health status, including conditions, medications, biometric data, and health-related location data.</p>
+        <p style="font-weight:700;margin-bottom:4px;">What we collect and why</p>
+        <p style="margin-bottom:10px;">Health conditions, medications, and care metrics you or your Huddle enter, strictly to display and coordinate that information within your family's account. We don't collect anything beyond what the app's features need, and we don't use it for any purpose beyond what's described here without asking you first.</p>
+        <p style="font-weight:700;margin-bottom:4px;">Who it's shared with</p>
+        <p style="margin-bottom:10px;">We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle — you'll always see a clear prompt before an invite goes out. It's processed by our infrastructure providers (cloud hosting, database, and — for photo-scanning features — Anthropic's Claude API) strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it.</p>
+        <p style="font-weight:700;margin-bottom:4px;">Your rights</p>
+        <p style="margin-bottom:10px;">You can access, correct, delete, or withdraw consent for your health data at any time by emailing nicole@genxcaregiver.care or visiting genxcaregiver.care/health-privacy-request. We respond within 45 days, and you can appeal any decision we make.</p>
+        <p style="margin-bottom:0;">You can read this policy in full any time from the app settings. Checking the box on the signup screen confirms you've had the chance to review it — it doesn't waive any of the rights described above.</p>
+      </div>
+      <div style="margin-top:18px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="closeConsentPolicy()">Close</div>
+    </div>
   </div>
 </div>
 
@@ -1407,6 +1432,27 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 </div>
 </div>
 
+
+<div id="invite-share-consent-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;">Before you send this invite</div>
+    <div id="invite-share-consent-text" style="font-size:13px;color:var(--charcoal);line-height:1.6;margin-bottom:18px;"></div>
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="cancelInviteShare()">Cancel</div>
+      <div style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="confirmInviteShare()">I understand, create link</div>
+    </div>
+  </div>
+</div>
+<div id="ai-photo-consent-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;">Before we scan this photo</div>
+    <div style="font-size:13px;color:var(--charcoal);line-height:1.6;margin-bottom:18px;">This photo will be sent to Anthropic's Claude AI to read the medication, condition, or receipt information on it. Anthropic processes it only to extract that information for you and doesn't use it to train their models. The photo itself isn't stored afterward — only the information you confirm gets saved. You'll only see this notice once.</div>
+    <div style="display:flex;gap:8px;">
+      <div id="ai-photo-consent-cancel" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Not now</div>
+      <div id="ai-photo-consent-confirm" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;">I understand, continue</div>
+    </div>
+  </div>
+</div>
 </div><!-- end screens-wrap -->
 
 </div><!-- end app-root -->
@@ -1691,6 +1737,10 @@ async function submitAuth(){
       showAuthError(usingInvite?'Enter your name to continue.':'Fill in your name and who you\'re caring for.');
       btn.disabled=false;return;
     }
+    if(!document.getElementById('auth-consent-checkbox').checked){
+      showAuthError('Please review and agree to the Consumer Health Data Privacy Policy to create an account.');
+      btn.disabled=false;return;
+    }
     const redirectUrl=usingInvite?window.location.origin+window.location.pathname+'?invite='+PENDING_INVITE_ID:window.location.origin+window.location.pathname;
     const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl}});
     if(error){showAuthError(error.message);btn.disabled=false;return;}
@@ -1700,6 +1750,7 @@ async function submitAuth(){
       return;
     }
     await completeAccountSetup(data.user.id,displayName,careRecipient);
+    await logConsent(data.user.id,'health_data_collection');
     await enterApp(data.user,displayName);
   } else {
     const {data,error}=await sb.auth.signInWithPassword({email,password});
@@ -1779,12 +1830,63 @@ async function submitFinishSetup(){
     errEl.style.display='block';
     return;
   }
+  if(!document.getElementById('finish-consent-checkbox').checked){
+    errEl.textContent='Please review and agree to the Consumer Health Data Privacy Policy to continue.';
+    errEl.style.display='block';
+    return;
+  }
   const btn=document.getElementById('finish-setup-btn');
   btn.disabled=true;
   await completeAccountSetup(PENDING_SETUP_USER.id,displayName,careRecipient);
+  await logConsent(PENDING_SETUP_USER.id,'health_data_collection');
   document.getElementById('finish-setup-card').style.display='none';
   await enterApp(PENDING_SETUP_USER,displayName);
   btn.disabled=false;
+}
+
+/* ══════════ CONSENT (Washington/Nevada/California Consumer Health Data laws) ══════════
+   Three distinct consents, logged separately per the two-step
+   requirement: collection consent happens once at signup; sharing
+   consent happens each time it's actually about to occur (an invite
+   going out, or a photo about to be sent to the AI scanner) rather
+   than being bundled into signup. AI photo consent is asked once per
+   account, not on every scan, since re-prompting every single time
+   would be exactly the kind of consent fatigue that undermines a real
+   choice — but the disclosure itself is unavoidable on first use. */
+let CONSENT_STATUS={ai_photo_processing:false};
+
+function openConsentPolicy(){document.getElementById('consent-policy-overlay').style.display='flex';}
+function closeConsentPolicy(){document.getElementById('consent-policy-overlay').style.display='none';}
+
+async function logConsent(userId,consentType){
+  if(!userId)return;
+  const {error}=await sb.from('consent_records').insert({
+    user_id:userId,family_id:CURRENT_FAMILY_ID||null,consent_type:consentType
+  });
+  if(error)console.error('Could not log consent:',error.message);
+}
+
+async function loadConsentStatus(){
+  if(!CURRENT_USER)return;
+  const {data,error}=await sb.from('consent_records').select('consent_type').eq('user_id',CURRENT_USER.id).eq('consent_type','ai_photo_processing').limit(1);
+  if(error){console.error('Could not load consent status:',error.message);return;}
+  CONSENT_STATUS.ai_photo_processing=!!(data&&data.length);
+}
+
+// Gate shown once, before the very first medication/conditions/receipt
+// photo scan on this account. Returns true if the caller should
+// proceed (either already consented, or just granted it here).
+function requestAiPhotoConsent(onConfirm){
+  if(CONSENT_STATUS.ai_photo_processing){onConfirm();return;}
+  const overlay=document.getElementById('ai-photo-consent-overlay');
+  overlay.style.display='flex';
+  document.getElementById('ai-photo-consent-confirm').onclick=async()=>{
+    overlay.style.display='none';
+    CONSENT_STATUS.ai_photo_processing=true;
+    await logConsent(CURRENT_USER.id,'ai_photo_processing');
+    onConfirm();
+  };
+  document.getElementById('ai-photo-consent-cancel').onclick=()=>{overlay.style.display='none';};
 }
 
 async function enterApp(user,displayName){
@@ -1812,6 +1914,7 @@ async function enterApp(user,displayName){
   setupRealtimeSync();
   startMedAlertTicker();
   setupPushUI();
+  await loadConsentStatus();
 }
 
 /* ══════════ REAL-TIME SYNC ACROSS DEVICES ══════════
@@ -2121,11 +2224,25 @@ async function deleteContact(){
 }
 
 
-async function showInviteForm(){
+function showInviteForm(){
   if(!isCoordinator()){
     alert("Only your Huddle's coordinator can invite new family members.");
     return;
   }
+  const recip=CARE_RECIPIENT_NAME||'them';
+  document.getElementById('invite-share-consent-text').textContent=
+    `Anyone who joins through this link will be able to see ${recip}'s medications, conditions, appointments, and other health information stored in this Huddle. Only send this link to someone you want to have that access.`;
+  document.getElementById('invite-share-consent-overlay').style.display='flex';
+}
+async function confirmInviteShare(){
+  document.getElementById('invite-share-consent-overlay').style.display='none';
+  await logConsent(CURRENT_USER.id,'huddle_invite_share');
+  await generateInviteLink();
+}
+function cancelInviteShare(){
+  document.getElementById('invite-share-consent-overlay').style.display='none';
+}
+async function generateInviteLink(){
   const box=document.getElementById('invite-link-box');
   box.value='Generating link…';
   document.getElementById('invite-form').style.display='block';
@@ -2668,7 +2785,7 @@ let MED_SCAN_ISDEMO=false;
 let MED_SCAN_SAVED_COUNT=0;
 
 function triggerMedPhoto(){
-  document.getElementById('med-photo-input').click();
+  requestAiPhotoConsent(()=>document.getElementById('med-photo-input').click());
 }
 
 function demoMedResult(){
@@ -3393,7 +3510,7 @@ let CONDITIONS_SCAN_ITEMS=[];
 let CONDITIONS_SCAN_ISDEMO=false;
 
 function triggerConditionsPhoto(){
-  document.getElementById('conditions-photo-input').click();
+  requestAiPhotoConsent(()=>document.getElementById('conditions-photo-input').click());
 }
 
 function demoConditionsResult(){
@@ -4291,7 +4408,7 @@ function costEntryRowHTML(e){
 }
 
 function triggerReceiptPhoto(){
-  document.getElementById('cost-photo-input').click();
+  requestAiPhotoConsent(()=>document.getElementById('cost-photo-input').click());
 }
 
 async function handleReceiptPhoto(evt){
