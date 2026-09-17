@@ -782,6 +782,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <input type="file" accept="image/*" capture="environment" id="med-photo-input" style="display:none" onchange="handleMedPhoto(event)">
     <div id="add-med-form" style="display:none;margin-top:10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div id="med-form-title" style="font-family:'Lora',serif;font-size:14px;font-weight:700;color:var(--slate-dark);margin-bottom:8px;">Add medication</div>
       <div class="auth-field-label" style="margin-top:0;">Medication name</div>
       <input class="auth-input" id="new-med-name" placeholder="e.g. Lisinopril 10mg">
       <div class="auth-field-label">Dosage</div>
@@ -793,6 +794,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div style="display:flex;gap:8px;margin-top:12px;">
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddMedForm()">Cancel</div>
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
+      </div>
+      <div id="med-delete-row" style="display:none;margin-top:8px;">
+        <div style="padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--crimson);color:var(--crimson);background:var(--white);" onclick="deleteMedication()">🗑 Remove this medication</div>
       </div>
       <div class="auth-error" id="new-med-error" style="margin-top:10px;"></div>
     </div>
@@ -2519,10 +2523,10 @@ function renderMedsScreen(){
     const isTaken=log&&log.status==='taken';
     const details=[m.dosage,m.instructions].filter(Boolean).join(' · ');
     const rightInfo=isTaken
-      ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · tap to undo</div>`
-      : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Tap to mark taken</div>`;
+      ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · tap to undo, hold to edit</div>`
+      : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Tap to mark taken, hold to edit</div>`;
     return `<div class="full-med-card">
-      <div class="full-med-row" onclick="${isTaken?`unmarkMedTaken('${m.id}')`:`markMedTaken('${m.id}')`}">
+      <div class="full-med-row" onpointerdown="medRowPointerDown('${m.id}')" onpointerup="medRowPointerUp('${m.id}',${isTaken})" onpointerleave="medRowPointerCancel()" onpointercancel="medRowPointerCancel()" oncontextmenu="return false;">
         <div class="med-stripe ${isTaken?'done':'pending'}"></div>
         <div class="full-med-content">
           <div class="med-check ${isTaken?'done':'pending'}">${isTaken?'✓':''}</div>
@@ -2568,6 +2572,9 @@ async function unmarkMedTaken(medId){
 }
 
 function showAddMedForm(){
+  editingMedId=null;
+  document.getElementById('med-form-title').textContent='Add medication';
+  document.getElementById('med-delete-row').style.display='none';
   document.getElementById('add-med-form').style.display='block';
 }
 function hideAddMedForm(){
@@ -2577,6 +2584,55 @@ function hideAddMedForm(){
   document.getElementById('new-med-schedule').value='';
   document.getElementById('new-med-instructions').value='';
   document.getElementById('new-med-error').style.display='none';
+  editingMedId=null;
+}
+
+let editingMedId=null;
+
+function openEditMedForm(id){
+  const med=MEDICATIONS.find(m=>m.id===id);
+  if(!med)return;
+  editingMedId=id;
+  document.getElementById('med-form-title').textContent='Edit medication';
+  document.getElementById('new-med-name').value=med.name||'';
+  document.getElementById('new-med-dosage').value=med.dosage||'';
+  document.getElementById('new-med-schedule').value=med.schedule_time||'';
+  document.getElementById('new-med-instructions').value=med.instructions||'';
+  document.getElementById('new-med-error').style.display='none';
+  document.getElementById('med-delete-row').style.display='block';
+  document.getElementById('add-med-form').style.display='block';
+  document.getElementById('add-med-form').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+async function deleteMedication(){
+  if(!editingMedId)return;
+  if(!confirm('Remove this medication? It will no longer show up in the schedule.'))return;
+  const {error}=await sb.from('medications').update({active:false}).eq('id',editingMedId);
+  if(error){alert('Could not remove medication: '+error.message);return;}
+  hideAddMedForm();
+  await loadMedications();
+}
+
+// Distinguishes a tap (mark taken/undo) from a long-press (open the
+// edit form) on a medication row. Uses pointer events so the same
+// logic works for both touch and mouse without separate handlers.
+let medPressTimer=null;
+let medLongPressFired=false;
+function medRowPointerDown(id){
+  medLongPressFired=false;
+  clearTimeout(medPressTimer);
+  medPressTimer=setTimeout(()=>{
+    medLongPressFired=true;
+    openEditMedForm(id);
+  },550);
+}
+function medRowPointerUp(id,isTaken){
+  clearTimeout(medPressTimer);
+  if(medLongPressFired){medLongPressFired=false;return;}
+  isTaken?unmarkMedTaken(id):markMedTaken(id);
+}
+function medRowPointerCancel(){
+  clearTimeout(medPressTimer);
 }
 
 async function saveNewMedication(){
@@ -2586,9 +2642,14 @@ async function saveNewMedication(){
   const instructions=document.getElementById('new-med-instructions').value.trim();
   const errEl=document.getElementById('new-med-error');
   if(!name){errEl.textContent='Medication name is required.';errEl.style.display='block';return;}
-  const {error}=await sb.from('medications').insert({
-    family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions
-  });
+  let error;
+  if(editingMedId){
+    ({error}=await sb.from('medications').update({name,dosage,schedule_time,instructions}).eq('id',editingMedId));
+  } else {
+    ({error}=await sb.from('medications').insert({
+      family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions
+    }));
+  }
   if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
   hideAddMedForm();
   await loadMedications();
