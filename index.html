@@ -310,7 +310,8 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .contact-name{font-size:13px;font-weight:500;color:var(--charcoal);}
 .contact-role{font-size:10px;color:var(--graphite);}
 .contact-actions{display:flex;gap:5px;}
-.contact-btn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;}
+.contact-btn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;text-decoration:none;color:inherit;}
+.contact-empty{padding:16px 12px;text-align:center;color:var(--graphite);font-size:12px;}
 .contact-btn.call{background:var(--sage-light);}
 .contact-btn.msg{background:var(--terracotta-light);}
 
@@ -966,17 +967,16 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div class="contact-section">
       <div class="contact-section-label">Medical team</div>
-      <div class="contact-card">
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate)">RP</div><div class="contact-info"><div class="contact-name">Dr. Raj Patel</div><div class="contact-role">Cardiologist · Scripps Clinic</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--slate-light)">LC</div><div class="contact-info"><div class="contact-name">Dr. Linda Chen</div><div class="contact-role">Primary care · Kaiser Permanente</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--sage)">KW</div><div class="contact-info"><div class="contact-name">Kim Watkins, PT</div><div class="contact-role">Physical therapist · Sharp Rehab</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
+      <div class="contact-card" id="medical-contacts-list"></div>
+      <div class="add-btn" style="margin:0 0 4px;" onclick="openContactEditor('medical',null)">
+        <span style="font-size:16px;color:var(--graphite)">+</span>Add a doctor or specialist
       </div>
     </div>
     <div class="contact-section">
       <div class="contact-section-label">Pharmacy & services</div>
-      <div class="contact-card">
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--terracotta)">Rx</div><div class="contact-info"><div class="contact-name">CVS Pharmacy</div><div class="contact-role">Rancho Bernardo · Refill line available</div></div><div class="contact-actions"><div class="contact-btn call">📞</div></div></div>
-        <div class="contact-row"><div class="contact-avatar" style="background:var(--stone);color:var(--charcoal)">MA</div><div class="contact-info"><div class="contact-name">Mary Andersen</div><div class="contact-role">Home aide · Mon–Fri 9am–1pm</div></div><div class="contact-actions"><div class="contact-btn call">📞</div><div class="contact-btn msg">💬</div></div></div>
+      <div class="contact-card" id="pharmacy-contacts-list"></div>
+      <div class="add-btn" style="margin:0 0 4px;" onclick="openContactEditor('pharmacy',null)">
+        <span style="font-size:16px;color:var(--graphite)">+</span>Add a pharmacy or service
       </div>
     </div>
     <div class="contact-section">
@@ -996,6 +996,30 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div id="invite-expiry-note" style="font-size:10.5px;color:var(--graphite);margin-top:6px;"></div>
       <div class="auth-status" id="invite-copy-status" style="margin-top:8px;"></div>
       <div class="auth-forgot-link" onclick="hideInviteForm()" style="margin-top:12px;">Close</div>
+    </div>
+  </div>
+  <div class="doc-sheet-overlay" id="contact-editor-overlay" onclick="if(event.target===this)closeContactEditor()">
+    <div class="doc-sheet">
+      <div class="doc-sheet-handle"></div>
+      <div class="doc-sheet-header">
+        <div class="doc-sheet-icon" id="contact-editor-icon" style="background:var(--sage)">👨‍⚕️</div>
+        <div style="flex:1;">
+          <div class="doc-sheet-title" id="contact-editor-title">Add a contact</div>
+          <div class="doc-sheet-meta">Visible to the whole Huddle</div>
+        </div>
+        <div class="doc-sheet-close" onclick="closeContactEditor()">✕</div>
+      </div>
+      <div class="auth-field-label" style="margin-top:4px;">Name</div>
+      <input class="auth-input" id="contact-editor-name" placeholder="e.g. Dr. Linda Chen, or CVS Pharmacy">
+      <div class="auth-field-label">Role / details</div>
+      <input class="auth-input" id="contact-editor-role" placeholder="e.g. Primary care · Kaiser Permanente">
+      <div class="auth-field-label">Phone number</div>
+      <input class="auth-input" id="contact-editor-phone" type="tel" placeholder="e.g. (858) 555-0142">
+      <div class="doc-sheet-actions">
+        <div class="doc-action-btn primary" onclick="saveContact()">💾 Save</div>
+        <div class="doc-action-btn" id="contact-delete-btn" style="display:none;color:var(--crimson);" onclick="deleteContact()">🗑 Delete</div>
+      </div>
+      <div class="doc-sheet-status" id="contact-editor-status"></div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -1773,6 +1797,7 @@ async function enterApp(user,displayName){
   await loadAppointments();
   await loadPendingDebrief();
   await loadFamilyMembers();
+  await loadCareContacts();
   await loadCheckinHistory();
   await loadTasks();
   await loadVaultDocs();
@@ -1817,6 +1842,7 @@ function setupRealtimeSync(){
   subscribeRealtime('cost_entries',loadCostEntries);
   subscribeRealtime('vault_documents',loadVaultDocs);
   subscribeRealtime('family_members',loadFamilyMembers);
+  subscribeRealtime('care_contacts',loadCareContacts);
   subscribeRealtime('if_then_instructions',loadIfThenInstructions);
 }
 
@@ -1996,6 +2022,100 @@ function renderHuddleMembers(){
 }
 
 const INVITE_EXPIRY_DAYS=7;
+
+/* ══════════ CARE TEAM CONTACTS (real data, replacing hardcoded placeholders) ══════════
+   The "Medical team" and "Pharmacy & services" rows used to be fixed
+   demo HTML (Dr. Raj Patel, CVS Pharmacy, etc.) with non-functional
+   call/message icons. Now they're real rows per family, and the
+   call/text buttons are actual tel:/sms: links. */
+let CARE_CONTACTS=[];
+let editingContact=null;
+
+async function loadCareContacts(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('care_contacts').select('*').eq('family_id',CURRENT_FAMILY_ID).order('created_at');
+  if(error){console.error('Failed to load care contacts:',error.message);return;}
+  CARE_CONTACTS=data||[];
+  renderCareContacts();
+}
+
+const CONTACT_AVATAR_COLORS=['var(--slate)','var(--slate-light)','var(--sage)','var(--terracotta)','var(--stone)'];
+
+function contactRowHTML(c,i){
+  const initials=c.name.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+  const color=CONTACT_AVATAR_COLORS[i%CONTACT_AVATAR_COLORS.length];
+  const digits=(c.phone||'').replace(/[^\d+]/g,'');
+  const actions=digits
+    ?`<a class="contact-btn call" href="tel:${digits}" onclick="event.stopPropagation()">📞</a><a class="contact-btn msg" href="sms:${digits}" onclick="event.stopPropagation()">💬</a>`
+    :'';
+  return `<div class="contact-row" onclick="openContactEditor('${c.category}','${c.id}')">
+    <div class="contact-avatar" style="background:${color}">${initials}</div>
+    <div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-role">${c.role||'&nbsp;'}</div></div>
+    <div class="contact-actions">${actions}</div>
+  </div>`;
+}
+
+function renderCareContacts(){
+  const medEl=document.getElementById('medical-contacts-list');
+  const rxEl=document.getElementById('pharmacy-contacts-list');
+  if(!medEl||!rxEl)return;
+  const medical=CARE_CONTACTS.filter(c=>c.category==='medical');
+  const pharmacy=CARE_CONTACTS.filter(c=>c.category==='pharmacy');
+  medEl.innerHTML=medical.length
+    ?medical.map(contactRowHTML).join('')
+    :'<div class="contact-empty">No doctors or specialists added yet.</div>';
+  rxEl.innerHTML=pharmacy.length
+    ?pharmacy.map(contactRowHTML).join('')
+    :'<div class="contact-empty">No pharmacy or service contacts added yet.</div>';
+}
+
+function openContactEditor(category,id){
+  const existing=id?CARE_CONTACTS.find(c=>c.id===id):null;
+  editingContact={id:existing?existing.id:null,category};
+  document.getElementById('contact-editor-icon').textContent=category==='medical'?'👨\u200d⚕️':'💊';
+  document.getElementById('contact-editor-icon').style.background=category==='medical'?'var(--sage)':'var(--terracotta)';
+  document.getElementById('contact-editor-title').textContent=existing?'Edit contact':(category==='medical'?'Add a doctor or specialist':'Add a pharmacy or service');
+  document.getElementById('contact-editor-name').value=existing?existing.name:'';
+  document.getElementById('contact-editor-role').value=existing?(existing.role||''):'';
+  document.getElementById('contact-editor-phone').value=existing?(existing.phone||''):'';
+  document.getElementById('contact-editor-status').textContent='';
+  document.getElementById('contact-delete-btn').style.display=existing?'flex':'none';
+  document.getElementById('contact-editor-overlay').style.display='flex';
+}
+function closeContactEditor(){
+  document.getElementById('contact-editor-overlay').style.display='none';
+  editingContact=null;
+}
+
+async function saveContact(){
+  const statusEl=document.getElementById('contact-editor-status');
+  const name=document.getElementById('contact-editor-name').value.trim();
+  const role=document.getElementById('contact-editor-role').value.trim();
+  const phone=document.getElementById('contact-editor-phone').value.trim();
+  if(!name){statusEl.style.color='var(--crimson)';statusEl.textContent='A name is required.';return;}
+  if(!editingContact)return;
+  let error;
+  if(editingContact.id){
+    ({error}=await sb.from('care_contacts').update({name,role:role||null,phone:phone||null}).eq('id',editingContact.id));
+  } else {
+    ({error}=await sb.from('care_contacts').insert({
+      family_id:CURRENT_FAMILY_ID,category:editingContact.category,name,role:role||null,phone:phone||null,added_by:CURRENT_USER.id
+    }));
+  }
+  if(error){statusEl.style.color='var(--crimson)';statusEl.textContent=error.message;return;}
+  closeContactEditor();
+  await loadCareContacts();
+}
+
+async function deleteContact(){
+  if(!editingContact||!editingContact.id)return;
+  if(!confirm('Remove this contact?'))return;
+  const {error}=await sb.from('care_contacts').delete().eq('id',editingContact.id);
+  if(error){alert('Could not delete: '+error.message);return;}
+  closeContactEditor();
+  await loadCareContacts();
+}
+
 
 async function showInviteForm(){
   if(!isCoordinator()){
@@ -4244,7 +4364,7 @@ function showScreen(name){
   if(name==='meds') renderMedsScreen();
   if(name==='appts') renderAppointmentsList();
   if(name==='vault'){renderVaultGrid();renderOtherDocsList();}
-  if(name==='roster') renderHuddleMembers();
+  if(name==='roster'){renderHuddleMembers();renderCareContacts();}
   if(name==='costs') renderCostBody();
   if(name==='journal') renderJournal();
   if(name==='chat') renderChatFeed();
