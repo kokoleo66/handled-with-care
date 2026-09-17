@@ -1756,6 +1756,7 @@ async function submitAuth(){
     const {data,error}=await sb.auth.signInWithPassword({email,password});
     if(error){showAuthError(error.message);btn.disabled=false;return;}
     await loadFamilyAndEnter(data.user);
+    await logSecurityEvent('login_success',{method:'password'},data.user.id);
   }
   btn.disabled=false;
 }
@@ -1764,8 +1765,10 @@ async function completeAccountSetup(userId,displayName,careRecipient){
   const usingInvite=!!PENDING_INVITE_ID&&PENDING_INVITE_VALID===true;
   if(usingInvite){
     await joinFamilyViaInvite(userId,displayName,PENDING_INVITE_ID);
+    await logSecurityEvent('invite_accepted',{invite_id:PENDING_INVITE_ID},userId);
   } else {
     await createFamilyForNewUser(userId,displayName,careRecipient);
+    await logSecurityEvent('account_created',{care_recipient:careRecipient},userId);
   }
 }
 
@@ -1887,6 +1890,24 @@ function requestAiPhotoConsent(onConfirm){
     onConfirm();
   };
   document.getElementById('ai-photo-consent-cancel').onclick=()=>{overlay.style.display='none';};
+}
+
+/* ══════════ SECURITY AUDIT LOG ══════════
+   Distinct from activity_log (fair-use AI-action cap) and
+   consent_records (consent grants only). This is the "who did what,
+   when" trail for actions worth being able to reconstruct after the
+   fact: sign-ins, sign-outs, invites, and deletions. Viewable only by
+   the family's coordinator, same as invite creation and Vault deletes. */
+async function logSecurityEvent(eventType,detail,explicitUserId){
+  const uid=explicitUserId||(CURRENT_USER&&CURRENT_USER.id);
+  if(!uid)return;
+  const {error}=await sb.from('security_audit_log').insert({
+    family_id:CURRENT_FAMILY_ID||null,
+    user_id:uid,
+    event_type:eventType,
+    detail:detail||null
+  });
+  if(error)console.error('Could not log security event:',error.message);
 }
 
 async function enterApp(user,displayName){
@@ -2219,6 +2240,7 @@ async function deleteContact(){
   if(!confirm('Remove this contact?'))return;
   const {error}=await sb.from('care_contacts').delete().eq('id',editingContact.id);
   if(error){alert('Could not delete: '+error.message);return;}
+  await logSecurityEvent('care_contact_removed',{contact_id:editingContact.id});
   closeContactEditor();
   await loadCareContacts();
 }
@@ -2238,6 +2260,7 @@ async function confirmInviteShare(){
   document.getElementById('invite-share-consent-overlay').style.display='none';
   await logConsent(CURRENT_USER.id,'huddle_invite_share');
   await generateInviteLink();
+  await logSecurityEvent('invite_created',{});
 }
 function cancelInviteShare(){
   document.getElementById('invite-share-consent-overlay').style.display='none';
@@ -2726,6 +2749,7 @@ async function deleteMedication(){
   if(!confirm('Remove this medication? It will no longer show up in the schedule.'))return;
   const {error}=await sb.from('medications').update({active:false}).eq('id',editingMedId);
   if(error){alert('Could not remove medication: '+error.message);return;}
+  await logSecurityEvent('medication_removed',{medication_id:editingMedId});
   hideAddMedForm();
   await loadMedications();
 }
@@ -2947,6 +2971,7 @@ function confirmSignOut(){
 }
 
 async function signOutUser(){
+  await logSecurityEvent('sign_out',{});
   teardownRealtimeSync();
   stopMedAlertTicker();
   await sb.auth.signOut();
@@ -3721,6 +3746,7 @@ async function deleteVaultDoc(){
   }
   const {error}=await sb.from('vault_documents').delete().eq('id',editingVaultDoc.id);
   if(error){alert('Could not delete: '+error.message);return;}
+  await logSecurityEvent('vault_document_removed',{document_id:editingVaultDoc.id,category:editingVaultDoc.category||null});
   closeDoc();
   await loadVaultDocs();
 }
