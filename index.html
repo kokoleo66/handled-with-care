@@ -311,6 +311,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .contact-role{font-size:10px;color:var(--graphite);}
 .contact-actions{display:flex;gap:5px;}
 .contact-btn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;text-decoration:none;color:inherit;}
+.contact-edit-chevron{color:var(--stone);font-size:18px;margin-left:2px;}
 .contact-empty{padding:16px 12px;text-align:center;color:var(--graphite);font-size:12px;}
 .contact-btn.call{background:var(--sage-light);}
 .contact-btn.msg{background:var(--terracotta-light);}
@@ -997,6 +998,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="contact-section">
       <div class="contact-section-label">Medical team</div>
       <div class="contact-card" id="medical-contacts-list"></div>
+      <div style="font-size:10.5px;color:var(--stone);padding:2px 4px 6px;">Tap a contact to edit or remove it</div>
       <div class="add-btn" style="margin:0 0 4px;" onclick="openContactEditor('medical',null)">
         <span style="font-size:16px;color:var(--graphite)">+</span>Add a doctor or specialist
       </div>
@@ -1004,6 +1006,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div class="contact-section">
       <div class="contact-section-label">Pharmacy & services</div>
       <div class="contact-card" id="pharmacy-contacts-list"></div>
+      <div style="font-size:10.5px;color:var(--stone);padding:2px 4px 6px;">Tap a contact to edit or remove it</div>
       <div class="add-btn" style="margin:0 0 4px;" onclick="openContactEditor('pharmacy',null)">
         <span style="font-size:16px;color:var(--graphite)">+</span>Add a pharmacy or service
       </div>
@@ -2179,7 +2182,7 @@ function contactRowHTML(c,i){
   return `<div class="contact-row" onclick="openContactEditor('${c.category}','${c.id}')">
     <div class="contact-avatar" style="background:${color}">${initials}</div>
     <div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-role">${c.role||'&nbsp;'}</div></div>
-    <div class="contact-actions">${actions}</div>
+    <div class="contact-actions">${actions}<span class="contact-edit-chevron">›</span></div>
   </div>`;
 }
 
