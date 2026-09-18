@@ -1,135 +1,113 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Consumer Health Data Privacy Request · Handled with Care</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --slate:#1273C4; --slate-dark:#0D5A99; --terracotta:#C4531A;
-    --charcoal:#2B2621; --graphite:#6B6259; --stone:#B8AC9C; --stone-light:#E8E1D6;
-    --cream:#FAF7F2; --white:#FFFFFF; --sage:#5C7A5C; --crimson:#B03A3A; --crimson-light:#FBEAEA;
-    --radius:14px; --radius-sm:8px;
+// netlify/functions/submit-privacy-request.js
+//
+// Accepts a POST from the public privacy-request.html page. Regular
+// rights requests (access/delete/withdraw_consent/other) go into
+// privacy_requests. Appeals go into privacy_appeals. Either way, on
+// success this also emails the submitter a confirmation containing
+// their reference number (the row's own id), so they don't have to
+// remember to copy it off the success screen themselves.
+//
+// Env vars required:
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  (already set up)
+//   RESEND_API_KEY                            (new -- see setup notes)
+//   PRIVACY_EMAIL_FROM                        (new, e.g.
+//     "Handled with Care <privacy@genxcaregiver.care>" -- must be a
+//     domain verified in Resend, or Resend's sandbox address for
+//     testing only)
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const FROM_ADDRESS = process.env.PRIVACY_EMAIL_FROM || 'onboarding@resend.dev';
+
+const VALID_TYPES = ['access', 'delete', 'withdraw_consent', 'appeal', 'other'];
+
+async function insertRow(table, payload) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(payload),
+  });
+  return res;
+}
+
+async function sendConfirmationEmail(email, name, referenceId, isAppeal) {
+  if (!RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not set -- skipping confirmation email');
+    return;
   }
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--charcoal);}
-  .wrap{max-width:560px;margin:0 auto;padding:40px 20px 80px;}
-  .brand{display:flex;align-items:center;gap:8px;margin-bottom:28px;}
-  .brand-mark{width:34px;height:34px;border-radius:9px;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;}
-  .brand-name{font-family:'Lora',serif;font-size:17px;font-weight:700;color:var(--slate-dark);}
-  .brand-name em{color:var(--terracotta);font-style:italic;}
-  h1{font-family:'Lora',serif;font-size:24px;font-weight:700;color:var(--slate-dark);margin:0 0 6px;line-height:1.3;}
-  .sub{font-size:13px;color:var(--graphite);margin-bottom:28px;line-height:1.6;}
-  .sub a{color:var(--slate);}
-  .card{background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:24px;}
-  .field-label{font-size:12px;font-weight:600;color:var(--graphite);margin:16px 0 6px;}
-  .field-label:first-child{margin-top:0;}
-  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--stone-light);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--charcoal);background:var(--white);}
-  textarea{resize:vertical;min-height:90px;}
-  input:focus,select:focus,textarea:focus{outline:2px solid var(--slate);outline-offset:1px;}
-  .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
-  .type-opt{border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;cursor:pointer;text-align:center;transition:border-color 0.15s,background 0.15s;}
-  .type-opt.selected{border-color:var(--slate);background:#EAF3FB;color:var(--slate-dark);font-weight:600;}
-  .submit-btn{width:100%;margin-top:22px;padding:13px;border:none;border-radius:var(--radius-sm);background:var(--slate);color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-  .submit-btn:disabled{opacity:0.6;cursor:not-allowed;}
-  .error{color:var(--crimson);background:var(--crimson-light);border-radius:var(--radius-sm);padding:10px 12px;font-size:12.5px;margin-top:14px;display:none;}
-  .success{display:none;text-align:center;padding:20px 8px;}
-  .success .icon{font-size:36px;margin-bottom:12px;}
-  .success h2{font-family:'Lora',serif;font-size:19px;color:var(--slate-dark);margin:0 0 8px;}
-  .success p{font-size:13.5px;color:var(--graphite);line-height:1.6;margin:0;}
-  .footer-note{font-size:11.5px;color:var(--stone);text-align:center;margin-top:24px;line-height:1.6;}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="brand">
-    <div class="brand-mark">♥</div>
-    <div class="brand-name">Handled <em>with Care</em></div>
-  </div>
-  <h1>Consumer Health Data Privacy Request</h1>
-  <div class="sub">Use this form to access, delete, or withdraw consent for your Consumer Health Data, or to appeal a prior decision, under Washington, Nevada, California, or other applicable state law. Read the full <a href="/index.html" target="_blank">Consumer Health Data Privacy Policy</a> for details on your rights. We respond within 45 days.</div>
-
-  <div class="card" id="form-card">
-    <div class="field-label">Your name</div>
-    <input type="text" id="req-name" placeholder="Full name">
-
-    <div class="field-label">Your email</div>
-    <input type="email" id="req-email" placeholder="you@example.com">
-
-    <div class="field-label">What are you requesting?</div>
-    <div class="type-grid" id="type-grid">
-      <div class="type-opt" data-value="access">Access my data</div>
-      <div class="type-opt" data-value="delete">Delete my data</div>
-      <div class="type-opt" data-value="withdraw_consent">Withdraw consent</div>
-      <div class="type-opt" data-value="appeal">Appeal a decision</div>
-    </div>
-    <div class="type-grid" style="margin-top:8px;">
-      <div class="type-opt" data-value="other" style="grid-column:1 / -1;">Something else</div>
-    </div>
-
-    <div class="field-label">Details (optional, but helpful — e.g. which account or family this relates to)</div>
-    <textarea id="req-details" placeholder="Anything that helps us find and process your request faster"></textarea>
-
-    <button class="submit-btn" id="submit-btn">Submit request</button>
-    <div class="error" id="form-error"></div>
-  </div>
-
-  <div class="card success" id="success-card">
-    <div class="icon">✅</div>
-    <h2>Request received</h2>
-    <p>We've logged your request and will respond within 45 calendar days at the email you provided. If you don't hear back, or want to check on status sooner, email <a href="mailto:nicole@genxcaregiver.care">nicole@genxcaregiver.care</a> directly.</p>
-  </div>
-
-  <div class="footer-note">Handled with Care · Attn: Legal &amp; Privacy Office · nicole@genxcaregiver.care</div>
-</div>
-
-<script>
-  let selectedType = null;
-  document.querySelectorAll('.type-opt').forEach(el=>{
-    el.addEventListener('click',()=>{
-      document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedType = el.getAttribute('data-value');
+  const subject = isAppeal
+    ? 'Your appeal has been received: Handled with Care'
+    : 'Your privacy request has been received: Handled with Care';
+  const kindLabel = isAppeal ? 'appeal' : 'request';
+  const html = `
+    <p>Hi ${name || 'there'},</p>
+    <p>We've received your ${kindLabel} regarding your Consumer Health Data. Here's your reference number. Save this, you'll need it to check on the status later:</p>
+    <p style="font-size:18px;font-family:monospace;background:#f2f2f2;padding:10px 14px;border-radius:6px;display:inline-block;">${referenceId}</p>
+    <p>We'll respond within 45 calendar days. You can check on the status of your ${kindLabel} any time using this reference number and this email address at our <a href="https://handled-with-care.netlify.app/health-privacy-request">privacy request page</a>.</p>
+    <p>If you have any questions in the meantime, just reply to this email or reach us at nicole@genxcaregiver.care.</p>
+    <p>Handled with Care</p>
+  `;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: FROM_ADDRESS, to: email, subject, html }),
     });
-  });
-
-  document.getElementById('submit-btn').addEventListener('click', async ()=>{
-    const errEl = document.getElementById('form-error');
-    errEl.style.display = 'none';
-    const name = document.getElementById('req-name').value.trim();
-    const email = document.getElementById('req-email').value.trim();
-    const details = document.getElementById('req-details').value.trim();
-
-    if(!name || !email || !selectedType){
-      errEl.textContent = 'Please fill in your name, email, and select what you\'re requesting.';
-      errEl.style.display = 'block';
-      return;
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Resend confirmation email failed:', res.status, text);
     }
+  } catch (err) {
+    console.error('Resend confirmation email threw:', err.message);
+  }
+}
 
-    const btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.textContent = 'Submitting…';
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method not allowed' };
+  }
 
-    try{
-      const res = await fetch('/.netlify/functions/submit-privacy-request', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name, email, requestType: selectedType, details })
-      });
-      const data = await res.json();
-      if(!res.ok){
-        throw new Error(data.error || 'Something went wrong.');
-      }
-      document.getElementById('form-card').style.display = 'none';
-      document.getElementById('success-card').style.display = 'block';
-    }catch(err){
-      errEl.textContent = err.message || 'Something went wrong. Please email nicole@genxcaregiver.care directly instead.';
-      errEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Submit request';
-    }
-  });
-</script>
-</body>
-</html>
+  let body;
+  try {
+    body = JSON.parse(event.body);
+  } catch {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+  }
+
+  const name = (body.name || '').trim();
+  const email = (body.email || '').trim();
+  const requestType = body.requestType;
+  const details = (body.details || '').trim();
+
+  if (!name || !email || !VALID_TYPES.includes(requestType)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing or invalid fields' }) };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Please enter a valid email address' }) };
+  }
+
+  const isAppeal = requestType === 'appeal';
+  const res = isAppeal
+    ? await insertRow('privacy_appeals', { name, email, reason: details || null })
+    : await insertRow('privacy_requests', { name, email, request_type: requestType, details: details || null });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Failed to insert privacy submission:', res.status, text);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Something went wrong submitting your request. Please email nicole@genxcaregiver.care directly instead.' }) };
+  }
+
+  const [row] = await res.json();
+  await sendConfirmationEmail(email, name, row.id, isAppeal);
+
+  return { statusCode: 200, body: JSON.stringify({ ok: true, referenceId: row.id }) };
+};
