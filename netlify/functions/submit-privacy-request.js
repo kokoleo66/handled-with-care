@@ -1,17 +1,75 @@
 // netlify/functions/submit-privacy-request.js
 //
-// Accepts a POST from the public privacy-request.html page and inserts
-// it into Supabase using the service-role key, since this page has no
-// login and the table has no anon-facing policies. Basic validation
-// only — this isn't a scan/AI endpoint, no fair-use cap needed.
+// Accepts a POST from the public privacy-request.html page. Regular
+// rights requests (access/delete/withdraw_consent/other) go into
+// privacy_requests. Appeals go into privacy_appeals. Either way, on
+// success this also emails the submitter a confirmation containing
+// their reference number (the row's own id), so they don't have to
+// remember to copy it off the success screen themselves.
 //
-// Requires the same SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env
-// vars already set up for check-overdue-meds.js — nothing new to add.
+// Env vars required:
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  (already set up)
+//   RESEND_API_KEY                            (new -- see setup notes)
+//   PRIVACY_EMAIL_FROM                        (new, e.g.
+//     "Handled with Care <privacy@genxcaregiver.care>" -- must be a
+//     domain verified in Resend, or Resend's sandbox address for
+//     testing only)
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const FROM_ADDRESS = process.env.PRIVACY_EMAIL_FROM || 'onboarding@resend.dev';
 
 const VALID_TYPES = ['access', 'delete', 'withdraw_consent', 'appeal', 'other'];
+
+async function insertRow(table, payload) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(payload),
+  });
+  return res;
+}
+
+async function sendConfirmationEmail(email, name, referenceId, isAppeal) {
+  if (!RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not set -- skipping confirmation email');
+    return;
+  }
+  const subject = isAppeal
+    ? 'Your appeal has been received — Handled with Care'
+    : 'Your privacy request has been received — Handled with Care';
+  const kindLabel = isAppeal ? 'appeal' : 'request';
+  const html = `
+    <p>Hi ${name || 'there'},</p>
+    <p>We've received your ${kindLabel} regarding your Consumer Health Data. Here's your reference number -- save this, you'll need it to check on the status later:</p>
+    <p style="font-size:18px;font-family:monospace;background:#f2f2f2;padding:10px 14px;border-radius:6px;display:inline-block;">${referenceId}</p>
+    <p>We'll respond within 45 calendar days. You can check on the status of your ${kindLabel} any time using this reference number and this email address at our <a href="https://handled-with-care.netlify.app/health-privacy-request">privacy request page</a>.</p>
+    <p>If you have any questions in the meantime, just reply to this email or reach us at nicole@genxcaregiver.care.</p>
+    <p>-- Handled with Care</p>
+  `;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: FROM_ADDRESS, to: email, subject, html }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Resend confirmation email failed:', res.status, text);
+    }
+  } catch (err) {
+    console.error('Resend confirmation email threw:', err.message);
+  }
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -37,22 +95,19 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Please enter a valid email address' }) };
   }
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/privacy_requests`, {
-    method: 'POST',
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    },
-    body: JSON.stringify({ name, email, request_type: requestType, details: details || null }),
-  });
+  const isAppeal = requestType === 'appeal';
+  const res = isAppeal
+    ? await insertRow('privacy_appeals', { name, email, reason: details || null })
+    : await insertRow('privacy_requests', { name, email, request_type: requestType, details: details || null });
 
   if (!res.ok) {
     const text = await res.text();
-    console.error('Failed to insert privacy request:', res.status, text);
+    console.error('Failed to insert privacy submission:', res.status, text);
     return { statusCode: 500, body: JSON.stringify({ error: 'Something went wrong submitting your request. Please email nicole@genxcaregiver.care directly instead.' }) };
   }
 
-  return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+  const [row] = await res.json();
+  await sendConfirmationEmail(email, name, row.id, isAppeal);
+
+  return { statusCode: 200, body: JSON.stringify({ ok: true, referenceId: row.id }) };
 };
