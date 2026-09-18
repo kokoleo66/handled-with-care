@@ -836,8 +836,8 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <input class="auth-input" id="new-med-name" placeholder="e.g. Lisinopril 10mg">
       <div class="auth-field-label">Dosage</div>
       <input class="auth-input" id="new-med-dosage" placeholder="e.g. 1 tablet">
-      <div class="auth-field-label">Schedule</div>
-      <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM">
+      <div class="auth-field-label">Schedule (separate multiple times with commas)</div>
+      <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM, or 8:00 AM, 2:00 PM, 8:00 PM for multiple times a day">
       <div class="auth-field-label">Instructions (optional)</div>
       <input class="auth-input" id="new-med-instructions" placeholder="e.g. with food">
       <div style="display:flex;gap:8px;margin-top:12px;">
@@ -2411,14 +2411,29 @@ function parseScheduleHour(text){
   return null;
 }
 
+// A medication's schedule_time can now hold multiple comma-separated
+// times (e.g. "8:00 AM, 2:00 PM, 8:00 PM") for a medication taken
+// more than once a day. Each time is tracked and checked for overdue
+// independently -- marking the 8am dose taken doesn't affect the 2pm
+// dose's own status.
+function splitDoseTimes(scheduleTime){
+  if(!scheduleTime||!scheduleTime.trim())return[''];
+  const parts=scheduleTime.split(',').map(s=>s.trim()).filter(Boolean);
+  return parts.length?parts:[''];
+}
+
 function getOverdueMedications(){
   const currentHour=new Date().getHours();
-  return MEDICATIONS.filter(m=>{
-    const schedHour=parseScheduleHour(m.schedule_time);
-    if(schedHour===null||currentHour<schedHour)return false;
-    const log=latestLogFor(m.id);
-    return !(log&&log.status==='taken');
+  const overdue=[];
+  MEDICATIONS.forEach(m=>{
+    splitDoseTimes(m.schedule_time).forEach(doseTime=>{
+      const schedHour=parseScheduleHour(doseTime);
+      if(schedHour===null||currentHour<schedHour)return;
+      const log=latestLogFor(m.id,doseTime);
+      if(!(log&&log.status==='taken'))overdue.push({medication:m,doseTime,schedHour});
+    });
   });
+  return overdue;
 }
 
 function minutesOverdue(schedHour){
@@ -2444,14 +2459,10 @@ function updateHomeAlertBanner(){
     return;
   }
   if(overdue.length===1){
-    const schedHour=parseScheduleHour(overdue[0].schedule_time);
-    const duration=schedHour!==null?formatOverdueDuration(minutesOverdue(schedHour)):'';
-    textEl.innerHTML=`${overdue[0].name} not logged${duration?' · '+duration:''}. <span>Tap to check Meds</span>`;
+    const duration=overdue[0].schedHour!==null?formatOverdueDuration(minutesOverdue(overdue[0].schedHour)):'';
+    textEl.innerHTML=`${overdue[0].medication.name} not logged${duration?' · '+duration:''}. <span>Tap to check Meds</span>`;
   } else {
-    const durations=overdue.map(m=>{
-      const h=parseScheduleHour(m.schedule_time);
-      return h!==null?minutesOverdue(h):0;
-    });
+    const durations=overdue.map(o=>o.schedHour!==null?minutesOverdue(o.schedHour):0);
     const longest=formatOverdueDuration(Math.max(...durations));
     textEl.innerHTML=`${overdue.length} medications not logged · longest ${longest}. <span>Tap to check Meds</span>`;
   }
@@ -3137,8 +3148,8 @@ function renderHomeMedPreview(){
   }).join('');
 }
 
-function latestLogFor(medId){
-  const logs=MED_LOGS_TODAY.filter(l=>l.medication_id===medId);
+function latestLogFor(medId,doseTime){
+  const logs=MED_LOGS_TODAY.filter(l=>l.medication_id===medId&&(doseTime===undefined||l.dose_time===doseTime));
   if(!logs.length)return null;
   return logs.sort((a,b)=>new Date(b.logged_at)-new Date(a.logged_at))[0];
 }
@@ -3154,39 +3165,48 @@ function renderMedsScreen(){
     return;
   }
 
-  let taken=0,pending=0;
+  // Each scheduled dose (not each medication) is one countable, one
+  // trackable row -- a 3x/day medication contributes 3 to the total,
+  // not 1, since each dose needs its own tap.
+  const doses=[];
   MEDICATIONS.forEach(m=>{
-    const log=latestLogFor(m.id);
+    splitDoseTimes(m.schedule_time).forEach(doseTime=>doses.push({med:m,doseTime}));
+  });
+
+  let taken=0,pending=0;
+  doses.forEach(d=>{
+    const log=latestLogFor(d.med.id,d.doseTime);
     if(log&&log.status==='taken')taken++;else pending++;
   });
 
   summaryEl.innerHTML=`
     <div class="sum-card"><div class="sum-num" style="color:var(--sage)">${taken}</div><div class="sum-label">Taken</div></div>
     <div class="sum-card"><div class="sum-num" style="color:var(--graphite)">${pending}</div><div class="sum-label">Pending</div></div>
-    <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">${MEDICATIONS.length}</div><div class="sum-label">Total</div></div>
+    <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">${doses.length}</div><div class="sum-label">Total</div></div>
   `;
 
-  listEl.innerHTML=MEDICATIONS.map(m=>{
-    const log=latestLogFor(m.id);
+  listEl.innerHTML=doses.map(({med:m,doseTime})=>{
+    const log=latestLogFor(m.id,doseTime);
     const isTaken=log&&log.status==='taken';
     const details=[m.dosage,m.instructions].filter(Boolean).join(' · ');
     const rightInfo=isTaken
       ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · tap to undo, hold to edit</div>`
       : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Tap to mark taken, hold to edit</div>`;
+    const doseAttr=doseTime.replace(/'/g,"\\'");
     return `<div class="full-med-card">
-      <div class="full-med-row" onpointerdown="medRowPointerDown('${m.id}')" onpointerup="medRowPointerUp('${m.id}',${isTaken})" onpointerleave="medRowPointerCancel()" onpointercancel="medRowPointerCancel()" oncontextmenu="return false;">
+      <div class="full-med-row" onpointerdown="medRowPointerDown('${m.id}')" onpointerup="medRowPointerUp('${m.id}','${doseAttr}',${isTaken})" onpointerleave="medRowPointerCancel()" onpointercancel="medRowPointerCancel()" oncontextmenu="return false;">
         <div class="med-stripe ${isTaken?'done':'pending'}"></div>
         <div class="full-med-content">
           <div class="med-check ${isTaken?'done':'pending'}">${isTaken?'✓':''}</div>
           <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div></div>
-          <div class="full-med-right"><div class="full-med-time">${m.schedule_time||''}</div>${rightInfo}</div>
+          <div class="full-med-right"><div class="full-med-time">${doseTime||''}</div>${rightInfo}</div>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-async function markMedTaken(medId){
+async function markMedTaken(medId,doseTime){
   try{
     if(!CURRENT_USER||!CURRENT_FAMILY_ID){
       alert('Session issue: please refresh the page and sign in again.');
@@ -3196,7 +3216,8 @@ async function markMedTaken(medId){
       medication_id:medId,
       family_id:CURRENT_FAMILY_ID,
       status:'taken',
-      logged_by:CURRENT_USER.id
+      logged_by:CURRENT_USER.id,
+      dose_time:doseTime||null
     });
     if(error){alert('Could not log medication: '+error.message);return;}
     await loadMedications();
@@ -3206,9 +3227,9 @@ async function markMedTaken(medId){
   }
 }
 
-async function unmarkMedTaken(medId){
+async function unmarkMedTaken(medId,doseTime){
   try{
-    const log=latestLogFor(medId);
+    const log=latestLogFor(medId,doseTime);
     if(!log){await loadMedications();return;}
     const {error}=await sb.from('medication_logs').delete().eq('id',log.id);
     if(error){alert('Could not undo: '+error.message);return;}
@@ -3275,10 +3296,10 @@ function medRowPointerDown(id){
     openEditMedForm(id);
   },550);
 }
-function medRowPointerUp(id,isTaken){
+function medRowPointerUp(id,doseTime,isTaken){
   clearTimeout(medPressTimer);
   if(medLongPressFired){medLongPressFired=false;return;}
-  isTaken?unmarkMedTaken(id):markMedTaken(id);
+  isTaken?unmarkMedTaken(id,doseTime):markMedTaken(id,doseTime);
 }
 function medRowPointerCancel(){
   clearTimeout(medPressTimer);
