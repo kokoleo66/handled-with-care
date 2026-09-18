@@ -817,10 +817,11 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
   </div>
   <div class="screen-tabs">
     <div class="stab" onclick="showScreen('home')">Today</div>
-    <div class="stab active">Meds</div>
-    <div class="stab">History</div>
+    <div class="stab active" id="meds-tab-current" onclick="showMedsTab('current')">Meds</div>
+    <div class="stab" id="meds-tab-history" onclick="showMedsTab('history')">History</div>
   </div>
   <div class="app-body" id="meds-app-body">
+    <div id="meds-current-view">
     <div class="summary-row" id="meds-summary-row"></div>
     <div id="meds-list-container"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
@@ -844,12 +845,20 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddMedForm()">Cancel</div>
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
       </div>
+      <div id="med-history-link-row" style="display:none;text-align:center;margin-top:10px;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;" onclick="openMedHistoryDetail(editingMedId)">🕐 View change history</div>
       <div id="med-delete-row" style="display:none;margin-top:8px;">
-        <div style="padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--crimson);color:var(--crimson);background:var(--white);" onclick="deleteMedication()">🗑 Remove this medication</div>
+        <div class="auth-field-label" style="margin-top:0;">Why are you stopping this? (optional)</div>
+        <input class="auth-input" id="med-stop-reason" placeholder="e.g. doctor switched to a different medication">
+        <div style="padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--crimson);color:var(--crimson);background:var(--white);margin-top:8px;" onclick="deleteMedication()">🗑 Remove this medication</div>
       </div>
       <div class="auth-error" id="new-med-error" style="margin-top:10px;"></div>
     </div>
     <div id="med-scan-panel"></div>
+    </div>
+    <div id="meds-history-view" style="display:none;">
+      <div style="font-size:11.5px;color:var(--graphite);padding:4px 2px 10px;">Medications no longer active, with why they stopped and their full change history.</div>
+      <div id="past-meds-list"></div>
+    </div>
   </div>
   <div class="bottom-nav">
     <div class="nav-item" onclick="showScreen('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#57565A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div class="nav-label">Today</div></div>
@@ -1577,6 +1586,16 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div style="font-size:10.5px;color:var(--stone);margin-top:14px;line-height:1.5;">To withdraw consent for basic account data collection entirely, or to delete your data, use the <a href="/health-privacy-request" target="_blank" style="color:var(--stone);">privacy request page</a> instead, since that closes your account rather than just one feature.</div>
     <div style="margin-top:14px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="closeManageConsent()">Done</div>
+  </div>
+</div>
+<div id="med-history-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:220;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:440px;width:100%;max-height:80vh;overflow-y:auto;padding:22px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+      <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);" id="med-history-title">Change history</div>
+      <div style="font-size:18px;cursor:pointer;color:var(--graphite);" onclick="closeMedHistoryDetail()">✕</div>
+    </div>
+    <div style="font-size:11px;color:var(--graphite);margin-bottom:14px;">Every change is logged automatically, so this is a complete record.</div>
+    <div id="med-history-list"></div>
   </div>
 </div>
 </div><!-- end screens-wrap -->
@@ -3244,6 +3263,7 @@ function showAddMedForm(){
   editingMedId=null;
   document.getElementById('med-form-title').textContent='Add medication';
   document.getElementById('med-delete-row').style.display='none';
+  document.getElementById('med-history-link-row').style.display='none';
   document.getElementById('add-med-form').style.display='block';
 }
 function hideAddMedForm(){
@@ -3252,6 +3272,7 @@ function hideAddMedForm(){
   document.getElementById('new-med-dosage').value='';
   document.getElementById('new-med-schedule').value='';
   document.getElementById('new-med-instructions').value='';
+  document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
   editingMedId=null;
 }
@@ -3267,20 +3288,106 @@ function openEditMedForm(id){
   document.getElementById('new-med-dosage').value=med.dosage||'';
   document.getElementById('new-med-schedule').value=med.schedule_time||'';
   document.getElementById('new-med-instructions').value=med.instructions||'';
+  document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
   document.getElementById('med-delete-row').style.display='block';
+  document.getElementById('med-history-link-row').style.display='block';
   document.getElementById('add-med-form').style.display='block';
   document.getElementById('add-med-form').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 async function deleteMedication(){
   if(!editingMedId)return;
-  if(!confirm('Remove this medication? It will no longer show up in the schedule.'))return;
-  const {error}=await sb.from('medications').update({active:false}).eq('id',editingMedId);
+  const reason=document.getElementById('med-stop-reason').value.trim();
+  if(!confirm('Remove this medication? It will move to History rather than being erased.'))return;
+  const {error}=await sb.from('medications').update({active:false,stopped_reason:reason||null}).eq('id',editingMedId);
   if(error){alert('Could not remove medication: '+error.message);return;}
   await logSecurityEvent('medication_removed',{medication_id:editingMedId});
   hideAddMedForm();
   await loadMedications();
+}
+
+/* ══════════ MEDICATION HISTORY & PAST MEDICATIONS ══════════
+   "Past medications" is a real, browsable view, not a soft-delete
+   that just vanishes -- and every field-level change (dosage,
+   schedule, name, instructions, and being stopped) is logged
+   automatically by a database trigger, not something the app has to
+   remember to record. That's what makes it a trustworthy history
+   rather than a best-effort log. */
+function showMedsTab(tab){
+  document.getElementById('meds-tab-current').classList.toggle('active',tab==='current');
+  document.getElementById('meds-tab-history').classList.toggle('active',tab==='history');
+  document.getElementById('meds-current-view').style.display=tab==='current'?'block':'none';
+  document.getElementById('meds-history-view').style.display=tab==='history'?'block':'none';
+  if(tab==='history')loadPastMedications();
+}
+
+async function loadPastMedications(){
+  const listEl=document.getElementById('past-meds-list');
+  if(!listEl||!CURRENT_FAMILY_ID)return;
+  listEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--graphite);font-size:12.5px;">Loading…</div>';
+  const {data,error}=await sb.from('medications').select('*').eq('family_id',CURRENT_FAMILY_ID).eq('active',false).order('updated_at',{ascending:false});
+  if(error){listEl.innerHTML='<div style="color:var(--crimson);font-size:12.5px;">Could not load past medications: '+error.message+'</div>';return;}
+  if(!data||data.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:24px 10px;color:var(--graphite);font-size:13px;">No past medications yet.</div>';
+    return;
+  }
+  listEl.innerHTML=data.map(m=>{
+    const details=[m.dosage,m.schedule_time].filter(Boolean).join(' · ');
+    const stoppedDate=m.updated_at?new Date(m.updated_at).toLocaleDateString():'';
+    return `<div class="full-med-card" style="cursor:pointer;" onclick="openMedHistoryDetail('${m.id}')">
+      <div class="full-med-row" style="opacity:0.75;">
+        <div class="med-stripe" style="background:var(--stone);"></div>
+        <div class="full-med-content">
+          <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div></div>
+          <div class="full-med-right"><div class="full-med-confirmed" style="color:var(--graphite);">Stopped ${stoppedDate}</div>${m.stopped_reason?`<div style="font-size:10px;color:var(--graphite);max-width:140px;text-align:right;">${m.stopped_reason}</div>`:''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const HISTORY_FIELD_LABELS={name:'Name',dosage:'Dosage',schedule:'Schedule',instructions:'Instructions',status:'Status'};
+
+async function openMedHistoryDetail(medId){
+  if(!medId)return;
+  const med=MEDICATIONS.find(m=>m.id===medId)||{name:'Medication'};
+  document.getElementById('med-history-title').textContent=`${med.name} — change history`;
+  const listEl=document.getElementById('med-history-list');
+  listEl.innerHTML='<div style="text-align:center;padding:16px;color:var(--graphite);font-size:12.5px;">Loading…</div>';
+  document.getElementById('med-history-overlay').style.display='flex';
+
+  // If we don't already have the medication's name (it's a past med,
+  // not in the currently-loaded active MEDICATIONS array), fetch it
+  // directly so the title isn't just "Medication."
+  if(!MEDICATIONS.find(m=>m.id===medId)){
+    const {data}=await sb.from('medications').select('name').eq('id',medId).maybeSingle();
+    if(data)document.getElementById('med-history-title').textContent=`${data.name} — change history`;
+  }
+
+  const {data:rows,error}=await sb.from('medication_history').select('*').eq('medication_id',medId).order('changed_at',{ascending:false});
+  if(error){listEl.innerHTML='<div style="color:var(--crimson);font-size:12.5px;">Could not load history: '+error.message+'</div>';return;}
+  if(!rows||rows.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:16px;color:var(--graphite);font-size:12.5px;">No changes recorded yet.</div>';
+    return;
+  }
+  listEl.innerHTML=rows.map(r=>{
+    const date=new Date(r.changed_at).toLocaleDateString();
+    const label=HISTORY_FIELD_LABELS[r.field_name]||r.field_name;
+    let line;
+    if(r.field_name==='status'){
+      line=r.new_value&&r.new_value.startsWith('discontinued')?`Discontinued${r.new_value.includes(':')?' — '+r.new_value.split(':').slice(1).join(':').trim():''}`:'Reactivated';
+    } else {
+      line=`${label} changed${r.old_value?` from "${r.old_value}"`:''} to "${r.new_value||''}"`;
+    }
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--stone-light);">
+      <div style="font-size:10px;color:var(--stone);font-weight:600;">${date}</div>
+      <div style="font-size:12.5px;color:var(--charcoal);">${line}</div>
+    </div>`;
+  }).join('');
+}
+function closeMedHistoryDetail(){
+  document.getElementById('med-history-overlay').style.display='none';
 }
 
 // Distinguishes a tap (mark taken/undo) from a long-press (open the
