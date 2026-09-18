@@ -165,6 +165,22 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .checkin-done{text-align:center;font-size:12px;color:var(--sage);font-weight:600;padding:6px 0 2px;}
 .checkin-history{display:flex;gap:5px;margin-top:11px;justify-content:center;}
 .checkin-dot{width:9px;height:9px;border-radius:50%;}
+.burnout-q-domain{font-size:10px;font-weight:700;color:var(--terracotta);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.burnout-q-text{font-family:'Lora',serif;font-size:19px;font-weight:600;color:var(--slate-dark);line-height:1.4;margin-bottom:24px;}
+.burnout-answer-opt{border:1px solid var(--stone-light);border-radius:var(--radius);padding:13px 16px;margin-bottom:10px;font-size:14px;color:var(--charcoal);cursor:pointer;background:var(--white);transition:border-color 0.15s,background 0.15s;}
+.burnout-answer-opt:hover{border-color:var(--slate);background:#EAF3FB;}
+.burnout-back-link{font-size:12px;color:var(--graphite);cursor:pointer;margin-top:12px;text-align:center;}
+.burnout-crisis-box{background:var(--crimson-light);border-left:4px solid var(--crimson);border-radius:var(--radius-sm);padding:16px;margin-bottom:18px;}
+.burnout-crisis-box .title{font-weight:700;color:var(--crimson);font-size:14px;margin-bottom:6px;}
+.burnout-crisis-box .body{font-size:13px;color:#7a1f1f;line-height:1.5;margin-bottom:10px;}
+.burnout-crisis-box a{color:var(--crimson);font-weight:700;}
+.burnout-score-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:6px;}
+.burnout-score-badge.low{background:#E3EEE3;color:var(--sage);}
+.burnout-score-badge.mild{background:#FBF3D9;color:#8A6A1E;}
+.burnout-score-badge.moderate{background:var(--terracotta-light);color:#8A2E10;}
+.burnout-score-badge.severe{background:var(--crimson-light);color:var(--crimson);}
+.burnout-action-btn{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--charcoal);}
+.burnout-action-btn:hover{border-color:var(--slate);}
 .checkin-exercise-intro{font-size:12px;color:var(--charcoal);margin:11px 0 8px;line-height:1.4;}
 .checkin-exercise-wrap{margin-bottom:7px;}
 .checkin-exercise-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--sage-light);border:1px solid var(--sage);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:#245A2A;cursor:pointer;transition:background 0.15s;}
@@ -726,6 +742,8 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="checkin-title">How are <em style="font-style:italic;color:var(--terracotta);">you</em> doing this week?</div>
       <div class="checkin-sub">Just for you. Not shared with the Huddle unless you want it to be.</div>
       <div id="checkin-body"></div>
+      <div style="text-align:center;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;margin-top:10px;" onclick="openBurnoutQuiz()">🧭 Want a fuller picture? Take the 2-minute burnout check-in →</div>
+      <div id="burnout-history-dots" style="display:flex;gap:5px;margin-top:8px;justify-content:center;"></div>
     </div>
     <div class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:10px 14px 0;" onclick="showScreen('costs')">💰 Track caregiving costs →</div>
     <div class="journal-link" style="background:var(--stone-light);border-radius:var(--radius-sm);margin:6px 14px 0;" onclick="showScreen('care-guide')">🧭 Do they need more help? →</div>
@@ -1496,6 +1514,17 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div onclick="sendDirectMessage()" style="width:42px;height:42px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;">➤</div>
   </div>
 </div>
+<div id="burnout-quiz-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:215;flex-direction:column;overflow-y:auto;">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:14px;color:var(--slate-dark);">Burnout check-in</div>
+      <div id="burnout-quiz-progress-label" style="font-size:10.5px;color:var(--graphite);">Just for you, not shared with the Huddle</div>
+    </div>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeBurnoutQuiz()">✕</div>
+  </div>
+  <div style="height:4px;background:var(--stone-light);flex-shrink:0;"><div id="burnout-quiz-progress-bar" style="height:100%;background:var(--slate);width:0%;transition:width 0.2s;"></div></div>
+  <div id="burnout-quiz-body" style="flex:1;padding:24px 18px;max-width:480px;margin:0 auto;width:100%;box-sizing:border-box;"></div>
+</div>
 <div id="account-menu-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.4);z-index:200;" onclick="if(event.target===this)closeAccountMenu()">
   <div style="position:absolute;top:60px;right:16px;background:var(--white);border-radius:var(--radius);box-shadow:0 6px 24px rgba(0,0,0,0.15);min-width:220px;overflow:hidden;">
     <div style="padding:10px 16px;font-size:12px;color:var(--stone);border-bottom:1px solid var(--stone-light);" id="account-menu-name">Account</div>
@@ -2152,6 +2181,7 @@ async function enterApp(user,displayName){
   await loadFamilyMembers();
   await loadCareContacts();
   await loadCheckinHistory();
+  await loadBurnoutHistory();
   await loadTasks();
   await loadVaultDocs();
   await loadCostEntries();
@@ -4566,7 +4596,7 @@ function renderCheckin(){
       followup=`<div class="checkin-followup">
         <div class="checkin-followup-text">Two rough weeks in a row is worth noticing. You're carrying a lot right now. Want to loop someone else in?</div>
         <div class="checkin-followup-actions">
-          ${others.map(o=>`<div class="checkin-followup-btn" onclick="checkinFollowup('${o.display_name.replace(/'/g,"\\'")}')">Ask ${o.display_name} to step in</div>`).join('')}
+          ${others.map(o=>`<div class="checkin-followup-btn" onclick="checkinFollowup('${o.user_id}','${o.display_name.replace(/'/g,"\\'")}')">Ask ${o.display_name} to step in</div>`).join('')}
         </div>
         <div class="checkin-followup-status" id="checkin-followup-status"></div>
       </div>`;
@@ -4588,9 +4618,200 @@ async function selectMood(key){
   await loadCheckinHistory();
 }
 
-function checkinFollowup(name){
+async function checkinFollowup(otherUserId,name){
   const status=document.getElementById('checkin-followup-status');
-  if(status) status.textContent=`Sent. ${name} will see a note asking them to check in more this week ✓`;
+  if(!CURRENT_USER||!CURRENT_FAMILY_ID||!otherUserId){
+    if(status)status.textContent='Could not send that right now.';
+    return;
+  }
+  const {error}=await sb.from('direct_messages').insert({
+    family_id:CURRENT_FAMILY_ID,
+    sender_id:CURRENT_USER.id,
+    recipient_id:otherUserId,
+    content:"Hey, just a heads up from my Handled with Care check-in: I've had a couple of rough weeks and could use a bit more support if you're able."
+  });
+  if(error){
+    if(status)status.textContent='Could not send: '+error.message;
+    return;
+  }
+  if(status)status.textContent=`Sent. ${name} will see this as a private message from you ✓`;
+}
+
+/* ══════════ BURNOUT CHECK-IN QUIZ ══════════
+   A deeper, optional companion to the weekly mood tap above -- 10
+   questions across the domains real caregiver-burden screening tools
+   use (physical, sleep, emotional, isolation, self-neglect, overwhelm,
+   support), scored 0-30. Same privacy promise as the mood check-in:
+   private to the person, never surfaced to the family automatically.
+   Question 10 is a safety-flag item; any answer above "Never" shows
+   crisis resources immediately and unconditionally on the results
+   screen, regardless of total score -- this never gets suppressed by
+   a low overall number. Results route into this app's own real
+   features (Tasks, Care Team, the private chat we just built) rather
+   than generic advice, since "assign this to someone" is something
+   the person can actually do here, not just read about. */
+const BURNOUT_QUESTIONS=[
+  {domain:'Physical',text:"I've had headaches, stomach issues, or other physical symptoms I think are stress-related."},
+  {domain:'Sleep',text:"My sleep has been disrupted because of caregiving."},
+  {domain:'Emotional',text:"I've felt irritable or snapped at people more than usual."},
+  {domain:'Emotional',text:"I've felt resentful, numb, or detached toward the person I'm caring for."},
+  {domain:'Isolation',text:"I've felt cut off from friends or things I used to enjoy."},
+  {domain:'Self-Neglect',text:"I've skipped my own meals, appointments, or basic needs to keep up with caregiving."},
+  {domain:'Overwhelm',text:"I've felt like there's too much on me and no real plan for handling it."},
+  {domain:'Overwhelm',text:"I've felt like I have no time that's actually mine."},
+  {domain:'Support',text:"I've felt unsupported by the rest of the family."},
+  {domain:'Safety',text:"I've had thoughts that things would be easier if I weren't around."}
+];
+const BURNOUT_ANSWER_OPTIONS=[
+  {label:'Never',value:0},
+  {label:'Rarely',value:1},
+  {label:'Sometimes',value:2},
+  {label:'Often or always',value:3}
+];
+let burnoutQuizStep=0;
+let burnoutQuizAnswers=[];
+let BURNOUT_HISTORY=[];
+
+async function loadBurnoutHistory(){
+  if(!CURRENT_USER)return;
+  const {data,error}=await sb.from('burnout_quiz_entries').select('band,submitted_at').eq('user_id',CURRENT_USER.id).order('submitted_at',{ascending:true}).limit(12);
+  if(error){console.error('Could not load burnout quiz history:',error.message);return;}
+  BURNOUT_HISTORY=data||[];
+  renderBurnoutHistoryDots();
+}
+
+const BURNOUT_BAND_COLORS={low:'var(--sage)',mild:'#C9A227',moderate:'var(--terracotta)',severe:'var(--crimson)'};
+
+function renderBurnoutHistoryDots(){
+  const el=document.getElementById('burnout-history-dots');
+  if(!el)return;
+  if(BURNOUT_HISTORY.length===0){el.innerHTML='';return;}
+  el.innerHTML=BURNOUT_HISTORY.map(h=>`<div class="checkin-dot" style="background:${BURNOUT_BAND_COLORS[h.band]}" title="${new Date(h.submitted_at).toLocaleDateString()}: ${h.band}"></div>`).join('');
+}
+
+function openBurnoutQuiz(){
+  burnoutQuizStep=0;
+  burnoutQuizAnswers=[];
+  document.getElementById('burnout-quiz-overlay').style.display='flex';
+  renderBurnoutQuizStep();
+}
+function closeBurnoutQuiz(){
+  document.getElementById('burnout-quiz-overlay').style.display='none';
+}
+
+function renderBurnoutQuizStep(){
+  const body=document.getElementById('burnout-quiz-body');
+  const progressLabel=document.getElementById('burnout-quiz-progress-label');
+  const progressBar=document.getElementById('burnout-quiz-progress-bar');
+  const q=BURNOUT_QUESTIONS[burnoutQuizStep];
+  progressLabel.textContent=`Question ${burnoutQuizStep+1} of ${BURNOUT_QUESTIONS.length}`;
+  progressBar.style.width=((burnoutQuizStep)/BURNOUT_QUESTIONS.length*100)+'%';
+  body.innerHTML=`
+    <div class="burnout-q-domain">${q.domain}</div>
+    <div class="burnout-q-text">${q.text}</div>
+    <div>${BURNOUT_ANSWER_OPTIONS.map(o=>`<div class="burnout-answer-opt" onclick="answerBurnoutQuestion(${o.value})">${o.label}</div>`).join('')}</div>
+    ${burnoutQuizStep>0?'<div class="burnout-back-link" onclick="backBurnoutQuestion()">← Back</div>':''}
+  `;
+}
+
+function answerBurnoutQuestion(value){
+  burnoutQuizAnswers[burnoutQuizStep]=value;
+  if(burnoutQuizStep<BURNOUT_QUESTIONS.length-1){
+    burnoutQuizStep++;
+    renderBurnoutQuizStep();
+  } else {
+    submitBurnoutQuiz();
+  }
+}
+function backBurnoutQuestion(){
+  if(burnoutQuizStep>0){
+    burnoutQuizStep--;
+    renderBurnoutQuizStep();
+  }
+}
+
+function burnoutBandFor(score){
+  if(score<=7)return'low';
+  if(score<=15)return'mild';
+  if(score<=22)return'moderate';
+  return'severe';
+}
+
+async function submitBurnoutQuiz(){
+  const score=burnoutQuizAnswers.reduce((a,b)=>a+b,0);
+  const band=burnoutBandFor(score);
+  const crisisFlag=burnoutQuizAnswers[9]>0;
+  if(CURRENT_USER&&CURRENT_FAMILY_ID){
+    const {error}=await sb.from('burnout_quiz_entries').insert({
+      family_id:CURRENT_FAMILY_ID,user_id:CURRENT_USER.id,
+      answers:burnoutQuizAnswers,score,band,crisis_flag:crisisFlag
+    });
+    if(error)console.error('Could not save burnout quiz:',error.message);
+    else await loadBurnoutHistory();
+  }
+  renderBurnoutResults(score,band,crisisFlag);
+}
+
+const BURNOUT_BAND_CONTENT={
+  low:{
+    label:'Low',
+    summary:"You're managing reasonably well right now. Caregiving is a long-term commitment, so it's worth setting up support before intensity grows, not after.",
+    actions:[
+      {text:'Make sure your Care Team roster has real contacts saved',action:"closeBurnoutQuiz();showScreen('roster');"},
+      {text:'Check that your Tasks list reflects who actually does what',action:"closeBurnoutQuiz();showScreen('home');"}
+    ]
+  },
+  mild:{
+    label:'Mild',
+    summary:"Early signs worth paying attention to. The risk at this stage is normalizing it. Small changes now are easier than bigger ones later.",
+    actions:[
+      {text:'Assign one recurring task to someone else in your Huddle',action:"closeBurnoutQuiz();showScreen('home');"},
+      {text:'Post a quick update in the Journal so your Huddle sees how things are going',action:"closeBurnoutQuiz();showScreen('journal');"}
+    ]
+  },
+  moderate:{
+    label:'Moderate',
+    summary:"This is active burnout territory, not just a hard week. It's worth a real conversation, not just pushing through.",
+    actions:[
+      {text:'Message someone in your Care Team directly right now',action:"closeBurnoutQuiz();showScreen('roster');"},
+      {text:'Post an honest update in the Journal for the whole Huddle',action:"closeBurnoutQuiz();showScreen('journal');"},
+      {text:'Talk to your own doctor about how you\'ve been feeling',action:"closeBurnoutQuiz();"}
+    ]
+  },
+  severe:{
+    label:'Severe',
+    summary:"Your health and the care you're able to give are both at real risk right now. This isn't something to carry alone or push through.",
+    actions:[
+      {text:'Message someone in your Care Team directly right now',action:"closeBurnoutQuiz();showScreen('roster');"},
+      {text:'Talk to your doctor this week, not eventually',action:"closeBurnoutQuiz();"},
+      {text:'Post an honest update in the Journal for the whole Huddle',action:"closeBurnoutQuiz();showScreen('journal');"}
+    ]
+  }
+};
+
+function renderBurnoutResults(score,band,crisisFlag){
+  const body=document.getElementById('burnout-quiz-body');
+  const progressLabel=document.getElementById('burnout-quiz-progress-label');
+  const progressBar=document.getElementById('burnout-quiz-progress-bar');
+  progressLabel.textContent='Your results';
+  progressBar.style.width='100%';
+  const content=BURNOUT_BAND_CONTENT[band];
+  const crisisHTML=crisisFlag?`<div class="burnout-crisis-box">
+    <div class="title">Please read this before anything else</div>
+    <div class="body">You answered that you've had thoughts that things would be easier if you weren't around. That's serious, and you deserve support right now, not just later. The 988 Suicide &amp; Crisis Lifeline is free, confidential, and available right now.</div>
+    <a href="tel:988">📞 Call 988</a> &nbsp;·&nbsp; <a href="sms:988">💬 Text 988</a>
+  </div>`:'';
+  body.innerHTML=`
+    ${crisisHTML}
+    <div style="text-align:center;margin-bottom:18px;">
+      <div class="burnout-score-badge ${band}">${content.label} · ${score}/30</div>
+    </div>
+    <div style="font-size:14px;color:var(--charcoal);line-height:1.6;margin-bottom:20px;">${content.summary}</div>
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">What you can actually do right now</div>
+    ${content.actions.map(a=>`<div class="burnout-action-btn" onclick="${a.action}">→ ${a.text}</div>`).join('')}
+    <div style="font-size:10.5px;color:var(--stone);text-align:center;margin-top:18px;line-height:1.6;">This is a self-check-in, not a medical diagnosis. If you're in crisis, call or text 988 any time.</div>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--slate);font-weight:600;cursor:pointer;" onclick="closeBurnoutQuiz()">Close</div>
+  `;
 }
 
 /* ── ONBOARDING ── */
