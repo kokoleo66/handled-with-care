@@ -181,6 +181,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 .burnout-score-badge.severe{background:var(--crimson-light);color:var(--crimson);}
 .burnout-action-btn{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--charcoal);}
 .burnout-action-btn:hover{border-color:var(--slate);}
+.np-toggle{width:42px;height:24px;border-radius:12px;background:var(--stone-light);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.np-toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:left 0.2s;}
+.np-toggle.on{background:var(--sage);}
+.np-toggle.on::after{left:20px;}
 .checkin-exercise-intro{font-size:12px;color:var(--charcoal);margin:11px 0 8px;line-height:1.4;}
 .checkin-exercise-wrap{margin-bottom:7px;}
 .checkin-exercise-btn{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--sage-light);border:1px solid var(--sage);border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:#245A2A;cursor:pointer;transition:background 0.15s;}
@@ -1528,8 +1532,33 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 <div id="account-menu-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.4);z-index:200;" onclick="if(event.target===this)closeAccountMenu()">
   <div style="position:absolute;top:60px;right:16px;background:var(--white);border-radius:var(--radius);box-shadow:0 6px 24px rgba(0,0,0,0.15);min-width:220px;overflow:hidden;">
     <div style="padding:10px 16px;font-size:12px;color:var(--stone);border-bottom:1px solid var(--stone-light);" id="account-menu-name">Account</div>
-    <div style="padding:13px 16px;font-size:13.5px;color:var(--charcoal);cursor:pointer;" onclick="closeAccountMenu();openConsentPolicy();">📄 Consumer Health Data Privacy Policy</div>
+    <div style="padding:13px 16px;font-size:13.5px;color:var(--charcoal);cursor:pointer;" onclick="closeAccountMenu();openNotificationPrefs();">🔔 Notification preferences</div>
+    <div style="padding:13px 16px;font-size:13.5px;color:var(--charcoal);cursor:pointer;border-top:1px solid var(--stone-light);" onclick="closeAccountMenu();openConsentPolicy();">📄 Consumer Health Data Privacy Policy</div>
     <div style="padding:13px 16px;font-size:13.5px;color:var(--crimson);cursor:pointer;border-top:1px solid var(--stone-light);" onclick="closeAccountMenu();confirmSignOut();">🚪 Sign out</div>
+  </div>
+</div>
+<div id="notification-prefs-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:4px;">Notification preferences</div>
+    <div style="font-size:11.5px;color:var(--graphite);margin-bottom:16px;">Applies to this account across all your devices.</div>
+
+    <div id="np-med-row" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--stone-light);">
+      <div><div style="font-size:13.5px;font-weight:600;color:var(--charcoal);">Overdue medication alerts</div><div style="font-size:11px;color:var(--graphite);">A medication hasn't been logged past its scheduled time</div></div>
+      <div class="np-toggle" id="np-toggle-medications" onclick="toggleNotifPref('medications_enabled')"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--stone-light);">
+      <div><div style="font-size:13.5px;font-weight:600;color:var(--charcoal);">Appointment reminders</div><div style="font-size:11px;color:var(--graphite);">About an hour before an appointment starts</div></div>
+      <div class="np-toggle" id="np-toggle-appointment_reminder" onclick="toggleNotifPref('appointment_reminder_enabled')"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--stone-light);">
+      <div><div style="font-size:13.5px;font-weight:600;color:var(--charcoal);">Daily activity digest</div><div style="font-size:11px;color:var(--graphite);">One evening summary of notes, changes, and chat, not each one separately</div></div>
+      <div class="np-toggle" id="np-toggle-daily_digest" onclick="toggleNotifPref('daily_digest_enabled')"></div>
+    </div>
+    <div style="padding:12px 0;">
+      <div style="font-size:13.5px;font-weight:600;color:var(--charcoal);">Private messages &amp; assigned tasks</div>
+      <div style="font-size:11px;color:var(--graphite);">Always on, since these are addressed to you specifically</div>
+    </div>
+    <div style="margin-top:14px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="closeNotificationPrefs()">Done</div>
   </div>
 </div>
 </div><!-- end screens-wrap -->
@@ -1590,29 +1619,60 @@ async function registerServiceWorker(){
 // Shows the "get alerted" prompt only when it's actually actionable:
 // browser supports push, permission hasn't been denied outright, and
 // this device isn't already subscribed.
-let NOTIFICATION_PREFS={medications_enabled:true};
+let NOTIFICATION_PREFS={medications_enabled:true,appointment_reminder_enabled:true,daily_digest_enabled:true};
 
 async function loadNotificationPrefs(){
   if(!CURRENT_USER)return;
-  const {data,error}=await sb.from('notification_preferences').select('medications_enabled').eq('user_id',CURRENT_USER.id).maybeSingle();
+  const {data,error}=await sb.from('notification_preferences').select('medications_enabled,appointment_reminder_enabled,daily_digest_enabled').eq('user_id',CURRENT_USER.id).maybeSingle();
   if(error){console.error('Could not load notification preferences:',error.message);return;}
   NOTIFICATION_PREFS.medications_enabled=data?data.medications_enabled:true;
+  NOTIFICATION_PREFS.appointment_reminder_enabled=data?data.appointment_reminder_enabled:true;
+  NOTIFICATION_PREFS.daily_digest_enabled=data?data.daily_digest_enabled:true;
+  const stateEl=document.getElementById('med-alert-pref-state');
+  if(stateEl)stateEl.textContent=NOTIFICATION_PREFS.medications_enabled?'on':'off';
+  syncNotifToggleUI();
+}
+
+async function toggleMedicationAlertPref(){
+  await setNotifPref('medications_enabled',!NOTIFICATION_PREFS.medications_enabled);
   const stateEl=document.getElementById('med-alert-pref-state');
   if(stateEl)stateEl.textContent=NOTIFICATION_PREFS.medications_enabled?'on':'off';
 }
 
-async function toggleMedicationAlertPref(){
-  const newValue=!NOTIFICATION_PREFS.medications_enabled;
+async function setNotifPref(field,newValue){
   const {error}=await sb.from('notification_preferences').upsert({
     user_id:CURRENT_USER.id,
     family_id:CURRENT_FAMILY_ID,
-    medications_enabled:newValue,
+    [field]:newValue,
     updated_at:new Date().toISOString()
   },{onConflict:'user_id'});
   if(error){alert('Could not update your notification preference: '+error.message);return;}
-  NOTIFICATION_PREFS.medications_enabled=newValue;
-  const stateEl=document.getElementById('med-alert-pref-state');
-  if(stateEl)stateEl.textContent=newValue?'on':'off';
+  NOTIFICATION_PREFS[field]=newValue;
+  syncNotifToggleUI();
+}
+
+function toggleNotifPref(field){
+  setNotifPref(field,!NOTIFICATION_PREFS[field]);
+}
+
+function syncNotifToggleUI(){
+  const map={
+    'np-toggle-medications':NOTIFICATION_PREFS.medications_enabled,
+    'np-toggle-appointment_reminder':NOTIFICATION_PREFS.appointment_reminder_enabled,
+    'np-toggle-daily_digest':NOTIFICATION_PREFS.daily_digest_enabled
+  };
+  Object.keys(map).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.classList.toggle('on',!!map[id]);
+  });
+}
+
+function openNotificationPrefs(){
+  syncNotifToggleUI();
+  document.getElementById('notification-prefs-overlay').style.display='flex';
+}
+function closeNotificationPrefs(){
+  document.getElementById('notification-prefs-overlay').style.display='none';
 }
 
 async function setupPushUI(){
@@ -2500,6 +2560,17 @@ async function sendDirectMessage(){
   });
   if(error){alert('Could not send message: '+error.message);input.value=content;return;}
   await loadDirectMessages();
+  notifyDirectPush(activeDmPartnerId,`New message from ${CURRENT_DISPLAY_NAME||'a Huddle member'}`,content,'dm-'+activeDmPartnerId);
+}
+
+// Fire-and-forget instant push. Never blocks the UI and never
+// surfaces its own errors to the user -- if this fails, the message
+// itself still sent and saved fine, only the notification is missed.
+function notifyDirectPush(recipientUserId,title,notifBody,tag){
+  fetch('/.netlify/functions/send-direct-push',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({recipientUserId,title,notifBody:notifBody.slice(0,120),url:'/',tag})
+  }).catch(err=>console.error('Push notify failed:',err.message));
 }
 
 async function markDirectMessagesRead(otherUserId){
@@ -2753,6 +2824,9 @@ async function saveNewTask(){
     created_by:CURRENT_USER.id
   });
   if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  if(assignedTo&&assignedTo!==CURRENT_USER.id){
+    notifyDirectPush(assignedTo,'New task assigned to you',title,'task-assigned');
+  }
   hideAddTaskForm();
   await loadTasks();
 }
