@@ -645,7 +645,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <p style="font-weight:700;margin-bottom:4px;">What we collect and why</p>
       <p style="margin-bottom:10px;">Health conditions, medications, and care metrics you or your Huddle enter, strictly to display and coordinate that information within your family's account. We don't collect anything beyond what the app's features need, and we don't use it for any purpose beyond what's described here without asking you first.</p>
       <p style="font-weight:700;margin-bottom:4px;">Who it's shared with</p>
-      <p style="margin-bottom:10px;">We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle; you'll always see a clear prompt before an invite goes out. It's processed by our infrastructure providers (cloud hosting, database, and, for photo-scanning features, Anthropic's Claude API) strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it.</p>
+      <p style="margin-bottom:10px;">We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle; you'll always see a clear prompt before an invite goes out. It's processed by our infrastructure providers (cloud hosting, database, Anthropic's Claude API for photo-scanning features, and OpenAI's Whisper API for voice note transcription) strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it.</p>
       <p style="font-weight:700;margin-bottom:4px;">Your rights</p>
       <p style="margin-bottom:10px;">You can access, correct, delete, or withdraw consent for your health data at any time by emailing nicole@genxcaregiver.care or visiting genxcaregiver.care/health-privacy-request. We respond within 45 days, and you can appeal any decision we make.</p>
       <p style="margin-bottom:0;">You can read this policy in full any time from the app settings (tap your avatar, top right). Checking the box on the signup screen confirms you've had the chance to review it, and it doesn't waive any of the rights described above.</p>
@@ -1268,6 +1268,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div class="doc-sheet-close" onclick="closeCompose('journal')">✕</div>
       </div>
       <textarea class="compose-textarea" id="compose-text-journal" placeholder="How's Mom doing today? What should the family know?"></textarea>
+      <div style="text-align:center;font-size:12.5px;color:var(--slate);font-weight:600;cursor:pointer;margin:-4px 0 10px;" onclick="openVoiceRecorder()">🎤 Record instead</div>
       <div class="compose-submit" onclick="submitNote('journal')">Post to Journal</div>
       <div class="doc-sheet-status" id="compose-status-journal"></div>
     </div>
@@ -1450,11 +1451,34 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
 <div id="ai-photo-consent-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
     <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;">Before we scan this photo</div>
-    <div style="font-size:13px;color:var(--charcoal);line-height:1.6;margin-bottom:18px;">This photo will be sent to Anthropic's Claude AI to read the medication, condition, or receipt information on it. Anthropic processes it only to extract that information for you and doesn't use it to train their models. The photo itself isn't stored afterward — only the information you confirm gets saved. You'll only see this notice once.</div>
+    <div style="font-size:13px;color:var(--charcoal);line-height:1.6;margin-bottom:18px;">This photo will be sent to Anthropic's Claude AI to read the medication, condition, or receipt information on it. Anthropic processes it only to extract that information for you and doesn't use it to train their models. The photo itself isn't stored afterward, only the information you confirm gets saved. You'll only see this notice once.</div>
     <div style="display:flex;gap:8px;">
       <div id="ai-photo-consent-cancel" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Not now</div>
       <div id="ai-photo-consent-confirm" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;">I understand, continue</div>
     </div>
+  </div>
+</div>
+<div id="ai-voice-consent-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:10px;">Before we transcribe this recording</div>
+    <div style="font-size:13px;color:var(--charcoal);line-height:1.6;margin-bottom:18px;">Your voice note will be sent to OpenAI's Whisper API to turn it into text, then to Anthropic's Claude AI to clean it up. Neither uses it to train their models, and it's processed only to give you the note you see. The audio itself isn't stored afterward, only the text you review and confirm gets saved. You'll only see this notice once.</div>
+    <div style="display:flex;gap:8px;">
+      <div id="ai-voice-consent-cancel" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);">Not now</div>
+      <div id="ai-voice-consent-confirm" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;">I understand, continue</div>
+    </div>
+  </div>
+</div>
+<div id="voice-record-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.6);z-index:210;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:360px;width:100%;padding:26px 22px;text-align:center;">
+    <div id="voice-record-icon" style="font-size:40px;margin-bottom:10px;">🎤</div>
+    <div id="voice-record-status" style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:6px;">Ready to record</div>
+    <div id="voice-record-timer" style="font-size:22px;font-weight:700;color:var(--charcoal);margin-bottom:16px;">0:00</div>
+    <div id="voice-record-error" style="font-size:12.5px;color:var(--crimson);margin-bottom:12px;display:none;"></div>
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="cancelVoiceRecording()">Cancel</div>
+      <div id="voice-record-action-btn" style="flex:1;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--crimson);color:white;" onclick="startVoiceRecording()">Start recording</div>
+    </div>
+    <div style="font-size:10.5px;color:var(--stone);margin-top:12px;">Keep it under 2 minutes for best results</div>
   </div>
 </div>
 <div id="account-menu-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.4);z-index:200;" onclick="if(event.target===this)closeAccountMenu()">
@@ -1893,7 +1917,7 @@ async function submitFinishSetup(){
    account, not on every scan, since re-prompting every single time
    would be exactly the kind of consent fatigue that undermines a real
    choice — but the disclosure itself is unavoidable on first use. */
-let CONSENT_STATUS={ai_photo_processing:false};
+let CONSENT_STATUS={ai_photo_processing:false,ai_voice_processing:false};
 
 function openConsentPolicy(){document.getElementById('consent-policy-overlay').style.display='flex';}
 function closeConsentPolicy(){document.getElementById('consent-policy-overlay').style.display='none';}
@@ -1908,9 +1932,11 @@ async function logConsent(userId,consentType){
 
 async function loadConsentStatus(){
   if(!CURRENT_USER)return;
-  const {data,error}=await sb.from('consent_records').select('consent_type').eq('user_id',CURRENT_USER.id).eq('consent_type','ai_photo_processing').limit(1);
+  const {data,error}=await sb.from('consent_records').select('consent_type').eq('user_id',CURRENT_USER.id).in('consent_type',['ai_photo_processing','ai_voice_processing']);
   if(error){console.error('Could not load consent status:',error.message);return;}
-  CONSENT_STATUS.ai_photo_processing=!!(data&&data.length);
+  const types=new Set((data||[]).map(r=>r.consent_type));
+  CONSENT_STATUS.ai_photo_processing=types.has('ai_photo_processing');
+  CONSENT_STATUS.ai_voice_processing=types.has('ai_voice_processing');
 }
 
 // Gate shown once, before the very first medication/conditions/receipt
@@ -1927,6 +1953,154 @@ function requestAiPhotoConsent(onConfirm){
     onConfirm();
   };
   document.getElementById('ai-photo-consent-cancel').onclick=()=>{overlay.style.display='none';};
+}
+
+function requestAiVoiceConsent(onConfirm){
+  if(CONSENT_STATUS.ai_voice_processing){onConfirm();return;}
+  const overlay=document.getElementById('ai-voice-consent-overlay');
+  overlay.style.display='flex';
+  document.getElementById('ai-voice-consent-confirm').onclick=async()=>{
+    overlay.style.display='none';
+    CONSENT_STATUS.ai_voice_processing=true;
+    await logConsent(CURRENT_USER.id,'ai_voice_processing');
+    onConfirm();
+  };
+  document.getElementById('ai-voice-consent-cancel').onclick=()=>{overlay.style.display='none';};
+}
+
+/* ══════════ VOICE NOTE TRANSCRIPTION ══════════
+   Records audio via MediaRecorder, sends it to the transcribe-note
+   Netlify function (Whisper -> Claude cleanup pipeline), and drops the
+   cleaned result into the Journal's compose textarea for the person to
+   review and edit before posting -- never auto-posts. Reuses the
+   existing submitNote('journal') save path entirely; this only fills
+   the textarea. */
+let voiceMediaRecorder=null;
+let voiceAudioChunks=[];
+let voiceRecordTimerInterval=null;
+let voiceRecordSeconds=0;
+const VOICE_RECORD_MAX_SECONDS=120;
+
+function openVoiceRecorder(){
+  requestAiVoiceConsent(()=>{
+    resetVoiceRecorderUI();
+    document.getElementById('voice-record-overlay').style.display='flex';
+  });
+}
+
+function resetVoiceRecorderUI(){
+  voiceRecordSeconds=0;
+  document.getElementById('voice-record-icon').textContent='🎤';
+  document.getElementById('voice-record-status').textContent='Ready to record';
+  document.getElementById('voice-record-timer').textContent='0:00';
+  document.getElementById('voice-record-error').style.display='none';
+  const btn=document.getElementById('voice-record-action-btn');
+  btn.textContent='Start recording';
+  btn.style.background='var(--crimson)';
+  btn.onclick=startVoiceRecording;
+}
+
+function formatVoiceTimer(sec){
+  const m=Math.floor(sec/60);
+  const s=sec%60;
+  return `${m}:${s<10?'0':''}${s}`;
+}
+
+async function startVoiceRecording(){
+  const errEl=document.getElementById('voice-record-error');
+  errEl.style.display='none';
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const mimeType=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':(MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'');
+    voiceMediaRecorder=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
+    voiceAudioChunks=[];
+    voiceMediaRecorder.ondataavailable=(e)=>{if(e.data.size>0)voiceAudioChunks.push(e.data);};
+    voiceMediaRecorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());};
+    voiceMediaRecorder.start();
+
+    document.getElementById('voice-record-icon').textContent='🔴';
+    document.getElementById('voice-record-status').textContent='Recording…';
+    const btn=document.getElementById('voice-record-action-btn');
+    btn.textContent='Stop && transcribe';
+    btn.style.background='var(--slate)';
+    btn.onclick=stopVoiceRecording;
+
+    voiceRecordSeconds=0;
+    document.getElementById('voice-record-timer').textContent=formatVoiceTimer(0);
+    voiceRecordTimerInterval=setInterval(()=>{
+      voiceRecordSeconds++;
+      document.getElementById('voice-record-timer').textContent=formatVoiceTimer(voiceRecordSeconds);
+      if(voiceRecordSeconds>=VOICE_RECORD_MAX_SECONDS)stopVoiceRecording();
+    },1000);
+  }catch(err){
+    errEl.textContent="Could not access your microphone. Check your browser's permission settings and try again.";
+    errEl.style.display='block';
+  }
+}
+
+function stopVoiceRecording(){
+  clearInterval(voiceRecordTimerInterval);
+  if(!voiceMediaRecorder||voiceMediaRecorder.state==='inactive')return;
+  document.getElementById('voice-record-status').textContent='Transcribing…';
+  document.getElementById('voice-record-icon').textContent='⏳';
+  const btn=document.getElementById('voice-record-action-btn');
+  btn.textContent='Please wait…';
+  btn.onclick=null;
+  btn.style.background='var(--stone)';
+
+  voiceMediaRecorder.onstop=async()=>{
+    voiceMediaRecorder.stream.getTracks().forEach(t=>t.stop());
+    const blob=new Blob(voiceAudioChunks,{type:voiceMediaRecorder.mimeType||'audio/webm'});
+    await sendVoiceForTranscription(blob);
+  };
+  voiceMediaRecorder.stop();
+}
+
+function cancelVoiceRecording(){
+  clearInterval(voiceRecordTimerInterval);
+  if(voiceMediaRecorder&&voiceMediaRecorder.state!=='inactive'){
+    voiceMediaRecorder.onstop=()=>{voiceMediaRecorder.stream.getTracks().forEach(t=>t.stop());};
+    voiceMediaRecorder.stop();
+  }
+  document.getElementById('voice-record-overlay').style.display='none';
+}
+
+function blobToBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onloadend=()=>resolve(reader.result.split(',')[1]);
+    reader.onerror=reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function sendVoiceForTranscription(blob){
+  const errEl=document.getElementById('voice-record-error');
+  try{
+    const audioBase64=await blobToBase64(blob);
+    const res=await fetch('/.netlify/functions/transcribe-note',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({audioBase64,mimeType:blob.type,mode:'general'})
+    });
+    const data=await res.json();
+    if(!res.ok){
+      throw new Error(data.error||'Could not transcribe your recording.');
+    }
+    const noteText=(data.note&&data.note.cleanedNote)?data.note.cleanedNote:data.rawTranscript;
+    const textarea=document.getElementById('compose-text-journal');
+    textarea.value=textarea.value?(textarea.value+'\n\n'+noteText):noteText;
+    document.getElementById('voice-record-overlay').style.display='none';
+  }catch(err){
+    document.getElementById('voice-record-icon').textContent='🎤';
+    document.getElementById('voice-record-status').textContent='Ready to record';
+    errEl.textContent=err.message||'Something went wrong transcribing your recording. You can try again or type your note instead.';
+    errEl.style.display='block';
+    const btn=document.getElementById('voice-record-action-btn');
+    btn.textContent='Start recording';
+    btn.style.background='var(--crimson)';
+    btn.onclick=startVoiceRecording;
+  }
 }
 
 /* ══════════ SECURITY AUDIT LOG ══════════
