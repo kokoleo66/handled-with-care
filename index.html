@@ -665,7 +665,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <p style="font-weight:700;margin-bottom:4px;">What we collect and why</p>
       <p style="margin-bottom:10px;">Health conditions, medications, and care metrics you or your Huddle enter, strictly to display and coordinate that information within your family's account. We don't collect anything beyond what the app's features need, and we don't use it for any purpose beyond what's described here without asking you first.</p>
       <p style="font-weight:700;margin-bottom:4px;">Who it's shared with</p>
-      <p style="margin-bottom:10px;">We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle; you'll always see a clear prompt before an invite goes out. It's processed by our infrastructure providers (cloud hosting, database, Anthropic's Claude API for photo-scanning features, and OpenAI's Whisper API for voice note transcription) strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it.</p>
+      <p style="margin-bottom:10px;">We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle; you'll always see a clear prompt before an invite goes out. It's processed by four infrastructure providers strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it: Netlify (application hosting), Supabase (database and authentication), Anthropic's Claude API (photo-scanning features), and OpenAI's Whisper API (voice note transcription).</p>
       <p style="font-weight:700;margin-bottom:4px;">Your rights</p>
       <p style="margin-bottom:10px;">You can access, correct, delete, or withdraw consent for your health data at any time by emailing nicole@genxcaregiver.care or visiting genxcaregiver.care/health-privacy-request. We respond within 45 days, and you can appeal any decision we make.</p>
       <p style="margin-bottom:0;">You can read this policy in full any time from the app settings (tap your avatar, top right). Checking the box on the signup screen confirms you've had the chance to review it, and it doesn't waive any of the rights described above.</p>
@@ -1533,6 +1533,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
   <div style="position:absolute;top:60px;right:16px;background:var(--white);border-radius:var(--radius);box-shadow:0 6px 24px rgba(0,0,0,0.15);min-width:220px;overflow:hidden;">
     <div style="padding:10px 16px;font-size:12px;color:var(--stone);border-bottom:1px solid var(--stone-light);" id="account-menu-name">Account</div>
     <div style="padding:13px 16px;font-size:13.5px;color:var(--charcoal);cursor:pointer;" onclick="closeAccountMenu();openNotificationPrefs();">🔔 Notification preferences</div>
+    <div style="padding:13px 16px;font-size:13.5px;color:var(--charcoal);cursor:pointer;border-top:1px solid var(--stone-light);" onclick="closeAccountMenu();openManageConsent();">✅ Manage AI consent</div>
     <div style="padding:13px 16px;font-size:13.5px;color:var(--charcoal);cursor:pointer;border-top:1px solid var(--stone-light);" onclick="closeAccountMenu();openConsentPolicy();">📄 Consumer Health Data Privacy Policy</div>
     <div style="padding:13px 16px;font-size:13.5px;color:var(--crimson);cursor:pointer;border-top:1px solid var(--stone-light);" onclick="closeAccountMenu();confirmSignOut();">🚪 Sign out</div>
   </div>
@@ -1559,6 +1560,23 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div style="font-size:11px;color:var(--graphite);">Always on, since these are addressed to you specifically</div>
     </div>
     <div style="margin-top:14px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="closeNotificationPrefs()">Done</div>
+  </div>
+</div>
+<div id="manage-consent-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:4px;">Manage AI consent</div>
+    <div style="font-size:11.5px;color:var(--graphite);margin-bottom:16px;">Turning one of these off means you'll be asked to consent again the next time you try to use that feature. This doesn't delete anything you've already saved.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--stone-light);">
+      <div><div style="font-size:13.5px;font-weight:600;color:var(--charcoal);">Photo scanning (Anthropic)</div><div style="font-size:11px;color:var(--graphite);">Medication, condition, and receipt photo scans</div></div>
+      <div class="np-toggle" id="consent-toggle-photo" onclick="toggleAiConsent('ai_photo_processing')"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--stone-light);">
+      <div><div style="font-size:13.5px;font-weight:600;color:var(--charcoal);">Voice transcription (OpenAI + Anthropic)</div><div style="font-size:11px;color:var(--graphite);">Recording and transcribing voice notes</div></div>
+      <div class="np-toggle" id="consent-toggle-voice" onclick="toggleAiConsent('ai_voice_processing')"></div>
+    </div>
+    <div style="font-size:10.5px;color:var(--stone);margin-top:14px;line-height:1.5;">To withdraw consent for basic account data collection entirely, or to delete your data, use the <a href="/health-privacy-request" target="_blank" style="color:var(--stone);">privacy request page</a> instead, since that closes your account rather than just one feature.</div>
+    <div style="margin-top:14px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="closeManageConsent()">Done</div>
   </div>
 </div>
 </div><!-- end screens-wrap -->
@@ -2026,21 +2044,62 @@ let CONSENT_STATUS={ai_photo_processing:false,ai_voice_processing:false};
 function openConsentPolicy(){document.getElementById('consent-policy-overlay').style.display='flex';}
 function closeConsentPolicy(){document.getElementById('consent-policy-overlay').style.display='none';}
 
-async function logConsent(userId,consentType){
+async function logConsent(userId,consentType,action){
   if(!userId)return;
   const {error}=await sb.from('consent_records').insert({
-    user_id:userId,family_id:CURRENT_FAMILY_ID||null,consent_type:consentType
+    user_id:userId,family_id:CURRENT_FAMILY_ID||null,consent_type:consentType,action:action||'granted'
   });
   if(error)console.error('Could not log consent:',error.message);
 }
 
 async function loadConsentStatus(){
   if(!CURRENT_USER)return;
-  const {data,error}=await sb.from('consent_records').select('consent_type').eq('user_id',CURRENT_USER.id).in('consent_type',['ai_photo_processing','ai_voice_processing']);
+  const {data,error}=await sb.from('consent_records').select('consent_type,action,created_at').eq('user_id',CURRENT_USER.id).in('consent_type',['ai_photo_processing','ai_voice_processing']).order('created_at',{ascending:true});
   if(error){console.error('Could not load consent status:',error.message);return;}
-  const types=new Set((data||[]).map(r=>r.consent_type));
-  CONSENT_STATUS.ai_photo_processing=types.has('ai_photo_processing');
-  CONSENT_STATUS.ai_voice_processing=types.has('ai_voice_processing');
+  // Latest row per type wins, so a revoke correctly overrides an
+  // earlier grant instead of the two rows' mere existence being
+  // treated as still-consented.
+  const latest={};
+  (data||[]).forEach(r=>{latest[r.consent_type]=r.action;});
+  CONSENT_STATUS.ai_photo_processing=latest.ai_photo_processing==='granted';
+  CONSENT_STATUS.ai_voice_processing=latest.ai_voice_processing==='granted';
+  syncConsentToggleUI();
+}
+
+async function revokeConsent(consentType){
+  await logConsent(CURRENT_USER.id,consentType,'revoked');
+  CONSENT_STATUS[consentType]=false;
+  syncConsentToggleUI();
+}
+
+function syncConsentToggleUI(){
+  const photoEl=document.getElementById('consent-toggle-photo');
+  const voiceEl=document.getElementById('consent-toggle-voice');
+  if(photoEl)photoEl.classList.toggle('on',!!CONSENT_STATUS.ai_photo_processing);
+  if(voiceEl)voiceEl.classList.toggle('on',!!CONSENT_STATUS.ai_voice_processing);
+}
+
+function toggleAiConsent(consentType){
+  if(CONSENT_STATUS[consentType]){
+    if(confirm("Turn this off? You'll be asked to re-consent the next time you try to use this feature."))revokeConsent(consentType);
+  } else {
+    // Re-granting from settings, not from a feature trigger -- log
+    // directly rather than routing through the feature-specific
+    // requestAi*Consent() helpers, which expect a pending action to
+    // resume afterward.
+    logConsent(CURRENT_USER.id,consentType,'granted').then(()=>{
+      CONSENT_STATUS[consentType]=true;
+      syncConsentToggleUI();
+    });
+  }
+}
+
+function openManageConsent(){
+  syncConsentToggleUI();
+  document.getElementById('manage-consent-overlay').style.display='flex';
+}
+function closeManageConsent(){
+  document.getElementById('manage-consent-overlay').style.display='none';
 }
 
 // Gate shown once, before the very first medication/conditions/receipt
@@ -2745,7 +2804,7 @@ function copyInviteLink(){
 }
 
 function memberNameFor(userId){
-  if(!userId)return null;
+  if(!userId)return'Former member';
   const m=FAMILY_MEMBERS.find(fm=>fm.user_id===userId);
   return m?m.display_name:'Someone';
 }
