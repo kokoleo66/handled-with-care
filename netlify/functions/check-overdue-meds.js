@@ -126,8 +126,22 @@ async function handler() {
 
   let sentCount = 0;
   for (const med of toNotify) {
-    const subs = await sb(`push_subscriptions?family_id=eq.${med.family_id}&select=id,endpoint,p256dh,auth`);
+    const subs = await sb(`push_subscriptions?family_id=eq.${med.family_id}&select=id,user_id,endpoint,p256dh,auth`);
     if (!subs || subs.length === 0) continue;
+
+    // Respect each person's own notification preference -- a device
+    // being subscribed doesn't override the person later deciding they
+    // don't want medication alerts specifically. Default (no row yet)
+    // is enabled, matching existing behavior for anyone who hasn't
+    // touched the toggle.
+    const userIds = [...new Set(subs.map((s) => s.user_id).filter(Boolean))];
+    let optedOut = new Set();
+    if (userIds.length > 0) {
+      const prefs = await sb(`notification_preferences?user_id=in.(${userIds.join(',')})&select=user_id,medications_enabled`);
+      optedOut = new Set(prefs.filter((p) => p.medications_enabled === false).map((p) => p.user_id));
+    }
+    const eligibleSubs = subs.filter((s) => !optedOut.has(s.user_id));
+    if (eligibleSubs.length === 0) continue;
 
     const payload = JSON.stringify({
       title: 'Medication not logged',
@@ -136,7 +150,7 @@ async function handler() {
       url: '/',
     });
 
-    for (const sub of subs) {
+    for (const sub of eligibleSubs) {
       const pushSub = {
         endpoint: sub.endpoint,
         keys: { p256dh: sub.p256dh, auth: sub.auth },
