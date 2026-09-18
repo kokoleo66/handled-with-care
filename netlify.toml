@@ -10,3 +10,8 @@
   from = "/health-privacy-request"
   to = "/privacy-request.html"
   status = 200
+
+[[redirects]]
+  from = "/health-privacy-policy"
+  to = "/privacy-policy.html"
+  status = 200
