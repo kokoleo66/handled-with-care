@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consumer Health Data Privacy Policy · Handled with Care</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#1273C4; --slate-dark:#0D5A99; --terracotta:#C4531A;
+    --charcoal:#2B2621; --graphite:#6B6259; --stone:#B8AC9C; --stone-light:#E8E1D6;
+    --cream:#FAF7F2; --white:#FFFFFF;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--charcoal);}
+  .wrap{max-width:620px;margin:0 auto;padding:40px 20px 80px;}
+  .brand{display:flex;align-items:center;gap:8px;margin-bottom:28px;}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .brand-name{font-family:'Lora',serif;font-size:17px;font-weight:700;color:var(--slate-dark);}
+  .brand-name em{color:var(--terracotta);font-style:italic;}
+  h1{font-family:'Lora',serif;font-size:26px;font-weight:700;color:var(--slate-dark);margin:0 0 4px;line-height:1.3;}
+  .eff{font-size:12px;color:var(--graphite);margin-bottom:24px;}
+  .card{background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:28px 26px;}
+  .card h2{font-family:'Lora',serif;font-size:16px;color:var(--slate-dark);margin:22px 0 8px;}
+  .card h2:first-child{margin-top:0;}
+  .card p{font-size:13.5px;line-height:1.65;margin:0 0 12px;color:var(--charcoal);}
+  .card a{color:var(--slate);}
+  .footer-note{font-size:11.5px;color:var(--stone);text-align:center;margin-top:24px;line-height:1.6;}
+  .footer-note a{color:var(--stone);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark">♥</div>
+    <div class="brand-name">Handled <em>with Care</em></div>
+  </div>
+  <h1>Consumer Health Data Privacy Policy</h1>
+  <div class="eff">Effective September 16, 2026 &middot; separate from our general Privacy Policy</div>
+
+  <div class="card">
+    <p>This policy applies to consumers in Washington, Nevada, California, and other states with consumer health data laws. It covers "Consumer Health Data," information linked to you that identifies a past, present, or future physical or mental health status, including conditions, medications, biometric data, and health-related location data.</p>
+
+    <h2>What we collect and why</h2>
+    <p>Health conditions, medications, and care metrics you or your Huddle enter, strictly to display and coordinate that information within your family's account. We don't collect anything beyond what the app's features need, and we don't use it for any purpose beyond what's described here without asking you first.</p>
+
+    <h2>Who it's shared with</h2>
+    <p>We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle; you'll always see a clear prompt before an invite goes out. It's processed by four infrastructure providers strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it: Netlify (application hosting), Supabase (database and authentication), Anthropic's Claude API (photo-scanning features), and OpenAI's Whisper API (voice note transcription).</p>
+
+    <h2>Your rights</h2>
+    <p>You can access, correct, delete, or withdraw consent for your health data at any time by emailing <a href="mailto:nicole@genxcaregiver.care">nicole@genxcaregiver.care</a> or visiting our <a href="/health-privacy-request">privacy request page</a>. We respond within 45 days, and you can appeal any decision we make.</p>
+
+    <h2>Reading this policy</h2>
+    <p>If you're using the app, you can also open this policy any time from Settings (tap your avatar, top right) without needing to leave the app. Agreeing to this policy at signup confirms you've had the chance to review it; it doesn't waive any of the rights described above.</p>
+  </div>
+
+  <div class="footer-note">Handled with Care &middot; Attn: Legal &amp; Privacy Office &middot; <a href="mailto:nicole@genxcaregiver.care">nicole@genxcaregiver.care</a></div>
+</div>
+</body>
+</html>
