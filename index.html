@@ -1481,6 +1481,21 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div style="font-size:10.5px;color:var(--stone);margin-top:12px;">Keep it under 2 minutes for best results</div>
   </div>
 </div>
+<div id="dm-thread-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:220;flex-direction:column;">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <div id="dm-thread-avatar" style="width:34px;height:34px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;"></div>
+    <div style="flex:1;">
+      <div id="dm-thread-name" style="font-weight:700;font-size:14px;color:var(--slate-dark);"></div>
+      <div style="font-size:10.5px;color:var(--graphite);">Private, only you and them can see this</div>
+    </div>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeDirectThread()">✕</div>
+  </div>
+  <div class="app-body" id="dm-thread-feed" style="flex:1;overflow-y:auto;padding-top:12px;"></div>
+  <div style="display:flex;gap:8px;padding:12px 14px;background:var(--white);border-top:1px solid var(--stone-light);flex-shrink:0;">
+    <input class="auth-input" id="dm-thread-input" placeholder="Type a message..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendDirectMessage();}">
+    <div onclick="sendDirectMessage()" style="width:42px;height:42px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;">➤</div>
+  </div>
+</div>
 <div id="account-menu-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.4);z-index:200;" onclick="if(event.target===this)closeAccountMenu()">
   <div style="position:absolute;top:60px;right:16px;background:var(--white);border-radius:var(--radius);box-shadow:0 6px 24px rgba(0,0,0,0.15);min-width:220px;overflow:hidden;">
     <div style="padding:10px 16px;font-size:12px;color:var(--stone);border-bottom:1px solid var(--stone-light);" id="account-menu-name">Account</div>
@@ -2147,6 +2162,7 @@ async function enterApp(user,displayName){
   startMedAlertTicker();
   setupPushUI();
   await loadConsentStatus();
+  await loadUnreadDmCounts();
 }
 
 /* ══════════ REAL-TIME SYNC ACROSS DEVICES ══════════
@@ -2172,6 +2188,7 @@ function setupRealtimeSync(){
   if(!CURRENT_FAMILY_ID)return;
   teardownRealtimeSync();
   subscribeRealtime('medications',loadMedications);
+  subscribeRealtime('direct_messages',handleIncomingDirectMessage);
   subscribeRealtime('medication_logs',loadMedications);
   subscribeRealtime('appointments',()=>{loadAppointments();loadPendingDebrief();});
   subscribeRealtime('appointment_debriefs',loadPendingDebrief);
@@ -2339,8 +2356,11 @@ function renderHuddleMembers(){
       const initial=(m.display_name||'?').charAt(0).toUpperCase();
       const color=MEMBER_COLORS[i%MEMBER_COLORS.length];
       const roleTag=m.role==='coordinator'?` &nbsp;<span style="color:var(--terracotta);font-size:10px;font-weight:500">Coordinator</span>`:'';
-      const you=m.user_id===CURRENT_USER?.id?' (you)':'';
-      return `<div class="contact-row"><div class="contact-avatar" style="background:${color}">${initial}</div><div class="contact-info"><div class="contact-name">${m.display_name}${you}${roleTag}</div><div class="contact-role">${m.relationship||'Family member'}</div></div></div>`;
+      const isMe=m.user_id===CURRENT_USER?.id;
+      const you=isMe?' (you)':'';
+      const unread=DM_UNREAD_COUNTS[m.user_id]||0;
+      const dmBtn=isMe?'':`<div style="position:relative;width:30px;height:30px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex-shrink:0;" onclick="openDirectThread('${m.user_id}','${(m.display_name||'').replace(/'/g,"\\'")}')">💬${unread>0?`<span style="position:absolute;top:-3px;right:-3px;background:var(--crimson);color:white;border-radius:50%;width:15px;height:15px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;">${unread>9?'9+':unread}</span>`:''}</div>`;
+      return `<div class="contact-row"><div class="contact-avatar" style="background:${color}">${initial}</div><div class="contact-info"><div class="contact-name">${m.display_name}${you}${roleTag}</div><div class="contact-role">${m.relationship||'Family member'}</div></div>${dmBtn}</div>`;
     }).join('');
   }
   if(homeList){
@@ -2357,6 +2377,120 @@ function renderHuddleMembers(){
     const canInvite=isCoordinator();
     inviteBtn.style.display=canInvite?'flex':'none';
     coordinatorNote.style.display=canInvite?'none':'block';
+  }
+}
+
+/* ══════════ PRIVATE 1:1 CHAT ══════════
+   Distinct from the group Huddle Chat (the `messages` table, visible
+   to everyone). direct_messages is scoped so only the two people in a
+   conversation can ever see it, enforced by RLS, not just hidden in
+   the UI. */
+let DM_UNREAD_COUNTS={};
+let activeDmPartnerId=null;
+let activeDmPartnerName=null;
+let DM_THREAD_MESSAGES=[];
+
+async function loadUnreadDmCounts(){
+  if(!CURRENT_USER)return;
+  const {data,error}=await sb.from('direct_messages').select('sender_id').eq('recipient_id',CURRENT_USER.id).is('read_at',null);
+  if(error){console.error('Could not load unread DM counts:',error.message);return;}
+  const counts={};
+  (data||[]).forEach(row=>{counts[row.sender_id]=(counts[row.sender_id]||0)+1;});
+  DM_UNREAD_COUNTS=counts;
+  renderHuddleMembers();
+}
+
+async function openDirectThread(otherUserId,otherUserName){
+  activeDmPartnerId=otherUserId;
+  activeDmPartnerName=otherUserName;
+  document.getElementById('dm-thread-name').textContent=otherUserName;
+  document.getElementById('dm-thread-avatar').textContent=(otherUserName||'?').charAt(0).toUpperCase();
+  document.getElementById('dm-thread-overlay').style.display='flex';
+  document.getElementById('dm-thread-input').value='';
+  await loadDirectMessages();
+  await markDirectMessagesRead(otherUserId);
+}
+
+function closeDirectThread(){
+  document.getElementById('dm-thread-overlay').style.display='none';
+  activeDmPartnerId=null;
+  activeDmPartnerName=null;
+}
+
+async function loadDirectMessages(){
+  if(!activeDmPartnerId||!CURRENT_USER)return;
+  const {data,error}=await sb.from('direct_messages')
+    .select('*')
+    .eq('family_id',CURRENT_FAMILY_ID)
+    .or(`and(sender_id.eq.${CURRENT_USER.id},recipient_id.eq.${activeDmPartnerId}),and(sender_id.eq.${activeDmPartnerId},recipient_id.eq.${CURRENT_USER.id})`)
+    .order('created_at',{ascending:true});
+  if(error){console.error('Could not load direct messages:',error.message);return;}
+  DM_THREAD_MESSAGES=data||[];
+  renderDirectThread();
+}
+
+function renderDirectThread(){
+  const feed=document.getElementById('dm-thread-feed');
+  if(!feed)return;
+  if(DM_THREAD_MESSAGES.length===0){
+    feed.innerHTML=`<div style="text-align:center;padding:24px 14px;color:var(--graphite);font-size:13px;">No messages yet. Say hello to ${activeDmPartnerName||'them'}.</div>`;
+    return;
+  }
+  feed.innerHTML=DM_THREAD_MESSAGES.map(m=>{
+    const isMine=m.sender_id===CURRENT_USER.id;
+    const time=new Date(m.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    if(isMine){
+      return `<div style="display:flex;justify-content:flex-end;margin:0 14px 8px;">
+        <div style="max-width:75%;">
+          <div style="background:var(--slate);color:white;border-radius:14px 14px 3px 14px;padding:9px 12px;font-size:13px;line-height:1.4;">${m.content}</div>
+          <div style="font-size:9px;color:var(--graphite);text-align:right;margin-top:2px;">${time}</div>
+        </div>
+      </div>`;
+    }
+    return `<div style="display:flex;justify-content:flex-start;margin:0 14px 8px;">
+      <div style="max-width:75%;">
+        <div style="background:var(--white);border:1px solid var(--stone-light);border-radius:14px 14px 14px 3px;padding:9px 12px;font-size:13px;line-height:1.4;">${m.content}</div>
+        <div style="font-size:9px;color:var(--graphite);margin-top:2px;">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+  feed.scrollTop=feed.scrollHeight;
+}
+
+async function sendDirectMessage(){
+  const input=document.getElementById('dm-thread-input');
+  const content=input.value.trim();
+  if(!content||!activeDmPartnerId||!CURRENT_USER)return;
+  input.value='';
+  const {error}=await sb.from('direct_messages').insert({
+    family_id:CURRENT_FAMILY_ID,
+    sender_id:CURRENT_USER.id,
+    recipient_id:activeDmPartnerId,
+    content
+  });
+  if(error){alert('Could not send message: '+error.message);input.value=content;return;}
+  await loadDirectMessages();
+}
+
+async function markDirectMessagesRead(otherUserId){
+  if(!CURRENT_USER)return;
+  await sb.from('direct_messages').update({read_at:new Date().toISOString()})
+    .eq('recipient_id',CURRENT_USER.id).eq('sender_id',otherUserId).is('read_at',null);
+  await loadUnreadDmCounts();
+}
+
+function handleIncomingDirectMessage(payload){
+  const row=payload.new;
+  if(!row||!CURRENT_USER)return;
+  const isForMe=row.recipient_id===CURRENT_USER.id;
+  const isFromMe=row.sender_id===CURRENT_USER.id;
+  if(!isForMe&&!isFromMe)return;
+  const otherParty=isFromMe?row.recipient_id:row.sender_id;
+  if(activeDmPartnerId&&otherParty===activeDmPartnerId){
+    loadDirectMessages();
+    if(isForMe)markDirectMessagesRead(otherParty);
+  } else if(isForMe){
+    loadUnreadDmCounts();
   }
 }
 
