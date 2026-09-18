@@ -94,6 +94,15 @@ function localHourAndDate(date, timeZone) {
   return { hour, isoDate };
 }
 
+// A medication's schedule_time can hold multiple comma-separated
+// times (e.g. "8:00 AM, 2:00 PM, 8:00 PM") for more-than-once-daily
+// medications. Kept in sync with the client's splitDoseTimes().
+function splitDoseTimes(scheduleTime) {
+  if (!scheduleTime || !scheduleTime.trim()) return [''];
+  const parts = scheduleTime.split(',').map((s) => s.trim()).filter(Boolean);
+  return parts.length ? parts : [''];
+}
+
 async function handler() {
   const now = new Date();
   const { hour: currentHour, isoDate: todayISO } = localHourAndDate(now, APP_TIMEZONE);
@@ -104,29 +113,39 @@ async function handler() {
   const dayStartISO = dayStartLocal.toISOString();
 
   const meds = await sb('medications?active=eq.true&select=id,name,schedule_time,family_id');
-  const overdueMeds = meds.filter((m) => {
-    const h = parseScheduleHour(m.schedule_time);
-    return h !== null && currentHour >= h;
-  });
-  if (overdueMeds.length === 0) return { statusCode: 200, body: 'no scheduled meds due yet' };
 
-  const medIds = overdueMeds.map((m) => m.id);
+  // Expand into one entry per scheduled dose, not per medication — a
+  // 3x/day medication is checked as three independent doses, each
+  // with its own overdue status and its own notification.
+  const overdueDoses = [];
+  meds.forEach((m) => {
+    splitDoseTimes(m.schedule_time).forEach((doseTime) => {
+      const h = parseScheduleHour(doseTime);
+      if (h !== null && currentHour >= h) overdueDoses.push({ ...m, doseTime });
+    });
+  });
+  if (overdueDoses.length === 0) return { statusCode: 200, body: 'no scheduled doses due yet' };
+
+  const medIds = [...new Set(overdueDoses.map((d) => d.id))];
   const logs = await sb(
-    `medication_logs?medication_id=in.(${medIds.join(',')})&status=eq.taken&logged_at=gte.${dayStartISO}&select=medication_id`
+    `medication_logs?medication_id=in.(${medIds.join(',')})&status=eq.taken&logged_at=gte.${dayStartISO}&select=medication_id,dose_time`
   );
-  const takenIds = new Set(logs.map((l) => l.medication_id));
+  const takenKeys = new Set(logs.map((l) => `${l.medication_id}|${l.dose_time || ''}`));
 
   const alreadySent = await sb(
-    `push_notification_log?medication_id=in.(${medIds.join(',')})&sent_date=eq.${todayISO}&select=medication_id`
+    `push_notification_log?medication_id=in.(${medIds.join(',')})&sent_date=eq.${todayISO}&select=medication_id,dose_time`
   );
-  const sentIds = new Set(alreadySent.map((l) => l.medication_id));
+  const sentKeys = new Set(alreadySent.map((l) => `${l.medication_id}|${l.dose_time || ''}`));
 
-  const toNotify = overdueMeds.filter((m) => !takenIds.has(m.id) && !sentIds.has(m.id));
+  const toNotify = overdueDoses.filter((d) => {
+    const key = `${d.id}|${d.doseTime || ''}`;
+    return !takenKeys.has(key) && !sentKeys.has(key);
+  });
   if (toNotify.length === 0) return { statusCode: 200, body: 'nothing new to notify' };
 
   let sentCount = 0;
-  for (const med of toNotify) {
-    const subs = await sb(`push_subscriptions?family_id=eq.${med.family_id}&select=id,user_id,endpoint,p256dh,auth`);
+  for (const dose of toNotify) {
+    const subs = await sb(`push_subscriptions?family_id=eq.${dose.family_id}&select=id,user_id,endpoint,p256dh,auth`);
     if (!subs || subs.length === 0) continue;
 
     // Respect each person's own notification preference -- a device
@@ -143,10 +162,11 @@ async function handler() {
     const eligibleSubs = subs.filter((s) => !optedOut.has(s.user_id));
     if (eligibleSubs.length === 0) continue;
 
+    const timeLabel = dose.doseTime ? ` (${dose.doseTime} dose)` : '';
     const payload = JSON.stringify({
       title: 'Medication not logged',
-      body: `${med.name} hasn't been marked taken yet.`,
-      tag: `overdue-med-${med.id}`,
+      body: `${dose.name}${timeLabel} hasn't been marked taken yet.`,
+      tag: `overdue-med-${dose.id}-${dose.doseTime || 'default'}`,
       url: '/',
     });
 
@@ -170,13 +190,13 @@ async function handler() {
 
     await sb('push_notification_log', {
       method: 'POST',
-      body: JSON.stringify({ medication_id: med.id, family_id: med.family_id, sent_date: todayISO }),
+      body: JSON.stringify({ medication_id: dose.id, family_id: dose.family_id, sent_date: todayISO, dose_time: dose.doseTime || null }),
       prefer: 'return=minimal',
     });
     sentCount++;
   }
 
-  return { statusCode: 200, body: `notified for ${sentCount} medication(s)` };
+  return { statusCode: 200, body: `notified for ${sentCount} dose(s)` };
 }
 
 // Every 15 minutes. Netlify's scheduled functions always run in UTC,
