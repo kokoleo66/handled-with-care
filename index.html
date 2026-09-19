@@ -837,14 +837,36 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <input class="auth-input" id="new-med-name" placeholder="e.g. Lisinopril 10mg">
       <div class="auth-field-label">Dosage</div>
       <input class="auth-input" id="new-med-dosage" placeholder="e.g. 1 tablet">
-      <div class="auth-field-label">Schedule (separate multiple times with commas)</div>
-      <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM, or 8:00 AM, 2:00 PM, 8:00 PM for multiple times a day">
+      <label class="auth-remember-row" style="margin:10px 0;">
+        <input type="checkbox" id="new-med-is-prn" onchange="togglePrnFields()">
+        <span>Taken as needed (PRN), not on a fixed schedule</span>
+      </label>
+      <div id="med-schedule-field-group">
+        <div class="auth-field-label" style="margin-top:0;">Schedule (separate multiple times with commas)</div>
+        <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM, or 8:00 AM, 2:00 PM, 8:00 PM for multiple times a day">
+      </div>
+      <div id="med-prn-field-group" style="display:none;">
+        <div class="auth-field-label" style="margin-top:0;">Maximum doses per day (optional)</div>
+        <input class="auth-input" id="new-med-prn-max" type="number" min="1" placeholder="e.g. 4">
+      </div>
       <div class="auth-field-label">Instructions (optional)</div>
       <input class="auth-input" id="new-med-instructions" placeholder="e.g. with food">
       <div class="auth-field-label">Reason (optional)</div>
       <input class="auth-input" id="new-med-reason" placeholder="e.g. blood pressure">
       <div class="auth-field-label">Prescriber (optional)</div>
       <select class="auth-input" id="new-med-prescriber"><option value="">Not sure / not set</option></select>
+      <div class="auth-field-label">Pharmacy (optional)</div>
+      <select class="auth-input" id="new-med-pharmacy"><option value="">Not sure / not set</option></select>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;">
+          <div class="auth-field-label">Refill due (optional)</div>
+          <input class="auth-input" id="new-med-refill-date" type="date">
+        </div>
+        <div style="flex:1;">
+          <div class="auth-field-label">Quantity on hand (optional)</div>
+          <input class="auth-input" id="new-med-refill-qty" type="number" min="0" placeholder="e.g. 30">
+        </div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddMedForm()">Cancel</div>
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
@@ -2449,6 +2471,7 @@ function getOverdueMedications(){
   const currentHour=new Date().getHours();
   const overdue=[];
   MEDICATIONS.forEach(m=>{
+    if(m.is_prn)return; // as-needed meds have no schedule, so no such thing as "overdue"
     splitDoseTimes(m.schedule_time).forEach(doseTime=>{
       const schedHour=parseScheduleHour(doseTime);
       if(schedHour===null||currentHour<schedHour)return;
@@ -3177,6 +3200,20 @@ function latestLogFor(medId,doseTime){
   return logs.sort((a,b)=>new Date(b.logged_at)-new Date(a.logged_at))[0];
 }
 
+function refillBadgeHTML(m){
+  if(!m.refill_date)return'';
+  const today=new Date();today.setHours(0,0,0,0);
+  const refillDate=new Date(m.refill_date+'T00:00:00');
+  const daysUntil=Math.round((refillDate-today)/86400000);
+  if(daysUntil<0)return`<div style="font-size:9px;color:var(--crimson);font-weight:700;margin-top:2px;">Refill overdue</div>`;
+  if(daysUntil<=7)return`<div style="font-size:9px;color:var(--terracotta);font-weight:700;margin-top:2px;">Refill due ${daysUntil===0?'today':'in '+daysUntil+'d'}</div>`;
+  return'';
+}
+
+function countTodayLogsFor(medId){
+  return MED_LOGS_TODAY.filter(l=>l.medication_id===medId).length;
+}
+
 function renderMedsScreen(){
   const summaryEl=document.getElementById('meds-summary-row');
   const listEl=document.getElementById('meds-list-container');
@@ -3188,11 +3225,16 @@ function renderMedsScreen(){
     return;
   }
 
+  const scheduledMeds=MEDICATIONS.filter(m=>!m.is_prn);
+  const prnMeds=MEDICATIONS.filter(m=>m.is_prn);
+
   // Each scheduled dose (not each medication) is one countable, one
   // trackable row -- a 3x/day medication contributes 3 to the total,
-  // not 1, since each dose needs its own tap.
+  // not 1, since each dose needs its own tap. PRN meds are excluded
+  // from these counts entirely -- "pending" isn't a meaningful state
+  // for something with no fixed schedule to be pending against.
   const doses=[];
-  MEDICATIONS.forEach(m=>{
+  scheduledMeds.forEach(m=>{
     splitDoseTimes(m.schedule_time).forEach(doseTime=>doses.push({med:m,doseTime}));
   });
 
@@ -3208,7 +3250,7 @@ function renderMedsScreen(){
     <div class="sum-card"><div class="sum-num" style="color:var(--terracotta)">${doses.length}</div><div class="sum-label">Total</div></div>
   `;
 
-  listEl.innerHTML=doses.map(({med:m,doseTime})=>{
+  const scheduledHTML=doses.map(({med:m,doseTime})=>{
     const log=latestLogFor(m.id,doseTime);
     const isTaken=log&&log.status==='taken';
     const details=[m.dosage,m.instructions,m.reason?`for ${m.reason}`:null].filter(Boolean).join(' · ');
@@ -3221,12 +3263,56 @@ function renderMedsScreen(){
         <div class="med-stripe ${isTaken?'done':'pending'}"></div>
         <div class="full-med-content">
           <div class="med-check ${isTaken?'done':'pending'}">${isTaken?'✓':''}</div>
-          <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div></div>
+          <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div>${refillBadgeHTML(m)}</div>
           <div class="full-med-right"><div class="full-med-time">${doseTime||''}</div>${rightInfo}</div>
         </div>
       </div>
     </div>`;
   }).join('');
+
+  const prnHTML=prnMeds.length===0?'':`
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin:16px 2px 8px;">As needed</div>
+    ${prnMeds.map(m=>{
+      const todayCount=countTodayLogsFor(m.id);
+      const lastLog=latestLogFor(m.id,undefined);
+      const details=[m.dosage,m.instructions,m.reason?`for ${m.reason}`:null].filter(Boolean).join(' · ');
+      const overMax=m.prn_max_per_day&&todayCount>=m.prn_max_per_day;
+      const countLine=m.prn_max_per_day
+        ?`<div style="font-size:10px;color:${overMax?'var(--crimson)':'var(--graphite)'};font-weight:${overMax?700:400};">${todayCount} of ${m.prn_max_per_day} max today${overMax?' — limit reached':''}</div>`
+        :`<div style="font-size:10px;color:var(--graphite);">${todayCount} taken today</div>`;
+      const lastTakenLine=lastLog?`<div style="font-size:9px;color:var(--stone);">Last: ${new Date(lastLog.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>`:'';
+      return `<div class="full-med-card">
+        <div class="full-med-row" onpointerdown="medRowPointerDown('${m.id}')" onpointerup="medRowPointerCancel()" onpointerleave="medRowPointerCancel()" onpointercancel="medRowPointerCancel()" oncontextmenu="return false;" style="cursor:default;">
+          <div class="med-stripe" style="background:var(--slate-light);"></div>
+          <div class="full-med-content">
+            <div class="full-med-info"><div class="full-med-name">${m.name}</div><div class="full-med-details">${details||'&nbsp;'}</div>${refillBadgeHTML(m)}</div>
+            <div class="full-med-right">
+              ${countLine}${lastTakenLine}
+              <div onclick="logPrnDose('${m.id}')" style="margin-top:4px;padding:5px 10px;border-radius:20px;font-size:10.5px;font-weight:700;background:${overMax?'var(--stone-light)':'var(--slate)'};color:${overMax?'var(--graphite)':'white'};cursor:pointer;">Log a dose</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+
+  listEl.innerHTML=scheduledHTML+prnHTML;
+}
+
+async function logPrnDose(medId){
+  if(!CURRENT_USER||!CURRENT_FAMILY_ID){
+    alert('Session issue: please refresh the page and sign in again.');
+    return;
+  }
+  const {error}=await sb.from('medication_logs').insert({
+    medication_id:medId,
+    family_id:CURRENT_FAMILY_ID,
+    status:'taken',
+    logged_by:CURRENT_USER.id,
+    dose_time:null
+  });
+  if(error){alert('Could not log this dose: '+error.message);return;}
+  await loadMedications();
 }
 
 async function markMedTaken(medId,doseTime){
@@ -3264,14 +3350,26 @@ async function unmarkMedTaken(medId,doseTime){
 }
 
 function populatePrescriberDropdown(selectedId){
-  const sel=document.getElementById('new-med-prescriber');
+  populateContactDropdown('new-med-prescriber','medical',selectedId,'No doctors added yet — add one in Care Team');
+}
+function populatePharmacyDropdown(selectedId){
+  populateContactDropdown('new-med-pharmacy','pharmacy',selectedId,'No pharmacies added yet — add one in Care Team');
+}
+function populateContactDropdown(selectId,category,selectedId,emptyLabel){
+  const sel=document.getElementById(selectId);
   if(!sel)return;
-  const medicalContacts=CARE_CONTACTS.filter(c=>c.category==='medical');
+  const contacts=CARE_CONTACTS.filter(c=>c.category===category);
   sel.innerHTML='<option value="">Not sure / not set</option>'+
-    medicalContacts.map(c=>`<option value="${c.id}"${c.id===selectedId?' selected':''}>${c.name}</option>`).join('');
-  if(medicalContacts.length===0){
-    sel.innerHTML+='<option value="" disabled>No doctors added yet — add one in Care Team</option>';
+    contacts.map(c=>`<option value="${c.id}"${c.id===selectedId?' selected':''}>${c.name}</option>`).join('');
+  if(contacts.length===0){
+    sel.innerHTML+=`<option value="" disabled>${emptyLabel}</option>`;
   }
+}
+
+function togglePrnFields(){
+  const isPrn=document.getElementById('new-med-is-prn').checked;
+  document.getElementById('med-schedule-field-group').style.display=isPrn?'none':'block';
+  document.getElementById('med-prn-field-group').style.display=isPrn?'block':'none';
 }
 
 function showAddMedForm(){
@@ -3279,7 +3377,10 @@ function showAddMedForm(){
   document.getElementById('med-form-title').textContent='Add medication';
   document.getElementById('med-delete-row').style.display='none';
   document.getElementById('med-history-link-row').style.display='none';
+  document.getElementById('new-med-is-prn').checked=false;
+  togglePrnFields();
   populatePrescriberDropdown(null);
+  populatePharmacyDropdown(null);
   document.getElementById('add-med-form').style.display='block';
 }
 function hideAddMedForm(){
@@ -3290,8 +3391,14 @@ function hideAddMedForm(){
   document.getElementById('new-med-instructions').value='';
   document.getElementById('new-med-reason').value='';
   document.getElementById('new-med-prescriber').value='';
+  document.getElementById('new-med-pharmacy').value='';
+  document.getElementById('new-med-is-prn').checked=false;
+  document.getElementById('new-med-prn-max').value='';
+  document.getElementById('new-med-refill-date').value='';
+  document.getElementById('new-med-refill-qty').value='';
   document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
+  togglePrnFields();
   editingMedId=null;
 }
 
@@ -3307,7 +3414,13 @@ function openEditMedForm(id){
   document.getElementById('new-med-schedule').value=med.schedule_time||'';
   document.getElementById('new-med-instructions').value=med.instructions||'';
   document.getElementById('new-med-reason').value=med.reason||'';
+  document.getElementById('new-med-is-prn').checked=!!med.is_prn;
+  document.getElementById('new-med-prn-max').value=med.prn_max_per_day||'';
+  document.getElementById('new-med-refill-date').value=med.refill_date||'';
+  document.getElementById('new-med-refill-qty').value=med.refill_quantity||'';
+  togglePrnFields();
   populatePrescriberDropdown(med.prescriber_contact_id||null);
+  populatePharmacyDropdown(med.pharmacy_contact_id||null);
   document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
   document.getElementById('med-delete-row').style.display='block';
@@ -3367,7 +3480,7 @@ async function loadPastMedications(){
   }).join('');
 }
 
-const HISTORY_FIELD_LABELS={name:'Name',dosage:'Dosage',schedule:'Schedule',instructions:'Instructions',status:'Status',reason:'Reason',prescriber:'Prescriber'};
+const HISTORY_FIELD_LABELS={name:'Name',dosage:'Dosage',schedule:'Schedule',instructions:'Instructions',status:'Status',reason:'Reason',prescriber:'Prescriber','as-needed status':'As-needed status','refill date':'Refill date',pharmacy:'Pharmacy'};
 
 async function openMedHistoryDetail(medId){
   if(!medId)return;
@@ -3435,19 +3548,23 @@ function medRowPointerCancel(){
 async function saveNewMedication(){
   const name=document.getElementById('new-med-name').value.trim();
   const dosage=document.getElementById('new-med-dosage').value.trim();
-  const schedule_time=document.getElementById('new-med-schedule').value.trim();
+  const is_prn=document.getElementById('new-med-is-prn').checked;
+  const schedule_time=is_prn?'':document.getElementById('new-med-schedule').value.trim();
+  const prn_max_per_day=is_prn?(parseInt(document.getElementById('new-med-prn-max').value,10)||null):null;
   const instructions=document.getElementById('new-med-instructions').value.trim();
   const reason=document.getElementById('new-med-reason').value.trim();
   const prescriber_contact_id=document.getElementById('new-med-prescriber').value||null;
+  const pharmacy_contact_id=document.getElementById('new-med-pharmacy').value||null;
+  const refill_date=document.getElementById('new-med-refill-date').value||null;
+  const refill_quantity=document.getElementById('new-med-refill-qty').value?parseInt(document.getElementById('new-med-refill-qty').value,10):null;
   const errEl=document.getElementById('new-med-error');
   if(!name){errEl.textContent='Medication name is required.';errEl.style.display='block';return;}
+  const payload={name,dosage,schedule_time,instructions,reason,prescriber_contact_id,pharmacy_contact_id,is_prn,prn_max_per_day,refill_date,refill_quantity};
   let error;
   if(editingMedId){
-    ({error}=await sb.from('medications').update({name,dosage,schedule_time,instructions,reason,prescriber_contact_id}).eq('id',editingMedId));
+    ({error}=await sb.from('medications').update(payload).eq('id',editingMedId));
   } else {
-    ({error}=await sb.from('medications').insert({
-      family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions,reason,prescriber_contact_id
-    }));
+    ({error}=await sb.from('medications').insert({family_id:CURRENT_FAMILY_ID,...payload}));
   }
   if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
   hideAddMedForm();
