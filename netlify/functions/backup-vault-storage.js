@@ -4,13 +4,14 @@
 // cover Storage objects -- only metadata about them lives in the
 // database. This function is what actually protects the real files:
 // insurance cards, advance directives, and anything else families
-// upload to the Vault.
+// upload to the Vault, plus the optional medication reference photos
+// (label/pill) added later.
 //
-// Runs once daily. Walks every file in the vault-documents bucket
+// Runs once daily. Walks every file in each source bucket
 // (recursively, since files are organized in per-family folders) and
-// copies each one into a second, completely separate bucket
-// (vault-documents-backup) that the app itself never reads from or
-// writes to during normal use -- it exists purely as a backup target.
+// copies each one into a second, completely separate backup bucket
+// that the app itself never reads from or writes to during normal
+// use -- it exists purely as a backup target.
 //
 // This protects against accidental deletion or a bug in the app that
 // wipes files. It does NOT protect against total loss of the Supabase
@@ -26,11 +27,18 @@ const { schedule } = require('@netlify/functions');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SOURCE_BUCKET = 'vault-documents';
-const BACKUP_BUCKET = 'vault-documents-backup';
 
-async function listFolder(prefix) {
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${SOURCE_BUCKET}`, {
+// Each entry is one source bucket backed up into its own dedicated
+// backup bucket. Adding a new Storage feature later just means adding
+// a pair here -- easy to forget, so it's listed in one obvious place
+// rather than scattered.
+const BUCKET_PAIRS = [
+  { source: 'vault-documents', backup: 'vault-documents-backup' },
+  { source: 'medication-photos', backup: 'medication-photos-backup' },
+];
+
+async function listFolder(sourceBucket, prefix) {
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${sourceBucket}`, {
     method: 'POST',
     headers: {
       apikey: SERVICE_KEY,
@@ -40,7 +48,7 @@ async function listFolder(prefix) {
     body: JSON.stringify({ prefix, limit: 1000, offset: 0, sortBy: { column: 'name', order: 'asc' } }),
   });
   if (!res.ok) {
-    throw new Error(`Failed to list ${prefix || '(root)'}: ${res.status} ${await res.text()}`);
+    throw new Error(`Failed to list ${prefix || '(root)'} in ${sourceBucket}: ${res.status} ${await res.text()}`);
   }
   return res.json();
 }
@@ -48,13 +56,13 @@ async function listFolder(prefix) {
 // Recursively walks every folder to build a flat list of full file
 // paths. Supabase's list endpoint returns one level at a time; an
 // entry with a null `id` is a folder, not a file.
-async function listAllFiles(prefix = '') {
-  const entries = await listFolder(prefix);
+async function listAllFiles(sourceBucket, prefix = '') {
+  const entries = await listFolder(sourceBucket, prefix);
   let files = [];
   for (const entry of entries) {
     const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
     if (entry.id === null) {
-      const nested = await listAllFiles(fullPath);
+      const nested = await listAllFiles(sourceBucket, fullPath);
       files = files.concat(nested);
     } else {
       files.push(fullPath);
@@ -63,7 +71,7 @@ async function listAllFiles(prefix = '') {
   return files;
 }
 
-async function copyFile(path) {
+async function copyFile(sourceBucket, backupBucket, path) {
   const res = await fetch(`${SUPABASE_URL}/storage/v1/object/copy`, {
     method: 'POST',
     headers: {
@@ -72,40 +80,49 @@ async function copyFile(path) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      bucketId: SOURCE_BUCKET,
+      bucketId: sourceBucket,
       sourceKey: path,
-      destinationBucket: BACKUP_BUCKET,
+      destinationBucket: backupBucket,
       destinationKey: path,
     }),
   });
   return res.ok;
 }
 
-async function handler() {
+async function backupBucketPair(sourceBucket, backupBucket) {
   let files;
   try {
-    files = await listAllFiles('');
+    files = await listAllFiles(sourceBucket, '');
   } catch (err) {
-    console.error('Vault backup failed to list files:', err.message);
-    return { statusCode: 500, body: `Failed to list files: ${err.message}` };
+    console.error(`${sourceBucket} backup failed to list files:`, err.message);
+    return { bucket: sourceBucket, copied: 0, failed: 0, total: 0, error: err.message };
   }
 
   if (files.length === 0) {
-    return { statusCode: 200, body: 'No Vault files to back up yet.' };
+    return { bucket: sourceBucket, copied: 0, failed: 0, total: 0 };
   }
 
   let copied = 0;
   let failed = 0;
   for (const path of files) {
-    const ok = await copyFile(path);
+    const ok = await copyFile(sourceBucket, backupBucket, path);
     if (ok) copied++;
     else {
       failed++;
-      console.error('Failed to back up:', path);
+      console.error(`Failed to back up ${sourceBucket}:`, path);
     }
   }
+  return { bucket: sourceBucket, copied, failed, total: files.length };
+}
 
-  const summary = `Vault backup: ${copied} file(s) copied, ${failed} failed, ${files.length} total.`;
+async function handler() {
+  const results = [];
+  for (const pair of BUCKET_PAIRS) {
+    results.push(await backupBucketPair(pair.source, pair.backup));
+  }
+  const summary = results
+    .map((r) => (r.error ? `${r.bucket}: failed to list (${r.error})` : `${r.bucket}: ${r.copied}/${r.total} copied${r.failed ? `, ${r.failed} failed` : ''}`))
+    .join(' | ');
   console.log(summary);
   return { statusCode: 200, body: summary };
 }
