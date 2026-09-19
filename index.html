@@ -1575,6 +1575,34 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div onclick="sendDirectMessage()" style="width:42px;height:42px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;">➤</div>
   </div>
 </div>
+<div id="appt-detail-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:220;flex-direction:column;overflow-y:auto;">
+  <div style="display:flex;align-items:flex-start;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <div style="flex:1;">
+      <div id="appt-detail-title" style="font-weight:700;font-size:15px;color:var(--slate-dark);"></div>
+      <div id="appt-detail-meta" style="font-size:11px;color:var(--graphite);margin-top:2px;"></div>
+    </div>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeAppointmentDetail()">✕</div>
+  </div>
+  <div style="padding:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">❓ Questions to ask</div>
+    <div id="appt-questions-list" style="margin-bottom:8px;"></div>
+    <div style="display:flex;gap:6px;margin-bottom:20px;">
+      <input class="auth-input" id="appt-new-question" placeholder="Add a question..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addApptQuestion();}">
+      <div onclick="addApptQuestion()" style="padding:0 14px;border-radius:var(--radius-sm);background:var(--slate);color:white;display:flex;align-items:center;font-size:13px;cursor:pointer;">+</div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">🧳 Before you go</div>
+    <div id="appt-prep-list" style="margin-bottom:8px;"></div>
+    <div id="appt-prep-suggestions" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:6px;margin-bottom:20px;">
+      <input class="auth-input" id="appt-new-prep" placeholder="Add a prep item..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addApptPrepItem();}">
+      <div onclick="addApptPrepItem()" style="padding:0 14px;border-radius:var(--radius-sm);background:var(--slate);color:white;display:flex;align-items:center;font-size:13px;cursor:pointer;">+</div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📋 Debrief</div>
+    <div id="appt-debrief-section"></div>
+  </div>
+</div>
 <div id="burnout-quiz-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:215;flex-direction:column;overflow-y:auto;">
   <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
     <div style="flex:1;">
@@ -2998,7 +3026,7 @@ function renderAppointmentsList(){
     const day=dt.getDate();
     const timeStr=dt.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
     const metaBits=[a.provider,a.location].filter(Boolean).join(' · ');
-    return `<div class="appt-row">
+    return `<div class="appt-row" style="cursor:pointer;" onclick="openAppointmentDetail('${a.id}')">
       <div class="appt-date-block"><div class="appt-month" style="color:var(--slate)">${month}</div><div class="appt-day" style="color:var(--slate)">${day}</div></div>
       <div class="appt-body"><div class="appt-name">${a.title}</div><div class="appt-meta"><span class="appt-time">${timeStr}${metaBits?' · '+metaBits:''}</span></div>${a.notes?`<div class="appt-driver">${a.notes}</div>`:''}</div>
       <div style="font-size:16px;color:var(--stone);align-self:center;">›</div>
@@ -3042,10 +3070,12 @@ async function savePreApptNote(){
   if(!PRE_APPT_TARGET)return;
   const note=document.getElementById('pre-appt-prompt-input').value.trim();
   if(!note){dismissPreApptPrompt();return;}
-  const existing=PRE_APPT_TARGET.notes?PRE_APPT_TARGET.notes+'\n':'';
-  const {error}=await sb.from('appointments').update({
-    notes:existing+`To ask: ${note}`
-  }).eq('id',PRE_APPT_TARGET.id);
+  const {error}=await sb.from('appointment_questions').insert({
+    appointment_id:PRE_APPT_TARGET.id,
+    family_id:CURRENT_FAMILY_ID,
+    question_text:note,
+    created_by:CURRENT_USER.id
+  });
   if(!error){
     PRE_APPT_DISMISSED.add(PRE_APPT_TARGET.id);
     document.getElementById('pre-appt-prompt-banner').style.display='none';
@@ -4840,7 +4870,7 @@ function openDebriefQueueList(){
 }
 
 function openDebriefForm(apptId){
-  const appt=PENDING_DEBRIEF_QUEUE.find(a=>a.id===apptId);
+  const appt=PENDING_DEBRIEF_QUEUE.find(a=>a.id===apptId)||APPOINTMENTS.find(a=>a.id===apptId)||ACTIVE_APPT_DETAIL;
   if(!appt)return;
   PENDING_DEBRIEF_APPT=appt;
   document.getElementById('debrief-header-title').textContent='Appointment debrief';
@@ -4916,12 +4946,154 @@ async function submitDebrief(){
   status.textContent='Saved and shared with the Huddle ✓';
   setTimeout(async()=>{
     await loadPendingDebrief();
-    if(PENDING_DEBRIEF_QUEUE.length>0){
+    if(document.getElementById('appt-detail-overlay').style.display==='flex'&&ACTIVE_APPT_DETAIL&&ACTIVE_APPT_DETAIL.id===PENDING_DEBRIEF_APPT.id){
+      closeDebriefForm();
+      renderApptDebriefSection();
+    } else if(PENDING_DEBRIEF_QUEUE.length>0){
       openDebriefQueueList();
     } else {
       closeDebriefForm();
     }
   },900);
+}
+
+/* ══════════ APPOINTMENT DETAIL: QUESTIONS, PREP, DEBRIEF ══════════
+   Ties the three caregiving-specific pieces of an appointment
+   together in one place, rather than scattering "questions" as a
+   throwaway note and "debrief" as a totally separate flow. This is
+   the actual differentiator over a generic calendar: an appointment
+   here isn't just a time slot, it's a before-and-after record. */
+let ACTIVE_APPT_DETAIL=null;
+let APPT_QUESTIONS=[];
+let APPT_PREP_ITEMS=[];
+const APPT_PREP_SUGGESTIONS=[
+  'Bring insurance card',
+  'Bring current medication list',
+  'Bring list of symptoms/changes since last visit',
+  'Confirm fasting requirements with the office'
+];
+
+async function openAppointmentDetail(apptId){
+  let appt=APPOINTMENTS.find(a=>a.id===apptId);
+  if(!appt){
+    const {data}=await sb.from('appointments').select('*').eq('id',apptId).maybeSingle();
+    appt=data;
+  }
+  if(!appt)return;
+  ACTIVE_APPT_DETAIL=appt;
+  const dt=new Date(appt.appointment_at);
+  document.getElementById('appt-detail-title').textContent=appt.title;
+  document.getElementById('appt-detail-meta').textContent=[dt.toLocaleDateString(),dt.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),appt.provider,appt.location].filter(Boolean).join(' · ');
+  document.getElementById('appt-new-question').value='';
+  document.getElementById('appt-new-prep').value='';
+  document.getElementById('appt-detail-overlay').style.display='flex';
+  await Promise.all([loadApptQuestions(apptId),loadApptPrepItems(apptId)]);
+  renderApptDebriefSection();
+}
+function closeAppointmentDetail(){
+  document.getElementById('appt-detail-overlay').style.display='none';
+  ACTIVE_APPT_DETAIL=null;
+}
+
+async function loadApptQuestions(apptId){
+  const {data,error}=await sb.from('appointment_questions').select('*').eq('appointment_id',apptId).order('created_at');
+  if(error){console.error('Could not load questions:',error.message);return;}
+  APPT_QUESTIONS=data||[];
+  renderApptQuestions();
+}
+function renderApptQuestions(){
+  const el=document.getElementById('appt-questions-list');
+  if(APPT_QUESTIONS.length===0){
+    el.innerHTML='<div style="font-size:12px;color:var(--graphite);padding:4px 2px;">No questions added yet.</div>';
+    return;
+  }
+  el.innerHTML=APPT_QUESTIONS.map(q=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 2px;border-bottom:1px solid var(--stone-light);">
+      <div onclick="toggleApptQuestion('${q.id}',${q.answered})" style="width:18px;height:18px;border-radius:5px;border:1.5px solid ${q.answered?'var(--sage)':'var(--stone)'};background:${q.answered?'var(--sage)':'white'};color:white;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;">${q.answered?'✓':''}</div>
+      <div style="flex:1;font-size:13px;color:var(--charcoal);text-decoration:${q.answered?'line-through':'none'};opacity:${q.answered?0.6:1};">${q.question_text}</div>
+      <div onclick="deleteApptQuestion('${q.id}')" style="font-size:13px;color:var(--stone);cursor:pointer;padding:0 4px;">✕</div>
+    </div>`).join('');
+}
+async function addApptQuestion(){
+  const input=document.getElementById('appt-new-question');
+  const text=input.value.trim();
+  if(!text||!ACTIVE_APPT_DETAIL)return;
+  input.value='';
+  const {error}=await sb.from('appointment_questions').insert({
+    appointment_id:ACTIVE_APPT_DETAIL.id,family_id:CURRENT_FAMILY_ID,question_text:text,created_by:CURRENT_USER.id
+  });
+  if(error){alert('Could not add question: '+error.message);return;}
+  await loadApptQuestions(ACTIVE_APPT_DETAIL.id);
+}
+async function toggleApptQuestion(id,current){
+  await sb.from('appointment_questions').update({answered:!current}).eq('id',id);
+  await loadApptQuestions(ACTIVE_APPT_DETAIL.id);
+}
+async function deleteApptQuestion(id){
+  await sb.from('appointment_questions').delete().eq('id',id);
+  await loadApptQuestions(ACTIVE_APPT_DETAIL.id);
+}
+
+async function loadApptPrepItems(apptId){
+  const {data,error}=await sb.from('appointment_prep_items').select('*').eq('appointment_id',apptId).order('created_at');
+  if(error){console.error('Could not load prep items:',error.message);return;}
+  APPT_PREP_ITEMS=data||[];
+  renderApptPrepItems();
+}
+function renderApptPrepItems(){
+  const el=document.getElementById('appt-prep-list');
+  el.innerHTML=APPT_PREP_ITEMS.length===0?'':APPT_PREP_ITEMS.map(p=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 2px;border-bottom:1px solid var(--stone-light);">
+      <div onclick="toggleApptPrep('${p.id}',${p.done})" style="width:18px;height:18px;border-radius:5px;border:1.5px solid ${p.done?'var(--sage)':'var(--stone)'};background:${p.done?'var(--sage)':'white'};color:white;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;">${p.done?'✓':''}</div>
+      <div style="flex:1;font-size:13px;color:var(--charcoal);text-decoration:${p.done?'line-through':'none'};opacity:${p.done?0.6:1};">${p.item_text}</div>
+      <div onclick="deleteApptPrep('${p.id}')" style="font-size:13px;color:var(--stone);cursor:pointer;padding:0 4px;">✕</div>
+    </div>`).join('');
+  const existingTexts=new Set(APPT_PREP_ITEMS.map(p=>p.item_text));
+  const remaining=APPT_PREP_SUGGESTIONS.filter(s=>!existingTexts.has(s));
+  const sugEl=document.getElementById('appt-prep-suggestions');
+  sugEl.innerHTML=remaining.length===0?'':`<div style="font-size:10px;color:var(--stone);margin-bottom:4px;">Quick add:</div>`+
+    remaining.map(s=>`<div onclick="addApptPrepItem('${s.replace(/'/g,"\\'")}')" style="display:inline-block;font-size:11px;color:var(--slate);border:1px solid var(--stone-light);border-radius:14px;padding:4px 10px;margin:0 4px 4px 0;cursor:pointer;">+ ${s}</div>`).join('');
+}
+async function addApptPrepItem(presetText){
+  const input=document.getElementById('appt-new-prep');
+  const text=presetText||input.value.trim();
+  if(!text||!ACTIVE_APPT_DETAIL)return;
+  if(!presetText)input.value='';
+  const {error}=await sb.from('appointment_prep_items').insert({
+    appointment_id:ACTIVE_APPT_DETAIL.id,family_id:CURRENT_FAMILY_ID,item_text:text,created_by:CURRENT_USER.id
+  });
+  if(error){alert('Could not add item: '+error.message);return;}
+  await loadApptPrepItems(ACTIVE_APPT_DETAIL.id);
+}
+async function toggleApptPrep(id,current){
+  await sb.from('appointment_prep_items').update({done:!current}).eq('id',id);
+  await loadApptPrepItems(ACTIVE_APPT_DETAIL.id);
+}
+async function deleteApptPrep(id){
+  await sb.from('appointment_prep_items').delete().eq('id',id);
+  await loadApptPrepItems(ACTIVE_APPT_DETAIL.id);
+}
+
+async function renderApptDebriefSection(){
+  const el=document.getElementById('appt-debrief-section');
+  if(!ACTIVE_APPT_DETAIL)return;
+  const isPast=new Date(ACTIVE_APPT_DETAIL.appointment_at)<new Date();
+  if(!isPast){
+    el.innerHTML='<div style="font-size:12px;color:var(--graphite);">Available after the visit.</div>';
+    return;
+  }
+  const {data,error}=await sb.from('appointment_debriefs').select('*').eq('appointment_id',ACTIVE_APPT_DETAIL.id).maybeSingle();
+  if(error){el.innerHTML='<div style="font-size:12px;color:var(--crimson);">Could not load debrief.</div>';return;}
+  if(!data){
+    el.innerHTML=`<div onclick="openDebriefForm('${ACTIVE_APPT_DETAIL.id}')" style="padding:10px;border-radius:var(--radius-sm);background:var(--slate);color:white;text-align:center;font-size:13px;font-weight:600;cursor:pointer;">+ Add debrief</div>`;
+    return;
+  }
+  el.innerHTML=`
+    ${data.doctor_said?`<div style="margin-bottom:8px;"><div style="font-size:10px;font-weight:700;color:var(--graphite);">DOCTOR SAID</div><div style="font-size:13px;color:var(--charcoal);">${data.doctor_said}</div></div>`:''}
+    ${data.new_prescriptions?`<div style="margin-bottom:8px;"><div style="font-size:10px;font-weight:700;color:var(--graphite);">NEW PRESCRIPTIONS</div><div style="font-size:13px;color:var(--charcoal);">${data.new_prescriptions}</div></div>`:''}
+    ${data.next_steps?`<div style="margin-bottom:8px;"><div style="font-size:10px;font-weight:700;color:var(--graphite);">NEXT STEPS</div><div style="font-size:13px;color:var(--charcoal);">${data.next_steps}</div></div>`:''}
+    <div style="font-size:10.5px;color:var(--sage);font-weight:600;">Saved ${new Date(data.created_at).toLocaleDateString()} ✓</div>
+  `;
 }
 
 /* ── CAREGIVER CHECK-IN ── */
