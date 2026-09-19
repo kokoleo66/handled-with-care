@@ -841,6 +841,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <input class="auth-input" id="new-med-schedule" placeholder="e.g. 8:00 AM, or 8:00 AM, 2:00 PM, 8:00 PM for multiple times a day">
       <div class="auth-field-label">Instructions (optional)</div>
       <input class="auth-input" id="new-med-instructions" placeholder="e.g. with food">
+      <div class="auth-field-label">Reason (optional)</div>
+      <input class="auth-input" id="new-med-reason" placeholder="e.g. blood pressure">
+      <div class="auth-field-label">Prescriber (optional)</div>
+      <select class="auth-input" id="new-med-prescriber"><option value="">Not sure / not set</option></select>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddMedForm()">Cancel</div>
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
@@ -3207,7 +3211,7 @@ function renderMedsScreen(){
   listEl.innerHTML=doses.map(({med:m,doseTime})=>{
     const log=latestLogFor(m.id,doseTime);
     const isTaken=log&&log.status==='taken';
-    const details=[m.dosage,m.instructions].filter(Boolean).join(' · ');
+    const details=[m.dosage,m.instructions,m.reason?`for ${m.reason}`:null].filter(Boolean).join(' · ');
     const rightInfo=isTaken
       ? `<div class="full-med-confirmed done">Taken ${new Date(log.logged_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · tap to undo, hold to edit</div>`
       : `<div class="full-med-confirmed" style="color:var(--stone);font-size:9px;">Tap to mark taken, hold to edit</div>`;
@@ -3259,11 +3263,23 @@ async function unmarkMedTaken(medId,doseTime){
   }
 }
 
+function populatePrescriberDropdown(selectedId){
+  const sel=document.getElementById('new-med-prescriber');
+  if(!sel)return;
+  const medicalContacts=CARE_CONTACTS.filter(c=>c.category==='medical');
+  sel.innerHTML='<option value="">Not sure / not set</option>'+
+    medicalContacts.map(c=>`<option value="${c.id}"${c.id===selectedId?' selected':''}>${c.name}</option>`).join('');
+  if(medicalContacts.length===0){
+    sel.innerHTML+='<option value="" disabled>No doctors added yet — add one in Care Team</option>';
+  }
+}
+
 function showAddMedForm(){
   editingMedId=null;
   document.getElementById('med-form-title').textContent='Add medication';
   document.getElementById('med-delete-row').style.display='none';
   document.getElementById('med-history-link-row').style.display='none';
+  populatePrescriberDropdown(null);
   document.getElementById('add-med-form').style.display='block';
 }
 function hideAddMedForm(){
@@ -3272,6 +3288,8 @@ function hideAddMedForm(){
   document.getElementById('new-med-dosage').value='';
   document.getElementById('new-med-schedule').value='';
   document.getElementById('new-med-instructions').value='';
+  document.getElementById('new-med-reason').value='';
+  document.getElementById('new-med-prescriber').value='';
   document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
   editingMedId=null;
@@ -3288,6 +3306,8 @@ function openEditMedForm(id){
   document.getElementById('new-med-dosage').value=med.dosage||'';
   document.getElementById('new-med-schedule').value=med.schedule_time||'';
   document.getElementById('new-med-instructions').value=med.instructions||'';
+  document.getElementById('new-med-reason').value=med.reason||'';
+  populatePrescriberDropdown(med.prescriber_contact_id||null);
   document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
   document.getElementById('med-delete-row').style.display='block';
@@ -3347,7 +3367,7 @@ async function loadPastMedications(){
   }).join('');
 }
 
-const HISTORY_FIELD_LABELS={name:'Name',dosage:'Dosage',schedule:'Schedule',instructions:'Instructions',status:'Status'};
+const HISTORY_FIELD_LABELS={name:'Name',dosage:'Dosage',schedule:'Schedule',instructions:'Instructions',status:'Status',reason:'Reason',prescriber:'Prescriber'};
 
 async function openMedHistoryDetail(medId){
   if(!medId)return;
@@ -3417,14 +3437,16 @@ async function saveNewMedication(){
   const dosage=document.getElementById('new-med-dosage').value.trim();
   const schedule_time=document.getElementById('new-med-schedule').value.trim();
   const instructions=document.getElementById('new-med-instructions').value.trim();
+  const reason=document.getElementById('new-med-reason').value.trim();
+  const prescriber_contact_id=document.getElementById('new-med-prescriber').value||null;
   const errEl=document.getElementById('new-med-error');
   if(!name){errEl.textContent='Medication name is required.';errEl.style.display='block';return;}
   let error;
   if(editingMedId){
-    ({error}=await sb.from('medications').update({name,dosage,schedule_time,instructions}).eq('id',editingMedId));
+    ({error}=await sb.from('medications').update({name,dosage,schedule_time,instructions,reason,prescriber_contact_id}).eq('id',editingMedId));
   } else {
     ({error}=await sb.from('medications').insert({
-      family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions
+      family_id:CURRENT_FAMILY_ID,name,dosage,schedule_time,instructions,reason,prescriber_contact_id
     }));
   }
   if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
