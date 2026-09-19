@@ -553,6 +553,11 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
   .notch,.status-bar{display:none;}
   .app-body{flex:1;height:auto;min-height:0;}
   .bottom-nav{position:relative;bottom:auto;left:auto;right:auto;}
+}@media print{
+  body *{visibility:hidden;}
+  #care-summary-overlay, #care-summary-overlay *{visibility:visible;}
+  #care-summary-overlay{position:absolute;inset:0;background:white;overflow:visible;}
+  .no-print{display:none!important;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1180,6 +1185,10 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       <div class="em-title care-recipient-title">Mom's Red Folder</div>
       <div class="em-sub">The 6 things you'd need at 2am. One tap, no searching</div>
     </div>
+    <div style="display:flex;gap:8px;margin:10px 14px 0;">
+      <div class="add-btn" style="flex:1;margin:0;" onclick="openCareSummary()">📋 Care Summary</div>
+      <div class="add-btn" style="flex:1;margin:0;" onclick="openGlobalSearch()">🔍 Search everything</div>
+    </div>
     <div class="redfolder-grid" id="redfolder-grid"></div>
     <div class="vault-note">Tap any tile to view or update it. Everyone in the Huddle can see the Red Folder, even during a crisis when you aren't reachable.</div>
 
@@ -1584,6 +1593,28 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <input class="auth-input" id="dm-thread-input" placeholder="Type a message..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendDirectMessage();}">
     <div onclick="sendDirectMessage()" style="width:42px;height:42px;border-radius:50%;background:var(--slate);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;">➤</div>
   </div>
+</div>
+<div id="care-summary-overlay" style="display:none;position:fixed;inset:0;background:white;z-index:230;flex-direction:column;overflow-y:auto;">
+  <div class="no-print" style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <div style="flex:1;font-weight:700;font-size:15px;color:var(--slate-dark);">Care Summary</div>
+    <div onclick="window.print()" style="padding:8px 14px;border-radius:20px;background:var(--slate);color:white;font-size:12px;font-weight:600;cursor:pointer;margin-right:8px;">🖨 Print / Save as PDF</div>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeCareSummary()">✕</div>
+  </div>
+  <div style="padding:24px;max-width:640px;margin:0 auto;width:100%;box-sizing:border-box;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-family:'Lora',serif;font-size:20px;font-weight:700;color:var(--slate-dark);" id="cs-recipient-name">Care Summary</div>
+      <div style="font-size:11px;color:var(--graphite);" id="cs-generated-date"></div>
+    </div>
+    <div id="care-summary-content"></div>
+    <div class="no-print" style="font-size:10px;color:var(--stone);text-align:center;margin-top:20px;">Generated from Handled with Care. Information reflects what's currently entered in the app and may not be complete or up to date.</div>
+  </div>
+</div>
+<div id="global-search-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:230;flex-direction:column;overflow-y:auto;">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <input class="auth-input" id="global-search-input" placeholder="Search medications, appointments, notes, providers..." style="flex:1;margin:0;" oninput="runGlobalSearch()" autofocus>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeGlobalSearch()">✕</div>
+  </div>
+  <div id="global-search-results" style="padding:14px;"></div>
 </div>
 <div id="appt-detail-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:220;flex-direction:column;overflow-y:auto;">
   <div style="display:flex;align-items:flex-start;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
@@ -3414,6 +3445,125 @@ async function deleteRoutine(id){
   if(error){alert('Could not delete: '+error.message);return;}
   await loadRoutinesAndTemplates();
   renderRoutinesList();
+}
+
+/* ══════════ CARE SUMMARY ══════════
+   One consolidated, printable snapshot -- meds, conditions, allergies,
+   providers, insurance, emergency contact, advance directive -- built
+   fresh each time it's opened rather than trusting whatever happens
+   to already be loaded in memory, so it's never showing stale data to
+   someone about to hand it to a new doctor or a substitute caregiver. */
+const VAULT_DOC_LABELS={insurance:'Insurance (Primary)',insurance_secondary:'Insurance (Secondary)',emergency_contact:'Emergency Contact',legal:'Advance Directive'};
+
+async function openCareSummary(){
+  document.getElementById('cs-recipient-name').textContent=(CARE_RECIPIENT_NAME?CARE_RECIPIENT_NAME+"'s":'')+' Care Summary';
+  document.getElementById('cs-generated-date').textContent='Generated '+new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
+  document.getElementById('care-summary-content').innerHTML='<div style="text-align:center;padding:30px;color:var(--graphite);">Loading…</div>';
+  document.getElementById('care-summary-overlay').style.display='flex';
+
+  const [{data:conditions},{data:allergies},{data:vaultDocs}]=await Promise.all([
+    sb.from('conditions').select('*').eq('family_id',CURRENT_FAMILY_ID).order('name'),
+    sb.from('allergies').select('*').eq('family_id',CURRENT_FAMILY_ID).order('name'),
+    sb.from('vault_documents').select('*').eq('family_id',CURRENT_FAMILY_ID).in('category',['insurance','insurance_secondary','emergency_contact','legal'])
+  ]);
+
+  const activeMeds=MEDICATIONS.filter(m=>m.active!==false);
+  const medicalContacts=CARE_CONTACTS.filter(c=>c.category==='medical');
+  const pharmacyContacts=CARE_CONTACTS.filter(c=>c.category==='pharmacy');
+
+  function section(title,bodyHtml){
+    return `<div style="margin-bottom:20px;"><div style="font-size:11px;font-weight:700;color:var(--terracotta);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--stone-light);padding-bottom:4px;margin-bottom:8px;">${title}</div>${bodyHtml}</div>`;
+  }
+
+  let html='';
+
+  html+=section('Medications',activeMeds.length===0?'<div style="font-size:12.5px;color:var(--graphite);">None on file.</div>':activeMeds.map(m=>{
+    const bits=[m.dosage,m.schedule_time,m.reason?`for ${m.reason}`:null].filter(Boolean).join(' · ');
+    return `<div style="font-size:13px;margin-bottom:5px;"><strong>${m.name}</strong>${bits?' — '+bits:''}${m.is_prn?' (as needed)':''}</div>`;
+  }).join(''));
+
+  html+=section('Conditions',(!conditions||conditions.length===0)?'<div style="font-size:12.5px;color:var(--graphite);">None on file.</div>':conditions.map(c=>`<div style="font-size:13px;margin-bottom:4px;">${c.name}${c.notes?' — '+c.notes:''}</div>`).join(''));
+
+  html+=section('Allergies',(!allergies||allergies.length===0)?'<div style="font-size:12.5px;color:var(--graphite);">None on file.</div>':allergies.map(a=>`<div style="font-size:13px;margin-bottom:4px;"><strong>${a.name}</strong>${a.reaction?' — '+a.reaction:''}${a.severity?` (${a.severity})`:''}</div>`).join(''));
+
+  html+=section('Care Team',(medicalContacts.length===0&&pharmacyContacts.length===0)?'<div style="font-size:12.5px;color:var(--graphite);">None on file.</div>':
+    medicalContacts.map(c=>`<div style="font-size:13px;margin-bottom:4px;"><strong>${c.name}</strong>${c.role?' — '+c.role:''}${c.phone?' · '+c.phone:''}</div>`).join('')+
+    pharmacyContacts.map(c=>`<div style="font-size:13px;margin-bottom:4px;"><strong>${c.name}</strong> (Pharmacy)${c.role?' — '+c.role:''}${c.phone?' · '+c.phone:''}</div>`).join('')
+  );
+
+  ['insurance','insurance_secondary','emergency_contact','legal'].forEach(cat=>{
+    const doc=(vaultDocs||[]).find(d=>d.category===cat);
+    if(doc&&(doc.title||doc.content)){
+      html+=section(VAULT_DOC_LABELS[cat],`<div style="font-size:13px;">${doc.title?`<strong>${doc.title}</strong><br>`:''}${(doc.content||'').replace(/\n/g,'<br>')}</div>`);
+    }
+  });
+
+  document.getElementById('care-summary-content').innerHTML=html;
+}
+function closeCareSummary(){
+  document.getElementById('care-summary-overlay').style.display='none';
+}
+
+/* ══════════ GLOBAL SEARCH ══════════
+   One search box across medications, appointments, Journal notes,
+   Care Team contacts, Vault documents, tasks, conditions, and
+   allergies -- each result tappable straight to its real screen. */
+let globalSearchDebounce=null;
+function openGlobalSearch(){
+  document.getElementById('global-search-input').value='';
+  document.getElementById('global-search-results').innerHTML='<div style="text-align:center;padding:20px;color:var(--graphite);font-size:12.5px;">Start typing to search everything.</div>';
+  document.getElementById('global-search-overlay').style.display='flex';
+  setTimeout(()=>document.getElementById('global-search-input').focus(),50);
+}
+function closeGlobalSearch(){
+  document.getElementById('global-search-overlay').style.display='none';
+}
+function runGlobalSearch(){
+  clearTimeout(globalSearchDebounce);
+  globalSearchDebounce=setTimeout(executeGlobalSearch,300);
+}
+async function executeGlobalSearch(){
+  const term=document.getElementById('global-search-input').value.trim();
+  const resultsEl=document.getElementById('global-search-results');
+  if(!term){
+    resultsEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--graphite);font-size:12.5px;">Start typing to search everything.</div>';
+    return;
+  }
+  const like=`%${term}%`;
+  const fam=CURRENT_FAMILY_ID;
+  const [meds,appts,journal,contacts,vault,tasks,conditions,allergies]=await Promise.all([
+    sb.from('medications').select('id,name,dosage').eq('family_id',fam).eq('active',true).ilike('name',like).limit(6),
+    sb.from('appointments').select('id,title,provider,location').eq('family_id',fam).or(`title.ilike.${like},provider.ilike.${like},location.ilike.${like}`).limit(6),
+    sb.from('journal_entries').select('id,content').eq('family_id',fam).ilike('content',like).limit(6),
+    sb.from('care_contacts').select('id,name,role').eq('family_id',fam).or(`name.ilike.${like},role.ilike.${like}`).limit(6),
+    sb.from('vault_documents').select('id,category,title,content').eq('family_id',fam).or(`title.ilike.${like},content.ilike.${like}`).limit(6),
+    sb.from('tasks').select('id,title').eq('family_id',fam).ilike('title',like).limit(6),
+    sb.from('conditions').select('id,name').eq('family_id',fam).ilike('name',like).limit(6),
+    sb.from('allergies').select('id,name').eq('family_id',fam).ilike('name',like).limit(6)
+  ]);
+
+  const groups=[
+    {label:'💊 Medications',icon:'💊',items:(meds.data||[]).map(m=>({text:m.name,sub:m.dosage,action:`closeGlobalSearch();showScreen('meds');setTimeout(()=>openEditMedForm('${m.id}'),100);`}))},
+    {label:'📅 Appointments',icon:'📅',items:(appts.data||[]).map(a=>({text:a.title,sub:[a.provider,a.location].filter(Boolean).join(' · '),action:`closeGlobalSearch();showScreen('appts');setTimeout(()=>openAppointmentDetail('${a.id}'),100);`}))},
+    {label:'📝 Journal notes',icon:'📝',items:(journal.data||[]).map(j=>({text:(j.content||'').slice(0,80),sub:'',action:`closeGlobalSearch();showScreen('home');setTimeout(()=>showScreen('journal'),50);`}))},
+    {label:'👥 Care Team',icon:'👥',items:(contacts.data||[]).map(c=>({text:c.name,sub:c.role,action:`closeGlobalSearch();showScreen('roster');`}))},
+    {label:'🗂 Vault documents',icon:'🗂',items:(vault.data||[]).map(v=>({text:v.title||VAULT_DOC_LABELS[v.category]||v.category,sub:(v.content||'').slice(0,60),action:`closeGlobalSearch();showScreen('vault');setTimeout(()=>openVaultEditor('${v.category}','${v.id}'),100);`}))},
+    {label:'✅ Tasks',icon:'✅',items:(tasks.data||[]).map(t=>({text:t.title,sub:'',action:`closeGlobalSearch();showScreen('home');`}))},
+    {label:'🩺 Conditions',icon:'🩺',items:(conditions.data||[]).map(c=>({text:c.name,sub:'',action:`closeGlobalSearch();showScreen('vault');setTimeout(()=>openStructuredList('conditions'),100);`}))},
+    {label:'⚠️ Allergies',icon:'⚠️',items:(allergies.data||[]).map(a=>({text:a.name,sub:'',action:`closeGlobalSearch();showScreen('vault');setTimeout(()=>openStructuredList('allergies'),100);`}))}
+  ].filter(g=>g.items.length>0);
+
+  if(groups.length===0){
+    resultsEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--graphite);font-size:12.5px;">No matches found.</div>';
+    return;
+  }
+  resultsEl.innerHTML=groups.map(g=>`
+    <div style="font-size:10.5px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin:14px 2px 6px;">${g.label}</div>
+    ${g.items.map(it=>`<div onclick="${it.action}" style="background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;cursor:pointer;">
+      <div style="font-size:13px;color:var(--charcoal);">${it.text}</div>
+      ${it.sub?`<div style="font-size:10.5px;color:var(--graphite);">${it.sub}</div>`:''}
+    </div>`).join('')}
+  `).join('');
 }
 
 function populateTemplateDropdowns(){
