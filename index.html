@@ -763,8 +763,13 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div class="slabel">Tasks</div>
     <div class="task-card" id="home-task-list"></div>
-    <div class="add-btn" style="margin:0 14px 8px;" onclick="showAddTaskForm()">
-      <span style="font-size:18px;color:var(--graphite)">+</span>Add task
+    <div style="display:flex;gap:8px;margin:0 14px 8px;">
+      <div class="add-btn" style="flex:1;margin:0;" onclick="showAddTaskForm()">
+        <span style="font-size:18px;color:var(--graphite)">+</span>Add task
+      </div>
+      <div class="add-btn" style="flex:1;margin:0;" onclick="openRoutinesManager()">
+        🔁 Routines
+      </div>
     </div>
     <div id="add-task-form" style="display:none;margin:0 14px 10px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
       <div class="auth-field-label" style="margin-top:0;">Task</div>
@@ -1652,6 +1657,54 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div id="task-guide-viewer-steps"></div>
   </div>
 </div>
+<div id="routines-manager-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:220;flex-direction:column;overflow-y:auto;">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <div style="flex:1;font-weight:700;font-size:15px;color:var(--slate-dark);">Routines & recurring tasks</div>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeRoutinesManager()">✕</div>
+  </div>
+  <div style="padding:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">🔁 Routines</div>
+    <div id="routines-list" style="margin-bottom:8px;"></div>
+    <div class="add-btn" style="margin:0 0 20px;" onclick="createNewRoutine()">+ New routine (e.g. Morning, Bedtime)</div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--graphite);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📌 Standalone recurring tasks</div>
+    <div id="standalone-templates-list" style="margin-bottom:8px;"></div>
+    <div class="add-btn" style="margin:0;" onclick="openTemplateEditor(null,null)">+ New recurring task</div>
+  </div>
+</div>
+<div id="template-editor-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:225;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:440px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:4px;" id="template-editor-title">New recurring task</div>
+    <div style="font-size:11px;color:var(--graphite);margin-bottom:14px;" id="template-editor-routine-label"></div>
+
+    <div class="auth-field-label" style="margin-top:0;">Title</div>
+    <input class="auth-input" id="tpl-title" placeholder="e.g. Take morning meds">
+    <div class="auth-field-label">Time of day (optional)</div>
+    <input class="auth-input" id="tpl-time" placeholder="e.g. 7:00 AM">
+    <div class="auth-field-label">Assign to (optional)</div>
+    <select class="auth-input" id="tpl-assignee"><option value="">Unassigned</option></select>
+    <div class="auth-field-label">How-to guide (optional)</div>
+    <select class="auth-input" id="tpl-guide"><option value="">None</option></select>
+
+    <div class="auth-field-label">Repeats</div>
+    <select class="auth-input" id="tpl-frequency" onchange="renderRecurrenceInputs()">
+      <option value="daily">Every day</option>
+      <option value="weekly">Certain days of the week</option>
+      <option value="monthly">A certain day each month</option>
+      <option value="custom">Specific dates</option>
+    </select>
+    <div id="tpl-recurrence-inputs" style="margin-top:8px;"></div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="closeTemplateEditor()">Cancel</div>
+      <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveTemplate()">Save</div>
+    </div>
+    <div id="template-delete-row" style="display:none;margin-top:8px;">
+      <div style="padding:9px;border-radius:var(--radius-sm);border:1px solid var(--crimson);color:var(--crimson);text-align:center;font-size:12px;font-weight:600;cursor:pointer;" onclick="deleteTemplate()">🗑 Delete this recurring item</div>
+    </div>
+    <div class="auth-error" id="tpl-error" style="margin-top:10px;"></div>
+  </div>
+</div>
 <div id="burnout-quiz-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:215;flex-direction:column;overflow-y:auto;">
   <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
     <div style="flex:1;">
@@ -1711,6 +1764,17 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     </div>
     <div style="font-size:10.5px;color:var(--stone);margin-top:14px;line-height:1.5;">To withdraw consent for basic account data collection entirely, or to delete your data, use the <a href="/health-privacy-request" target="_blank" style="color:var(--stone);">privacy request page</a> instead, since that closes your account rather than just one feature.</div>
     <div style="margin-top:14px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="closeManageConsent()">Done</div>
+  </div>
+</div>
+<div id="availability-editor-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;padding:22px;">
+    <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);margin-bottom:4px;">Your availability</div>
+    <div style="font-size:11.5px;color:var(--graphite);margin-bottom:14px;">Let the rest of your Huddle see which days you're generally around to help — useful when someone's deciding who to ask.</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;" id="avail-day-chips"></div>
+    <div class="auth-field-label" style="margin-top:0;">Note (optional)</div>
+    <input class="auth-input" id="avail-note" placeholder="e.g. Evenings only, or on-call weekends">
+    <div style="margin-top:14px;padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveAvailability()">Save</div>
+    <div style="margin-top:8px;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);color:var(--charcoal);" onclick="closeAvailabilityEditor()">Cancel</div>
   </div>
 </div>
 <div id="med-history-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:220;align-items:center;justify-content:center;padding:20px;">
@@ -2442,10 +2506,12 @@ async function enterApp(user,displayName){
   await loadAppointments();
   await loadPendingDebrief();
   await loadFamilyMembers();
+  await loadAvailability();
   await loadCareContacts();
   await loadCheckinHistory();
   await loadBurnoutHistory();
   await loadTaskGuides();
+  await loadRoutinesAndTemplates();
   await loadTasks();
   await loadVaultDocs();
   await loadCostEntries();
@@ -2666,7 +2732,11 @@ function renderHuddleMembers(){
       const you=isMe?' (you)':'';
       const unread=DM_UNREAD_COUNTS[m.user_id]||0;
       const dmBtn=isMe?'':`<div style="position:relative;width:30px;height:30px;border-radius:50%;background:var(--stone-light);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex-shrink:0;" onclick="openDirectThread('${m.user_id}','${(m.display_name||'').replace(/'/g,"\\'")}')">💬${unread>0?`<span style="position:absolute;top:-3px;right:-3px;background:var(--crimson);color:white;border-radius:50%;width:15px;height:15px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;">${unread>9?'9+':unread}</span>`:''}</div>`;
-      return `<div class="contact-row"><div class="contact-avatar" style="background:${color}">${initial}</div><div class="contact-info"><div class="contact-name">${m.display_name}${you}${roleTag}</div><div class="contact-role">${m.relationship||'Family member'}</div></div>${dmBtn}</div>`;
+      const avail=AVAILABILITY[m.user_id];
+      const availLine=isMe
+        ?`<div onclick="openAvailabilityEditor()" style="font-size:10.5px;color:var(--slate);font-weight:600;cursor:pointer;margin-top:2px;">${avail&&avail.available_days.length?'Available: '+avail.available_days.map(d=>WEEKDAY_SHORT[d]).join('/'):'Set your availability →'}</div>`
+        :(avail&&avail.available_days.length?`<div style="font-size:10.5px;color:var(--graphite);margin-top:2px;">Available: ${avail.available_days.map(d=>WEEKDAY_SHORT[d]).join('/')}</div>`:'');
+      return `<div class="contact-row"><div class="contact-avatar" style="background:${color}">${initial}</div><div class="contact-info"><div class="contact-name">${m.display_name}${you}${roleTag}</div><div class="contact-role">${m.relationship||'Family member'}</div>${availLine}</div>${dmBtn}</div>`;
     }).join('');
   }
   if(homeList){
@@ -2684,6 +2754,53 @@ function renderHuddleMembers(){
     inviteBtn.style.display=canInvite?'flex':'none';
     coordinatorNote.style.display=canInvite?'none':'block';
   }
+}
+
+/* ══════════ CAREGIVER AVAILABILITY ══════════
+   A lightweight weekly pattern per person -- not a full calendar, just
+   "which days am I generally around" -- shown on each roster row so
+   deciding who to ask for help doesn't require messaging everyone. */
+let AVAILABILITY={};
+let availSelectedDays=[];
+
+async function loadAvailability(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('caregiver_availability').select('*').eq('family_id',CURRENT_FAMILY_ID);
+  if(error){console.error('Could not load availability:',error.message);return;}
+  AVAILABILITY={};
+  (data||[]).forEach(row=>{AVAILABILITY[row.user_id]=row;});
+  renderHuddleMembers();
+}
+
+function openAvailabilityEditor(){
+  const mine=AVAILABILITY[CURRENT_USER.id];
+  availSelectedDays=mine?[...mine.available_days]:[];
+  document.getElementById('avail-note').value=mine?(mine.note||''):'';
+  renderAvailDayChips();
+  document.getElementById('availability-editor-overlay').style.display='flex';
+}
+function closeAvailabilityEditor(){
+  document.getElementById('availability-editor-overlay').style.display='none';
+}
+function renderAvailDayChips(){
+  document.getElementById('avail-day-chips').innerHTML=WEEKDAY_SHORT.map((d,i)=>
+    `<div onclick="toggleAvailDay(${i})" style="padding:8px 12px;border-radius:16px;border:1px solid ${availSelectedDays.includes(i)?'var(--slate)':'var(--stone-light)'};background:${availSelectedDays.includes(i)?'var(--slate)':'var(--white)'};color:${availSelectedDays.includes(i)?'white':'var(--charcoal)'};font-size:12px;cursor:pointer;">${d}</div>`
+  ).join('');
+}
+function toggleAvailDay(i){
+  const idx=availSelectedDays.indexOf(i);
+  if(idx>-1)availSelectedDays.splice(idx,1);else availSelectedDays.push(i);
+  renderAvailDayChips();
+}
+async function saveAvailability(){
+  const note=document.getElementById('avail-note').value.trim()||null;
+  const {error}=await sb.from('caregiver_availability').upsert({
+    user_id:CURRENT_USER.id,family_id:CURRENT_FAMILY_ID,available_days:availSelectedDays,note,updated_at:new Date().toISOString()
+  },{onConflict:'user_id'});
+  if(error){alert('Could not save your availability: '+error.message);return;}
+  await loadAvailability();
+  renderHuddleMembers();
+  closeAvailabilityEditor();
 }
 
 /* ══════════ PRIVATE 1:1 CHAT ══════════
@@ -3009,6 +3126,9 @@ function renderTasksList(){
     const isOverdue=!isDone&&t.due_date&&new Date(t.due_date)<today;
     const dueLabel=isDone?'Done':(t.due_date?formatDueDate(t.due_date):'No due date');
     const guide=t.guide_id?TASK_GUIDES.find(g=>g.id===t.guide_id):null;
+    const recurTemplate=t.recurring_template_id?RECURRING_TEMPLATES.find(rt=>rt.id===t.recurring_template_id):null;
+    const recurRoutine=recurTemplate&&recurTemplate.routine_id?ROUTINES.find(r=>r.id===recurTemplate.routine_id):null;
+    const recurTag=t.recurring_template_id?`<span style="font-size:10px;color:var(--slate);">🔁${recurRoutine?' '+recurRoutine.name:''}</span>`:'';
     let statusBadge='';
     if(isDone)statusBadge='';
     else if(isOverdue)statusBadge=`<span style="color:var(--crimson);font-weight:700;">Overdue</span>`;
@@ -3018,7 +3138,7 @@ function renderTasksList(){
       <div class="task-check ${isDone?'done':'open'}" onclick="toggleTaskStatus('${t.id}','${t.status}')">${isDone?'✓':''}</div>
       <div class="task-body">
         <div class="task-name">${t.title}${t.needs_help&&!isDone?' 🆘':''}${guide?` <span onclick="event.stopPropagation();openTaskGuideViewer('${guide.id}')" style="font-size:11px;color:var(--slate);cursor:pointer;">📋 how-to</span>`:''}</div>
-        <div class="task-meta">${statusBadge}${assignee?`<span class="task-assignee">${assignee}</span>`:''}<span class="task-due">${dueLabel}</span></div>
+        <div class="task-meta">${statusBadge}${assignee?`<span class="task-assignee">${assignee}</span>`:''}<span class="task-due">${dueLabel}</span>${recurTag}</div>
         ${!isDone?`<div style="display:flex;gap:6px;margin-top:6px;">
           ${!assignee?`<div onclick="claimTask('${t.id}')" style="padding:5px 12px;border-radius:16px;background:var(--sage);color:white;font-size:11px;font-weight:700;cursor:pointer;">🙋 I'll do it</div>`:''}
           <div onclick="toggleNeedsHelp('${t.id}',${t.needs_help})" style="padding:5px 12px;border-radius:16px;border:1px solid ${t.needs_help?'var(--crimson)':'var(--stone-light)'};color:${t.needs_help?'var(--crimson)':'var(--graphite)'};font-size:11px;font-weight:600;cursor:pointer;">${t.needs_help?'Cancel help request':'🆘 Need help'}</div>
@@ -3177,6 +3297,233 @@ async function deleteTaskGuide(id){
   await loadTaskGuides();
   renderTaskGuideList();
   await loadTasks();
+}
+
+/* ══════════ ROUTINES & RECURRING TASKS ══════════
+   A routine (Morning, Bedtime, Sunday Prep) is a named group of
+   recurring_task_templates that share a routine_id; a standalone
+   recurring task is the same kind of row with no routine attached.
+   Actual task instances get generated once a day by the
+   generate-recurring-tasks scheduled function and simply show up in
+   the normal Tasks list -- editing/completing one instance never
+   touches the template it came from. */
+let ROUTINES=[];
+let RECURRING_TEMPLATES=[];
+let editingTemplateId=null;
+let editingTemplateRoutineId=null;
+let tplSelectedWeekDays=[];
+let tplCustomDates=[];
+
+async function loadRoutinesAndTemplates(){
+  if(!CURRENT_FAMILY_ID)return;
+  const [{data:routines,error:e1},{data:templates,error:e2}]=await Promise.all([
+    sb.from('routines').select('*').eq('family_id',CURRENT_FAMILY_ID).order('name'),
+    sb.from('recurring_task_templates').select('*').eq('family_id',CURRENT_FAMILY_ID).eq('active',true).order('time_of_day',{nullsFirst:false})
+  ]);
+  if(e1)console.error('Could not load routines:',e1.message);
+  if(e2)console.error('Could not load recurring templates:',e2.message);
+  ROUTINES=routines||[];
+  RECURRING_TEMPLATES=templates||[];
+}
+
+function openRoutinesManager(){
+  renderRoutinesList();
+  renderStandaloneTemplatesList();
+  document.getElementById('routines-manager-overlay').style.display='flex';
+}
+function closeRoutinesManager(){
+  document.getElementById('routines-manager-overlay').style.display='none';
+}
+
+const FREQ_LABELS={daily:'Every day',weekly:'Weekly',monthly:'Monthly',custom:'Specific dates'};
+const WEEKDAY_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function templateSummaryLine(t){
+  const bits=[];
+  if(t.time_of_day)bits.push(t.time_of_day);
+  if(t.frequency==='weekly'&&Array.isArray(t.recurrence_days)){
+    bits.push(t.recurrence_days.map(d=>WEEKDAY_SHORT[d]).join('/'));
+  } else if(t.frequency==='monthly'&&Array.isArray(t.recurrence_days)&&t.recurrence_days.length){
+    bits.push(`Day ${t.recurrence_days[0]} of month`);
+  } else if(t.frequency==='custom'){
+    bits.push(`${(t.recurrence_days||[]).length} date(s)`);
+  } else {
+    bits.push(FREQ_LABELS[t.frequency]||t.frequency);
+  }
+  const assignee=t.assigned_to?memberNameFor(t.assigned_to):null;
+  if(assignee)bits.push(assignee);
+  return bits.join(' · ');
+}
+
+function renderRoutinesList(){
+  const el=document.getElementById('routines-list');
+  if(ROUTINES.length===0){
+    el.innerHTML='<div style="font-size:12.5px;color:var(--graphite);margin-bottom:10px;">No routines yet.</div>';
+    return;
+  }
+  el.innerHTML=ROUTINES.map(r=>{
+    const steps=RECURRING_TEMPLATES.filter(t=>t.routine_id===r.id);
+    return `<div style="background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:13.5px;font-weight:700;color:var(--slate-dark);">${r.name}</div>
+        <div onclick="deleteRoutine('${r.id}')" style="font-size:13px;color:var(--crimson);cursor:pointer;padding:2px 4px;">🗑</div>
+      </div>
+      ${steps.map(t=>`<div onclick="openTemplateEditor('${t.id}',null)" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px dashed var(--stone-light);cursor:pointer;">
+        <div style="font-size:12.5px;color:var(--charcoal);">${t.title}</div>
+        <div style="font-size:10.5px;color:var(--graphite);">${templateSummaryLine(t)}</div>
+      </div>`).join('')}
+      <div onclick="openTemplateEditor(null,'${r.id}')" style="text-align:center;font-size:11px;color:var(--slate);font-weight:600;cursor:pointer;margin-top:8px;padding-top:6px;border-top:1px dashed var(--stone-light);">+ Add a step</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStandaloneTemplatesList(){
+  const el=document.getElementById('standalone-templates-list');
+  const standalone=RECURRING_TEMPLATES.filter(t=>!t.routine_id);
+  if(standalone.length===0){
+    el.innerHTML='<div style="font-size:12.5px;color:var(--graphite);margin-bottom:10px;">No standalone recurring tasks yet.</div>';
+    return;
+  }
+  el.innerHTML=standalone.map(t=>`
+    <div onclick="openTemplateEditor('${t.id}',null)" style="display:flex;justify-content:space-between;align-items:center;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;cursor:pointer;">
+      <div style="font-size:13px;color:var(--charcoal);">${t.title}</div>
+      <div style="font-size:10.5px;color:var(--graphite);">${templateSummaryLine(t)}</div>
+    </div>`).join('');
+}
+
+function createNewRoutine(){
+  const el=document.getElementById('routines-list');
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;margin-bottom:10px;';
+  row.innerHTML=`<input class="auth-input" id="new-routine-name-input" style="flex:1;margin:0;" placeholder="e.g. Morning"><div onclick="confirmNewRoutine()" style="padding:0 14px;border-radius:var(--radius-sm);background:var(--slate);color:white;display:flex;align-items:center;font-size:12px;cursor:pointer;">Create</div>`;
+  el.prepend(row);
+  document.getElementById('new-routine-name-input').focus();
+}
+async function confirmNewRoutine(){
+  const input=document.getElementById('new-routine-name-input');
+  const name=input.value.trim();
+  if(!name)return;
+  const {error}=await sb.from('routines').insert({family_id:CURRENT_FAMILY_ID,name,created_by:CURRENT_USER.id});
+  if(error){alert('Could not create routine: '+error.message);return;}
+  await loadRoutinesAndTemplates();
+  renderRoutinesList();
+}
+async function deleteRoutine(id){
+  if(!confirm('Delete this routine and all its steps? Any already-generated tasks stay as they are.'))return;
+  const {error}=await sb.from('routines').delete().eq('id',id);
+  if(error){alert('Could not delete: '+error.message);return;}
+  await loadRoutinesAndTemplates();
+  renderRoutinesList();
+}
+
+function populateTemplateDropdowns(){
+  const aSel=document.getElementById('tpl-assignee');
+  aSel.innerHTML='<option value="">Unassigned</option>'+FAMILY_MEMBERS.map(m=>`<option value="${m.user_id}">${m.display_name}</option>`).join('');
+  const gSel=document.getElementById('tpl-guide');
+  gSel.innerHTML='<option value="">None</option>'+TASK_GUIDES.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
+}
+
+function openTemplateEditor(templateId,routineId){
+  editingTemplateId=templateId;
+  editingTemplateRoutineId=routineId;
+  populateTemplateDropdowns();
+  document.getElementById('tpl-error').style.display='none';
+  const template=templateId?RECURRING_TEMPLATES.find(t=>t.id===templateId):null;
+  document.getElementById('template-editor-title').textContent=template?'Edit recurring item':'New recurring item';
+  document.getElementById('template-delete-row').style.display=template?'block':'none';
+  const routine=template?ROUTINES.find(r=>r.id===template.routine_id):(routineId?ROUTINES.find(r=>r.id===routineId):null);
+  document.getElementById('template-editor-routine-label').textContent=routine?`Part of "${routine.name}"`:'Standalone (not part of a routine)';
+  document.getElementById('tpl-title').value=template?template.title:'';
+  document.getElementById('tpl-time').value=template?(template.time_of_day||''):'';
+  document.getElementById('tpl-assignee').value=template?(template.assigned_to||''):'';
+  document.getElementById('tpl-guide').value=template?(template.guide_id||''):'';
+  document.getElementById('tpl-frequency').value=template?template.frequency:'daily';
+  tplSelectedWeekDays=template&&template.frequency==='weekly'?[...template.recurrence_days]:[];
+  tplCustomDates=template&&template.frequency==='custom'?[...template.recurrence_days]:[];
+  renderRecurrenceInputs(template&&template.frequency==='monthly'?template.recurrence_days[0]:null);
+  document.getElementById('template-editor-overlay').style.display='flex';
+}
+function closeTemplateEditor(){
+  document.getElementById('template-editor-overlay').style.display='none';
+  editingTemplateId=null;
+  editingTemplateRoutineId=null;
+}
+
+function renderRecurrenceInputs(presetMonthDay){
+  const freq=document.getElementById('tpl-frequency').value;
+  const el=document.getElementById('tpl-recurrence-inputs');
+  if(freq==='weekly'){
+    el.innerHTML=`<div style="display:flex;gap:5px;flex-wrap:wrap;">${WEEKDAY_SHORT.map((d,i)=>`<div onclick="toggleTplWeekDay(${i})" id="tpl-wd-${i}" style="padding:7px 10px;border-radius:14px;border:1px solid ${tplSelectedWeekDays.includes(i)?'var(--slate)':'var(--stone-light)'};background:${tplSelectedWeekDays.includes(i)?'var(--slate)':'var(--white)'};color:${tplSelectedWeekDays.includes(i)?'white':'var(--charcoal)'};font-size:11px;cursor:pointer;">${d}</div>`).join('')}</div>`;
+  } else if(freq==='monthly'){
+    el.innerHTML=`<input class="auth-input" id="tpl-monthly-day" type="number" min="1" max="31" placeholder="Day of month, e.g. 15" value="${presetMonthDay||''}">`;
+  } else if(freq==='custom'){
+    el.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:8px;"><input class="auth-input" id="tpl-custom-date-input" type="date" style="flex:1;margin:0;"><div onclick="addTplCustomDate()" style="padding:0 14px;border-radius:var(--radius-sm);background:var(--slate);color:white;display:flex;align-items:center;font-size:12px;cursor:pointer;">+</div></div><div id="tpl-custom-dates-list">${renderTplCustomDatesChips()}</div>`;
+  } else {
+    el.innerHTML='';
+  }
+}
+function toggleTplWeekDay(i){
+  const idx=tplSelectedWeekDays.indexOf(i);
+  if(idx>-1)tplSelectedWeekDays.splice(idx,1);else tplSelectedWeekDays.push(i);
+  renderRecurrenceInputs();
+}
+function renderTplCustomDatesChips(){
+  return tplCustomDates.map(d=>`<div style="display:inline-block;font-size:11px;background:var(--stone-light);border-radius:14px;padding:4px 10px;margin:0 4px 4px 0;">${d} <span onclick="removeTplCustomDate('${d}')" style="cursor:pointer;">✕</span></div>`).join('');
+}
+function addTplCustomDate(){
+  const input=document.getElementById('tpl-custom-date-input');
+  if(!input.value)return;
+  if(!tplCustomDates.includes(input.value))tplCustomDates.push(input.value);
+  input.value='';
+  document.getElementById('tpl-custom-dates-list').innerHTML=renderTplCustomDatesChips();
+}
+function removeTplCustomDate(d){
+  tplCustomDates=tplCustomDates.filter(x=>x!==d);
+  document.getElementById('tpl-custom-dates-list').innerHTML=renderTplCustomDatesChips();
+}
+
+async function saveTemplate(){
+  const title=document.getElementById('tpl-title').value.trim();
+  const time_of_day=document.getElementById('tpl-time').value.trim()||null;
+  const assigned_to=document.getElementById('tpl-assignee').value||null;
+  const guide_id=document.getElementById('tpl-guide').value||null;
+  const frequency=document.getElementById('tpl-frequency').value;
+  const errEl=document.getElementById('tpl-error');
+  if(!title){errEl.textContent='A title is required.';errEl.style.display='block';return;}
+  let recurrence_days=[];
+  if(frequency==='weekly'){
+    if(tplSelectedWeekDays.length===0){errEl.textContent='Pick at least one day of the week.';errEl.style.display='block';return;}
+    recurrence_days=tplSelectedWeekDays;
+  } else if(frequency==='monthly'){
+    const day=parseInt(document.getElementById('tpl-monthly-day').value,10);
+    if(!day||day<1||day>31){errEl.textContent='Enter a valid day of the month (1-31).';errEl.style.display='block';return;}
+    recurrence_days=[day];
+  } else if(frequency==='custom'){
+    if(tplCustomDates.length===0){errEl.textContent='Add at least one date.';errEl.style.display='block';return;}
+    recurrence_days=tplCustomDates;
+  }
+  const payload={title,time_of_day,assigned_to,guide_id,frequency,recurrence_days,routine_id:editingTemplateRoutineId};
+  let error;
+  if(editingTemplateId){
+    ({error}=await sb.from('recurring_task_templates').update(payload).eq('id',editingTemplateId));
+  } else {
+    ({error}=await sb.from('recurring_task_templates').insert({family_id:CURRENT_FAMILY_ID,created_by:CURRENT_USER.id,...payload}));
+  }
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  await loadRoutinesAndTemplates();
+  renderRoutinesList();
+  renderStandaloneTemplatesList();
+  closeTemplateEditor();
+}
+async function deleteTemplate(){
+  if(!editingTemplateId)return;
+  if(!confirm('Stop this recurring item? Already-generated tasks stay as they are; no new ones will be created.'))return;
+  const {error}=await sb.from('recurring_task_templates').update({active:false}).eq('id',editingTemplateId);
+  if(error){alert('Could not delete: '+error.message);return;}
+  await loadRoutinesAndTemplates();
+  renderRoutinesList();
+  renderStandaloneTemplatesList();
+  closeTemplateEditor();
 }
 
 function openTaskGuideViewer(guideId){
