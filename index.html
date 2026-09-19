@@ -775,6 +775,9 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
       </select>
       <div class="auth-field-label">Due date (optional)</div>
       <input class="auth-input" id="new-task-due" type="date">
+      <div class="auth-field-label">How-to guide (optional)</div>
+      <select class="auth-input" id="new-task-guide"><option value="">None</option></select>
+      <div style="text-align:right;font-size:10.5px;color:var(--slate);font-weight:600;cursor:pointer;margin-top:4px;" onclick="openTaskGuideManager()">📋 Manage guides →</div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="hideAddTaskForm()">Cancel</div>
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewTask()">Save</div>
@@ -1618,6 +1621,37 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div style="padding:10px;border-radius:var(--radius-sm);border:1px solid var(--stone-light);text-align:center;font-size:12.5px;font-weight:600;color:var(--charcoal);cursor:pointer;" onclick="closeCalendarFeedPanel()">Close</div>
   </div>
 </div>
+<div id="task-guide-manager-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:220;flex-direction:column;overflow-y:auto;">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
+    <div style="flex:1;font-weight:700;font-size:15px;color:var(--slate-dark);">How-to guides</div>
+    <div style="font-size:18px;cursor:pointer;color:var(--graphite);padding:4px;" onclick="closeTaskGuideManager()">✕</div>
+  </div>
+  <div style="padding:14px;">
+    <div style="font-size:11.5px;color:var(--graphite);margin-bottom:14px;">A saved, step-by-step guide any Huddle member can follow — so a task gets done the same way no matter who's doing it.</div>
+    <div id="task-guide-list" style="margin-bottom:16px;"></div>
+    <div id="task-guide-editor" style="background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius);padding:12px;">
+      <div class="auth-field-label" style="margin-top:0;">Guide title</div>
+      <input class="auth-input" id="new-guide-title" placeholder="e.g. Washing Mom's hair">
+      <div class="auth-field-label">Steps</div>
+      <div id="new-guide-steps"></div>
+      <div onclick="addGuideStepInput()" style="text-align:center;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;margin:6px 0 12px;">+ Add a step</div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--stone-light);background:var(--white);color:var(--charcoal);" onclick="resetGuideEditor()">Clear</div>
+        <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveTaskGuide()">Save guide</div>
+      </div>
+      <div class="auth-error" id="new-guide-error" style="margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+<div id="task-guide-viewer-overlay" style="display:none;position:fixed;inset:0;background:rgba(33,33,33,0.55);z-index:225;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:var(--radius-lg);max-width:420px;width:100%;max-height:80vh;overflow-y:auto;padding:22px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div style="font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--slate-dark);" id="task-guide-viewer-title"></div>
+      <div style="font-size:18px;cursor:pointer;color:var(--graphite);" onclick="closeTaskGuideViewer()">✕</div>
+    </div>
+    <div id="task-guide-viewer-steps"></div>
+  </div>
+</div>
 <div id="burnout-quiz-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:215;flex-direction:column;overflow-y:auto;">
   <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--white);border-bottom:1px solid var(--stone-light);flex-shrink:0;">
     <div style="flex:1;">
@@ -2411,6 +2445,7 @@ async function enterApp(user,displayName){
   await loadCareContacts();
   await loadCheckinHistory();
   await loadBurnoutHistory();
+  await loadTaskGuides();
   await loadTasks();
   await loadVaultDocs();
   await loadCostEntries();
@@ -2963,13 +2998,32 @@ function renderTasksList(){
     updateHomeProgress();
     return;
   }
+  const today=new Date();today.setHours(0,0,0,0);
   listEl.innerHTML=TASKS.map(t=>{
     const isDone=t.status==='done';
-    const assignee=memberNameFor(t.assigned_to);
+    // Never call memberNameFor() with a null assigned_to for tasks --
+    // that fallback exists for "this person's account was deleted,"
+    // not "this task was simply never assigned to anyone." Those are
+    // different states and look different here on purpose.
+    const assignee=t.assigned_to?memberNameFor(t.assigned_to):null;
+    const isOverdue=!isDone&&t.due_date&&new Date(t.due_date)<today;
     const dueLabel=isDone?'Done':(t.due_date?formatDueDate(t.due_date):'No due date');
-    return `<div class="task-row${isDone?' done':''}" onclick="toggleTaskStatus('${t.id}','${t.status}')">
-      <div class="task-check ${isDone?'done':'open'}">${isDone?'✓':''}</div>
-      <div class="task-body"><div class="task-name">${t.title}</div><div class="task-meta">${assignee?`<span class="task-assignee">${assignee}</span>`:''}<span class="task-due">${dueLabel}</span></div></div>
+    const guide=t.guide_id?TASK_GUIDES.find(g=>g.id===t.guide_id):null;
+    let statusBadge='';
+    if(isDone)statusBadge='';
+    else if(isOverdue)statusBadge=`<span style="color:var(--crimson);font-weight:700;">Overdue</span>`;
+    else if(assignee)statusBadge=`<span style="color:var(--sage);font-weight:600;">Claimed</span>`;
+    else statusBadge=`<span style="color:var(--terracotta);font-weight:600;">Open</span>`;
+    return `<div class="task-row${isDone?' done':''}" style="${t.needs_help&&!isDone?'background:var(--crimson-light);':''}">
+      <div class="task-check ${isDone?'done':'open'}" onclick="toggleTaskStatus('${t.id}','${t.status}')">${isDone?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-name">${t.title}${t.needs_help&&!isDone?' 🆘':''}${guide?` <span onclick="event.stopPropagation();openTaskGuideViewer('${guide.id}')" style="font-size:11px;color:var(--slate);cursor:pointer;">📋 how-to</span>`:''}</div>
+        <div class="task-meta">${statusBadge}${assignee?`<span class="task-assignee">${assignee}</span>`:''}<span class="task-due">${dueLabel}</span></div>
+        ${!isDone?`<div style="display:flex;gap:6px;margin-top:6px;">
+          ${!assignee?`<div onclick="claimTask('${t.id}')" style="padding:5px 12px;border-radius:16px;background:var(--sage);color:white;font-size:11px;font-weight:700;cursor:pointer;">🙋 I'll do it</div>`:''}
+          <div onclick="toggleNeedsHelp('${t.id}',${t.needs_help})" style="padding:5px 12px;border-radius:16px;border:1px solid ${t.needs_help?'var(--crimson)':'var(--stone-light)'};color:${t.needs_help?'var(--crimson)':'var(--graphite)'};font-size:11px;font-weight:600;cursor:pointer;">${t.needs_help?'Cancel help request':'🆘 Need help'}</div>
+        </div>`:''}
+      </div>
     </div>`;
   }).join('');
   updateHomeProgress();
@@ -2979,6 +3033,19 @@ async function toggleTaskStatus(taskId,currentStatus){
   const newStatus=currentStatus==='done'?'open':'done';
   const {error}=await sb.from('tasks').update({status:newStatus}).eq('id',taskId);
   if(error){alert('Could not update task: '+error.message);return;}
+  await loadTasks();
+}
+
+async function claimTask(taskId){
+  if(!CURRENT_USER)return;
+  const {error}=await sb.from('tasks').update({assigned_to:CURRENT_USER.id}).eq('id',taskId);
+  if(error){alert('Could not claim this task: '+error.message);return;}
+  await loadTasks();
+}
+
+async function toggleNeedsHelp(taskId,current){
+  const {error}=await sb.from('tasks').update({needs_help:!current}).eq('id',taskId);
+  if(error){alert('Could not update: '+error.message);return;}
   await loadTasks();
 }
 
@@ -2995,6 +3062,7 @@ async function saveNewTask(){
   const title=document.getElementById('new-task-title').value.trim();
   const assignedTo=document.getElementById('new-task-assignee').value||null;
   const dueDate=document.getElementById('new-task-due').value||null;
+  const guideId=document.getElementById('new-task-guide').value||null;
   const errEl=document.getElementById('new-task-error');
   if(!title){errEl.textContent='Task name is required.';errEl.style.display='block';return;}
   const {error}=await sb.from('tasks').insert({
@@ -3002,6 +3070,7 @@ async function saveNewTask(){
     title,
     assigned_to:assignedTo,
     due_date:dueDate,
+    guide_id:guideId,
     created_by:CURRENT_USER.id
   });
   if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
@@ -3010,6 +3079,119 @@ async function saveNewTask(){
   }
   hideAddTaskForm();
   await loadTasks();
+}
+
+/* ══════════ TASK HOW-TO GUIDES ══════════
+   Reusable, step-by-step instructions for a specific recurring chore
+   -- "Washing Mom's hair: shampoo X, conditioner Y, blow dry on low"
+   -- so the task gets done the same way regardless of who claims it,
+   without retyping the steps into every new task. Separate from the
+   68-condition medical Care Guides library; this is a how-to for a
+   chore, not clinical reference content. */
+let TASK_GUIDES=[];
+let editingGuideId=null;
+
+async function loadTaskGuides(){
+  if(!CURRENT_FAMILY_ID)return;
+  const {data,error}=await sb.from('task_guides').select('*').eq('family_id',CURRENT_FAMILY_ID).order('title');
+  if(error){console.error('Could not load task guides:',error.message);return;}
+  TASK_GUIDES=data||[];
+  const sel=document.getElementById('new-task-guide');
+  if(sel){
+    sel.innerHTML='<option value="">None</option>'+TASK_GUIDES.map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
+  }
+}
+
+function openTaskGuideManager(){
+  resetGuideEditor();
+  renderTaskGuideList();
+  document.getElementById('task-guide-manager-overlay').style.display='flex';
+}
+function closeTaskGuideManager(){
+  document.getElementById('task-guide-manager-overlay').style.display='none';
+}
+
+function renderTaskGuideList(){
+  const el=document.getElementById('task-guide-list');
+  if(TASK_GUIDES.length===0){
+    el.innerHTML='<div style="font-size:12.5px;color:var(--graphite);margin-bottom:12px;">No guides yet. Create your first one below.</div>';
+    return;
+  }
+  el.innerHTML=TASK_GUIDES.map(g=>`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--stone-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;">
+      <div style="flex:1;cursor:pointer;" onclick="editTaskGuide('${g.id}')"><div style="font-size:13px;font-weight:600;color:var(--charcoal);">${g.title}</div><div style="font-size:10.5px;color:var(--graphite);">${(g.steps||[]).length} step${(g.steps||[]).length===1?'':'s'}</div></div>
+      <div onclick="deleteTaskGuide('${g.id}')" style="font-size:13px;color:var(--crimson);cursor:pointer;padding:4px;">🗑</div>
+    </div>`).join('');
+}
+
+function addGuideStepInput(value){
+  const wrap=document.getElementById('new-guide-steps');
+  const idx=wrap.children.length;
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center;';
+  row.innerHTML=`<div style="font-size:11px;color:var(--stone);width:16px;">${idx+1}.</div><input class="auth-input guide-step-input" style="flex:1;margin:0;" value="${(value||'').replace(/"/g,'&quot;')}" placeholder="e.g. Blow dry on low heat"><div onclick="this.parentElement.remove();renumberGuideSteps();" style="font-size:14px;color:var(--stone);cursor:pointer;padding:0 4px;">✕</div>`;
+  wrap.appendChild(row);
+}
+function renumberGuideSteps(){
+  document.querySelectorAll('#new-guide-steps > div').forEach((row,i)=>{row.querySelector('div').textContent=(i+1)+'.';});
+}
+
+function resetGuideEditor(){
+  editingGuideId=null;
+  document.getElementById('new-guide-title').value='';
+  document.getElementById('new-guide-steps').innerHTML='';
+  document.getElementById('new-guide-error').style.display='none';
+  addGuideStepInput();
+}
+
+function editTaskGuide(id){
+  const guide=TASK_GUIDES.find(g=>g.id===id);
+  if(!guide)return;
+  editingGuideId=id;
+  document.getElementById('new-guide-title').value=guide.title;
+  document.getElementById('new-guide-steps').innerHTML='';
+  (guide.steps&&guide.steps.length?guide.steps:['']).forEach(s=>addGuideStepInput(s));
+}
+
+async function saveTaskGuide(){
+  const title=document.getElementById('new-guide-title').value.trim();
+  const steps=[...document.querySelectorAll('.guide-step-input')].map(i=>i.value.trim()).filter(Boolean);
+  const errEl=document.getElementById('new-guide-error');
+  if(!title){errEl.textContent='A title is required.';errEl.style.display='block';return;}
+  let error;
+  if(editingGuideId){
+    ({error}=await sb.from('task_guides').update({title,steps}).eq('id',editingGuideId));
+  } else {
+    ({error}=await sb.from('task_guides').insert({family_id:CURRENT_FAMILY_ID,title,steps,created_by:CURRENT_USER.id}));
+  }
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  await loadTaskGuides();
+  renderTaskGuideList();
+  resetGuideEditor();
+}
+
+async function deleteTaskGuide(id){
+  if(!confirm('Delete this guide? Tasks pointing to it will just lose the link, not get deleted.'))return;
+  const {error}=await sb.from('task_guides').delete().eq('id',id);
+  if(error){alert('Could not delete: '+error.message);return;}
+  await loadTaskGuides();
+  renderTaskGuideList();
+  await loadTasks();
+}
+
+function openTaskGuideViewer(guideId){
+  const guide=TASK_GUIDES.find(g=>g.id===guideId);
+  if(!guide)return;
+  document.getElementById('task-guide-viewer-title').textContent=guide.title;
+  document.getElementById('task-guide-viewer-steps').innerHTML=(guide.steps||[]).map((s,i)=>`
+    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--stone-light);">
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--slate);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+      <div style="font-size:13px;color:var(--charcoal);padding-top:2px;">${s}</div>
+    </div>`).join('')||'<div style="font-size:12.5px;color:var(--graphite);">No steps saved for this guide yet.</div>';
+  document.getElementById('task-guide-viewer-overlay').style.display='flex';
+}
+function closeTaskGuideViewer(){
+  document.getElementById('task-guide-viewer-overlay').style.display='none';
 }
 
 /* ══════════ APPOINTMENTS (real data) ══════════ */
