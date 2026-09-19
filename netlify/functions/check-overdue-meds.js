@@ -112,7 +112,7 @@ async function handler() {
   // slack either side of midnight doesn't change the answer.
   const dayStartISO = dayStartLocal.toISOString();
 
-  const meds = await sb('medications?active=eq.true&select=id,name,schedule_time,family_id');
+  const meds = await sb('medications?active=eq.true&is_prn=eq.false&select=id,name,schedule_time,family_id');
 
   // Expand into one entry per scheduled dose, not per medication — a
   // 3x/day medication is checked as three independent doses, each
