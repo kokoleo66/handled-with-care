@@ -663,7 +663,7 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
     <div style="font-size:12.5px;color:var(--charcoal);line-height:1.6;">
       <p style="margin-bottom:10px;">This policy applies to consumers in Washington, Nevada, California, and other states with consumer health data laws. It covers "Consumer Health Data," information linked to you that identifies a past, present, or future physical or mental health status, including conditions, medications, biometric data, and health-related location data.</p>
       <p style="font-weight:700;margin-bottom:4px;">What we collect and why</p>
-      <p style="margin-bottom:10px;">Health conditions, medications, and care metrics you or your Huddle enter, strictly to display and coordinate that information within your family's account. We don't collect anything beyond what the app's features need, and we don't use it for any purpose beyond what's described here without asking you first.</p>
+      <p style="margin-bottom:10px;">Health conditions, medications, and care metrics you or your Huddle enter, strictly to display and coordinate that information within your family's account. We don't collect anything beyond what the app's features need, and we don't use it for any purpose beyond what's described here without asking you first. If you choose to attach a reference photo of a medication label or pill, that photo is stored securely and visible only to your Huddle until you remove it; this is separate from our photo-scanning feature, where photos are used once to read information and are never kept afterward.</p>
       <p style="font-weight:700;margin-bottom:4px;">Who it's shared with</p>
       <p style="margin-bottom:10px;">We never sell, rent, or lease your health data. It's visible only to the family members you personally invite into your Huddle; you'll always see a clear prompt before an invite goes out. It's processed by four infrastructure providers strictly to run the app, under contracts that forbid them from using it for anything else, including training their own models on it: Netlify (application hosting), Supabase (database and authentication), Anthropic's Claude API (photo-scanning features), and OpenAI's Whisper API (voice note transcription).</p>
       <p style="font-weight:700;margin-bottom:4px;">Your rights</p>
@@ -872,6 +872,28 @@ body{font-family:'DM Sans',sans-serif;background:#DFD6C4;color:var(--charcoal);-
         <div style="flex:1;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;background:var(--slate);color:white;" onclick="saveNewMedication()">Save</div>
       </div>
       <div id="med-history-link-row" style="display:none;text-align:center;margin-top:10px;font-size:11.5px;color:var(--slate);font-weight:600;cursor:pointer;" onclick="openMedHistoryDetail(editingMedId)">🕐 View change history</div>
+      <div id="med-photos-section" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--stone-light);">
+        <div class="auth-field-label" style="margin-top:0;">Reference photos (optional, for your own use — not scanned or sent anywhere)</div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <div id="med-label-photo-preview" style="display:none;position:relative;margin-bottom:6px;">
+              <img id="med-label-photo-img" style="width:100%;border-radius:var(--radius-sm);display:block;">
+              <div onclick="removeMedPhoto('label')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;">✕</div>
+            </div>
+            <div id="med-label-photo-btn" style="padding:10px;border:1px dashed var(--stone-light);border-radius:var(--radius-sm);text-align:center;font-size:11.5px;color:var(--graphite);cursor:pointer;" onclick="document.getElementById('med-label-photo-input').click()">📷 Label photo</div>
+            <input type="file" accept="image/*" capture="environment" id="med-label-photo-input" style="display:none" onchange="handleMedPhotoUpload(event,'label')">
+          </div>
+          <div style="flex:1;">
+            <div id="med-pill-photo-preview" style="display:none;position:relative;margin-bottom:6px;">
+              <img id="med-pill-photo-img" style="width:100%;border-radius:var(--radius-sm);display:block;">
+              <div onclick="removeMedPhoto('pill')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;">✕</div>
+            </div>
+            <div id="med-pill-photo-btn" style="padding:10px;border:1px dashed var(--stone-light);border-radius:var(--radius-sm);text-align:center;font-size:11.5px;color:var(--graphite);cursor:pointer;" onclick="document.getElementById('med-pill-photo-input').click()">💊 Pill photo</div>
+            <input type="file" accept="image/*" capture="environment" id="med-pill-photo-input" style="display:none" onchange="handleMedPhotoUpload(event,'pill')">
+          </div>
+        </div>
+      </div>
+      <div id="med-photos-hint" style="display:none;text-align:center;font-size:10.5px;color:var(--stone);margin-top:10px;">Save this medication first, then reopen it to add reference photos.</div>
       <div id="med-delete-row" style="display:none;margin-top:8px;">
         <div class="auth-field-label" style="margin-top:0;">Why are you stopping this? (optional)</div>
         <input class="auth-input" id="med-stop-reason" placeholder="e.g. doctor switched to a different medication">
@@ -3377,6 +3399,8 @@ function showAddMedForm(){
   document.getElementById('med-form-title').textContent='Add medication';
   document.getElementById('med-delete-row').style.display='none';
   document.getElementById('med-history-link-row').style.display='none';
+  document.getElementById('med-photos-section').style.display='none';
+  document.getElementById('med-photos-hint').style.display='block';
   document.getElementById('new-med-is-prn').checked=false;
   togglePrnFields();
   populatePrescriberDropdown(null);
@@ -3398,6 +3422,10 @@ function hideAddMedForm(){
   document.getElementById('new-med-refill-qty').value='';
   document.getElementById('med-stop-reason').value='';
   document.getElementById('new-med-error').style.display='none';
+  document.getElementById('med-label-photo-preview').style.display='none';
+  document.getElementById('med-pill-photo-preview').style.display='none';
+  document.getElementById('med-label-photo-input').value='';
+  document.getElementById('med-pill-photo-input').value='';
   togglePrnFields();
   editingMedId=null;
 }
@@ -3425,6 +3453,9 @@ function openEditMedForm(id){
   document.getElementById('new-med-error').style.display='none';
   document.getElementById('med-delete-row').style.display='block';
   document.getElementById('med-history-link-row').style.display='block';
+  document.getElementById('med-photos-hint').style.display='none';
+  document.getElementById('med-photos-section').style.display='block';
+  loadMedPhotoThumbnails(med);
   document.getElementById('add-med-form').style.display='block';
   document.getElementById('add-med-form').scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -3438,6 +3469,58 @@ async function deleteMedication(){
   await logSecurityEvent('medication_removed',{medication_id:editingMedId});
   hideAddMedForm();
   await loadMedications();
+}
+
+/* ══════════ MEDICATION REFERENCE PHOTOS ══════════
+   Deliberately separate from the "Scan a bottle or list" AI feature
+   above -- that flow still sends a photo to Anthropic for one-time
+   extraction and never keeps it, exactly as its consent disclosure
+   promises. These are a different thing entirely: a plain photo
+   library the person explicitly chooses to keep for their own
+   reference, with no AI involved and no data leaving Supabase
+   Storage, organized the same way Vault documents already are. */
+async function loadMedPhotoThumbnails(med){
+  for(const which of['label','pill']){
+    const path=med[which+'_photo_path'];
+    const previewEl=document.getElementById(`med-${which}-photo-preview`);
+    const imgEl=document.getElementById(`med-${which}-photo-img`);
+    const btnEl=document.getElementById(`med-${which}-photo-btn`);
+    if(!path){previewEl.style.display='none';btnEl.style.display='block';continue;}
+    const {data,error}=await sb.storage.from('medication-photos').createSignedUrl(path,3600);
+    if(error||!data){previewEl.style.display='none';btnEl.style.display='block';continue;}
+    imgEl.src=data.signedUrl;
+    previewEl.style.display='block';
+    btnEl.style.display='none';
+  }
+}
+
+async function handleMedPhotoUpload(event,which){
+  const file=event.target.files[0];
+  if(!file||!editingMedId||!CURRENT_FAMILY_ID)return;
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const path=`${CURRENT_FAMILY_ID}/${editingMedId}/${which}.${ext}`;
+  const {error:uploadError}=await sb.storage.from('medication-photos').upload(path,file,{upsert:true});
+  if(uploadError){alert('Could not upload photo: '+uploadError.message);return;}
+  const column=which+'_photo_path';
+  const {error:updateError}=await sb.from('medications').update({[column]:path}).eq('id',editingMedId);
+  if(updateError){alert('Photo uploaded but could not save the reference: '+updateError.message);return;}
+  await loadMedications();
+  const med=MEDICATIONS.find(m=>m.id===editingMedId);
+  if(med)loadMedPhotoThumbnails(med);
+}
+
+async function removeMedPhoto(which){
+  if(!editingMedId)return;
+  const med=MEDICATIONS.find(m=>m.id===editingMedId);
+  const path=med&&med[which+'_photo_path'];
+  if(path)await sb.storage.from('medication-photos').remove([path]);
+  const column=which+'_photo_path';
+  const {error}=await sb.from('medications').update({[column]:null}).eq('id',editingMedId);
+  if(error){alert('Could not remove photo: '+error.message);return;}
+  await loadMedications();
+  document.getElementById(`med-${which}-photo-preview`).style.display='none';
+  document.getElementById(`med-${which}-photo-btn`).style.display='block';
+  document.getElementById(`med-${which}-photo-input`).value='';
 }
 
 /* ══════════ MEDICATION HISTORY & PAST MEDICATIONS ══════════
